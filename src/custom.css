@@ -1,0 +1,170 @@
+#root {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* --- GLOBAL RESET --- */
+* {
+  box-sizing: border-box;
+  margin: 0; 
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* --- BODY --- */
+body {
+  background-color: #FFFFFF;
+  color: #111827;
+  padding: 0;
+  margin: 0;
+  
+  /* Mengatur posisi container agar berada di tengah layar secara vertikal dan horizontal */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* --- CONTAINER UTAMA --- */
+.container {
+  max-width: 900px;
+  width: 95%; /* Membuat tampilan responsif pada layar kecil */
+  background: #FFFFFF;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Efek bayangan halus */
+  border: 1px solid #E5E7EB;
+  overflow: hidden;
+  height: fit-content;
+  
+  /* Tinggi container otomatis menyesuaikan panjang isi konten di dalamnya */
+  height: max-content; 
+  margin-top: 30px; 
+  margin-bottom: 30px; 
+}
+
+/* --- HEADER --- */
+.header {
+  background-color: #1E3A8A;
+  color: white;
+  text-align: center;
+  padding: 40px 20px;
+  border-bottom: 3px solid #60A5FA;
+}
+
+.header h1 {
+  color: white;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.header p {
+  color: #DBEAFE;
+  margin-top: 8px;
+}
+
+/* --- KONTEN TENGAH --- */
+.main-content {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 25px;
+  gap: 25px;
+  background-color: #F9FAFB;
+}
+
+.sidebar {
+  flex: 1;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.content {
+  flex: 2;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* --- KARTU KONTEN --- */
+.card {
+  background: #FFFFFF;
+  padding: 25px;
+  border-radius: 10px;
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); 
+}
+
+.card h3 {
+  margin-bottom: 18px;
+  color: #1E3A8A;
+  font-weight: 700;
+}
+
+/* --- PROFILE --- */
+.profile {
+  text-align: center;
+  border: none;
+  background: transparent;
+}
+
+.profile img {
+  border-radius: 50%;
+  width: 150px;
+  height: 150px;
+  object-fit: cover; /* Menjaga proporsi asli foto agar tidak melar/penyok */
+  border: 5px solid #E5E7EB; 
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* --- SKILLS --- */
+.skill-list li {
+  background: #F3F4F6;
+  margin: 10px 0;
+  padding: 15px;
+  border-radius: 8px;
+  list-style-type: none;
+  border: 1px solid #E5E7EB;
+  transition: all 0.2s ease-out; 
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* Efek hover untuk interaksi pengguna */
+.skill-list li:hover {
+  background: #DBEAFE; 
+  color: #1E3A8A; 
+  transform: translateY(-2px); 
+  border-color: #60A5FA;
+}
+
+/* --- FOOTER --- */
+.footer {
+  text-align: center;
+  padding: 20px;
+  background: #FFFFFF;
+  color: #6B7280;
+  font-size: 0.85em;
+  border-top: 1px solid #E5E7EB;
+}
+/* border kontak*/
+.contact {
+  text-align: left; /* Memaksa semua isi kotak kontak rata kiri */
+}
+
+.contact p {
+  display: flex;
+  align-items: flex-start; /* Biar ikon tetap nangkring di atas kalau teksnya turun ke bawah */
+  gap: 10px; /* Jarak antara ikon dan teks */
+  font-size: 0.9em;
+  margin-bottom: 15px;
+  line-height: 1.4;
+}
+
+.contact .email-text {
+  word-break: break-all; /* Memaksa email yang panjang turun ke baris baru dengan rapi */
+}

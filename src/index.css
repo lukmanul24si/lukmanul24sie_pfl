@@ -1,0 +1,22 @@
+/* --- RESET CSS Bawaan Browser & Vite --- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #ffffff; /* Paksa background jadi putih */
+  color: #1f2937; /* Teks warna gelap */
+  font-family: system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* Membuka gembok batasan lebar layar dari Vite */
+#root {
+  width: 100%;
+  max-width: 100%; /* Menghapus max-width 1280px bawaan Vite */
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
