@@ -1,0 +1,428 @@
+/* =============================================
+   WISATA DASHBOARD — dashboard.css
+   Import di WisataDashboard.jsx:
+   import './dashboard.css';
+   ============================================= */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body, #root {
+  width: 100%;
+  min-height: 100vh;
+  background: #F0EFFE;
+}
+
+/* ===== WRAPPER ===== */
+.dashboard-wrap {
+  min-height: 100vh;
+  width: 100%;
+  background: #F0EFFE;
+  padding: 1.5rem 2.5rem;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: #1a1a2e;
+}
+
+/* ===== HEADER ===== */
+.header-card {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  background: #ffffff;
+  border: 1.5px solid #dddaf8;
+  border-radius: 16px;
+  padding: 1.25rem 1.75rem;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.brand-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a2e;
+  letter-spacing: -0.5px;
+}
+
+.brand-accent { color: #5046c8; }
+
+.brand-sub {
+  font-size: 12px;
+  color: #888;
+  margin-top: 3px;
+  font-weight: 400;
+}
+
+/* ===== TABS ===== */
+.tab-group {
+  display: flex;
+  background: #f0effe;
+  border: 1.5px solid #dddaf8;
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.tab-btn {
+  padding: 8px 24px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: #7c75d4;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover { background: #e4e1fb; }
+
+.tab-active {
+  background: #ffffff !important;
+  color: #5046c8 !important;
+  border: 1.5px solid #cbc8f5 !important;
+  box-shadow: 0 1px 4px rgba(80,70,200,0.1);
+}
+
+/* ===== STAT CARDS ===== */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.stat-card {
+  background: #ffffff;
+  border: 1.5px solid #dddaf8;
+  border-radius: 14px;
+  padding: 16px 20px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-val {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1;
+}
+
+.stat-shown { color: #5046c8; }
+
+/* ===== FILTERS ===== */
+.filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+.filter-input,
+.filter-select {
+  padding: 11px 16px;
+  background: #ffffff;
+  border: 1.5px solid #dddaf8;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a1a2e;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+  width: 100%;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  border-color: #8b86e0;
+  box-shadow: 0 0 0 3px rgba(139,134,224,0.15);
+}
+
+/* ===== GUEST CARD GRID ===== */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.wisata-card {
+  background: #ffffff;
+  border: 1.5px solid #e0ddf8;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.wisata-card:hover {
+  border-color: #8b86e0;
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(80,70,200,0.12);
+}
+
+/* ===== CARD IMAGE ===== */
+.card-img-wrap {
+  position: relative;
+  height: 155px;
+  overflow: hidden;
+  border-bottom: 1.5px solid #e0ddf8;
+}
+
+.card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.wisata-card:hover .card-img { transform: scale(1.06); }
+
+.card-img-fallback {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #eeedfe 0%, #dddaf8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fallback-emoji { font-size: 48px; }
+
+/* ===== CATEGORY BADGES ===== */
+.cat-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  line-height: 1.6;
+}
+
+.card-img-wrap .cat-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  backdrop-filter: blur(4px);
+}
+
+.cat-pantai  { background: #d6f5eb; color: #0c6644; border: 1px solid #9fe0cb; }
+.cat-gunung  { background: #dff0d0; color: #2d5e10; border: 1px solid #b3d98a; }
+.cat-budaya  { background: #eeedfe; color: #4338b8; border: 1px solid #cbc8f5; }
+.cat-air     { background: #daeef9; color: #0e5a80; border: 1px solid #9dd5ef; }
+.cat-default { background: #f0f0f0; color: #555;    border: 1px solid #ddd; }
+
+/* ===== CARD BODY ===== */
+.card-body { padding: 14px 16px; }
+
+.card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 4px;
+}
+
+.card-loc {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+.price-box {
+  background: #eeedfe;
+  border: 1px solid #cbc8f5;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.price-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: #4338b8;
+}
+
+.fasi-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.fasi-tag {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: #f4f3ff;
+  border: 1px solid #e0ddf8;
+  color: #666;
+  font-weight: 500;
+}
+
+.card-phone {
+  font-size: 11px;
+  color: #c0377a;
+  font-weight: 600;
+}
+
+/* ===== ADMIN TABLE ===== */
+.table-wrap {
+  background: #ffffff;
+  border: 1.5px solid #dddaf8;
+  border-radius: 16px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.table-scroll { overflow-x: auto; }
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.admin-table thead {
+  background: #f4f3ff;
+  border-bottom: 1.5px solid #dddaf8;
+}
+
+.admin-table th {
+  padding: 14px 18px;
+  font-weight: 600;
+  color: #666;
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid #f0effe;
+  vertical-align: middle;
+  color: #1a1a2e;
+}
+
+.admin-table tbody tr:last-child td { border-bottom: none; }
+.admin-table tbody tr:hover td { background: #faf9ff; }
+
+.td-id {
+  font-weight: 600;
+  color: #aaa !important;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 1.5px solid #e0ddf8;
+  overflow: hidden;
+  background: #eeedfe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.td-name {
+  font-weight: 600;
+  margin-bottom: 5px;
+  white-space: nowrap;
+}
+
+.td-loc {
+  color: #555;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.td-prov {
+  font-size: 11px;
+  color: #aaa;
+}
+
+.price-chip {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #d6f5eb;
+  color: #0c6644;
+  border: 1px solid #9fe0cb;
+  white-space: nowrap;
+}
+
+.td-web {
+  font-size: 12px;
+  color: #4c8ad4;
+  font-weight: 500;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+  text-align: center;
+  padding: 4rem 1rem;
+  background: #ffffff;
+  border: 1.5px dashed #cbc8f5;
+  border-radius: 16px;
+  width: 100%;
+}
+
+.empty-icon {
+  font-size: 44px;
+  display: block;
+  margin-bottom: 14px;
+}
+
+.empty-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 6px;
+}
+
+.empty-sub {
+  font-size: 13px;
+  color: #888;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .dashboard-wrap { padding: 1rem 1.25rem; }
+  .stat-row { grid-template-columns: repeat(2, 1fr); }
+  .filters { grid-template-columns: 1fr; }
+  .header-card { flex-direction: column; align-items: flex-start; }
+  .tab-group { width: 100%; }
+  .tab-btn { flex: 1; text-align: center; }
+  .card-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 400px) {
+  .card-grid { grid-template-columns: 1fr; }
+  .stat-row { grid-template-columns: repeat(2, 1fr); }
+}

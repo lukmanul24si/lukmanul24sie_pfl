@@ -1,122 +1,202 @@
 [
   {
-    "id": 1, "nama": "Candi Borobudur", "kategori": "Sejarah", "rating": 4.8, "gambar": "https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "Jawa Tengah", "kota": "Magelang" },
-    "operasional": { "buka": "06:00", "tutup": "17:00" },
-    "tiket": { "lokal": 50000, "asing": 350000 }
-  },
-  {
-    "id": 2, "nama": "Pantai Kuta", "kategori": "Pantai", "rating": 4.5, "gambar": "https://images.unsplash.com/photo-1558005530-a7958896ec60?auto=format&fit=crop&w=500&q=60",
+    "id": 1,
+    "nama": "Pantai Kuta",
+    "kategori": "Pantai",
+    "harga": 0,
+    "gambar": "/img/pantai-kuta.jpg",
     "lokasi": { "provinsi": "Bali", "kota": "Badung" },
-    "operasional": { "buka": "24 Jam", "tutup": "24 Jam" },
-    "tiket": { "lokal": 0, "asing": 0 }
+    "fasilitas": ["Parkir", "Toilet", "Warung Makan"],
+    "kontak": { "telepon": "0811-111-2222", "website": "balitourism.com" }
   },
   {
-    "id": 3, "nama": "Gunung Bromo", "kategori": "Alam", "rating": 4.9, "gambar": "https://images.unsplash.com/photo-1602154663343-89fe0bf541ab?auto=format&fit=crop&w=500&q=60",
+    "id": 2,
+    "nama": "Gunung Bromo",
+    "kategori": "Gunung",
+    "harga": 35000,
+    "gambar": "/img/gunung-bromo.jpg",
     "lokasi": { "provinsi": "Jawa Timur", "kota": "Probolinggo" },
-    "operasional": { "buka": "24 Jam", "tutup": "24 Jam" },
-    "tiket": { "lokal": 29000, "asing": 220000 }
+    "fasilitas": ["Jeep Wisata", "Guide", "Area Camp"],
+    "kontak": { "telepon": "0812-333-4444", "website": "bromotengger.com" }
   },
   {
-    "id": 4, "nama": "Raja Ampat", "kategori": "Pantai", "rating": 5.0, "gambar": "https://images.unsplash.com/photo-1516690553959-71a414d6b9b6?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "Papua Barat", "kota": "Waisai" },
-    "operasional": { "buka": "08:00", "tutup": "18:00" },
-    "tiket": { "lokal": 500000, "asing": 1000000 }
+    "id": 3,
+    "nama": "Candi Borobudur",
+    "kategori": "Budaya",
+    "harga": 50000,
+    "gambar": "/img/borobudur.jpg",
+    "lokasi": { "provinsi": "Jawa Tengah", "kota": "Magelang" },
+    "fasilitas": ["Parkir", "Museum", "Guide Resmi"],
+    "kontak": { "telepon": "0813-555-6666", "website": "borobudurpark.com" }
   },
   {
-    "id": 5, "nama": "Taman Mini Indonesia Indah", "kategori": "Budaya", "rating": 4.6, "gambar": "https://images.unsplash.com/photo-1584646098378-0874589d76b1?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "DKI Jakarta", "kota": "Jakarta Timur" },
-    "operasional": { "buka": "06:00", "tutup": "18:00" },
-    "tiket": { "lokal": 25000, "asing": 25000 }
+    "id": 4,
+    "nama": "Pantai Senggigi",
+    "kategori": "Pantai",
+    "harga": 10000,
+    "gambar": "/img/senggigi.jpg",
+    "lokasi": { "provinsi": "Lombok", "kota": "Lombok Barat" },
+    "fasilitas": ["Hotel", "Snorkeling", "Restoran"],
+    "kontak": { "telepon": "0814-777-8888", "website": "lombokwisata.com" }
   },
   {
-    "id": 6, "nama": "Candi Prambanan", "kategori": "Sejarah", "rating": 4.8, "gambar": "https://images.unsplash.com/photo-1582050041567-9cfecac52206?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "DI Yogyakarta", "kota": "Sleman" },
-    "operasional": { "buka": "06:00", "tutup": "17:00" },
-    "tiket": { "lokal": 50000, "asing": 350000 }
+    "id": 5,
+    "nama": "Candi Prambanan",
+    "kategori": "Budaya",
+    "harga": 50000,
+    "gambar": "/img/prambanan.jpg",
+    "lokasi": { "provinsi": "Yogyakarta", "kota": "Sleman" },
+    "fasilitas": ["Parkir", "Taman", "Guide Resmi"],
+    "kontak": { "telepon": "0815-999-0000", "website": "prambanan.com" }
   },
   {
-    "id": 7, "nama": "Danau Toba", "kategori": "Alam", "rating": 4.7, "gambar": "https://images.unsplash.com/photo-1552084117-56a98a9f7336?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "Sumatera Utara", "kota": "Samosir" },
-    "operasional": { "buka": "24 Jam", "tutup": "24 Jam" },
-    "tiket": { "lokal": 10000, "asing": 20000 }
+    "id": 6,
+    "nama": "Coban Rondo",
+    "kategori": "Air Terjun",
+    "harga": 20000,
+    "gambar": "/img/coban-rondo.jpg",
+    "lokasi": { "provinsi": "Jawa Timur", "kota": "Malang" },
+    "fasilitas": ["Parkir", "Warung", "Toilet"],
+    "kontak": { "telepon": "0816-111-2233", "website": "cobanlowland.com" }
   },
   {
-    "id": 8, "nama": "Taman Nasional Komodo", "kategori": "Alam", "rating": 4.9, "gambar": "https://images.unsplash.com/photo-1579893976214-9844e13d968b?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "Nusa Tenggara Timur", "kota": "Manggarai Barat" },
-    "operasional": { "buka": "07:00", "tutup": "17:00" },
-    "tiket": { "lokal": 75000, "asing": 250000 }
-  },
-  {
-    "id": 9, "nama": "Kawah Putih", "kategori": "Alam", "rating": 4.6, "gambar": "https://images.unsplash.com/photo-1580226317769-6d601ffcd2b4?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "Jawa Barat", "kota": "Bandung" },
-    "operasional": { "buka": "07:00", "tutup": "17:00" },
-    "tiket": { "lokal": 28000, "asing": 81000 }
-  },
-  {
-    "id": 10, "nama": "Dunia Fantasi (Dufan)", "kategori": "Hiburan", "rating": 4.7, "gambar": "https://images.unsplash.com/photo-1513889961551-628c1e5e2ee9?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "DKI Jakarta", "kota": "Jakarta Utara" },
-    "operasional": { "buka": "10:00", "tutup": "18:00" },
-    "tiket": { "lokal": 250000, "asing": 250000 }
-  },
-  {
-    "id": 11, "nama": "Gunung Rinjani", "kategori": "Alam", "rating": 4.9, "gambar": "https://images.unsplash.com/photo-1572978051786-8ab6b403f39a?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "Nusa Tenggara Barat", "kota": "Lombok" },
-    "operasional": { "buka": "06:00", "tutup": "18:00" },
-    "tiket": { "lokal": 5000, "asing": 150000 }
-  },
-  {
-    "id": 12, "nama": "Jalan Malioboro", "kategori": "Budaya", "rating": 4.8, "gambar": "https://images.unsplash.com/photo-1627913348123-1d01dd3e51a5?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "DI Yogyakarta", "kota": "Yogyakarta" },
-    "operasional": { "buka": "24 Jam", "tutup": "24 Jam" },
-    "tiket": { "lokal": 0, "asing": 0 }
-  },
-  {
-    "id": 13, "nama": "Monumen Nasional", "kategori": "Sejarah", "rating": 4.5, "gambar": "https://images.unsplash.com/photo-1575883262602-0e9bd2889278?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "DKI Jakarta", "kota": "Jakarta Pusat" },
-    "operasional": { "buka": "08:00", "tutup": "16:00" },
-    "tiket": { "lokal": 15000, "asing": 15000 }
-  },
-  {
-    "id": 14, "nama": "Taman Laut Bunaken", "kategori": "Pantai", "rating": 4.8, "gambar": "https://images.unsplash.com/photo-1601269094034-7186dfc924bc?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "Sulawesi Utara", "kota": "Manado" },
-    "operasional": { "buka": "08:00", "tutup": "17:00" },
-    "tiket": { "lokal": 5000, "asing": 150000 }
-  },
-  {
-    "id": 15, "nama": "Tana Toraja", "kategori": "Budaya", "rating": 4.7, "gambar": "https://images.unsplash.com/photo-1622396481328-9b1b78cdd9fd?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "Sulawesi Selatan", "kota": "Toraja Utara" },
-    "operasional": { "buka": "08:00", "tutup": "17:00" },
-    "tiket": { "lokal": 15000, "asing": 100000 }
-  },
-  {
-    "id": 16, "nama": "Wakatobi", "kategori": "Pantai", "rating": 4.9, "gambar": "https://images.unsplash.com/photo-1590740924767-f1311026046e?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "Sulawesi Tenggara", "kota": "Wakatobi" },
-    "operasional": { "buka": "07:00", "tutup": "18:00" },
-    "tiket": { "lokal": 50000, "asing": 160000 }
-  },
-  {
-    "id": 17, "nama": "Gunung Tangkuban Perahu", "kategori": "Alam", "rating": 4.4, "gambar": "https://images.unsplash.com/photo-1634636906232-22ed1c784dd5?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "Jawa Barat", "kota": "Subang" },
-    "operasional": { "buka": "07:00", "tutup": "17:00" },
-    "tiket": { "lokal": 20000, "asing": 200000 }
-  },
-  {
-    "id": 18, "nama": "Garuda Wisnu Kencana", "kategori": "Budaya", "rating": 4.6, "gambar": "https://images.unsplash.com/photo-1605335133618-2e061dd637f9?auto=format&fit=crop&w=500&q=60",
+    "id": 7,
+    "nama": "Pantai Dreamland",
+    "kategori": "Pantai",
+    "harga": 20000,
+    "gambar": "/img/dreamland.jpg",
     "lokasi": { "provinsi": "Bali", "kota": "Badung" },
-    "operasional": { "buka": "08:00", "tutup": "21:00" },
-    "tiket": { "lokal": 100000, "asing": 125000 }
+    "fasilitas": ["Toilet", "Warung", "Spot Foto"],
+    "kontak": { "telepon": "0817-334-5566", "website": "balisouth.com" }
   },
   {
-    "id": 19, "nama": "Pantai Parangtritis", "kategori": "Pantai", "rating": 4.3, "gambar": "https://images.unsplash.com/photo-1620803738980-0a2a4b3f545a?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "DI Yogyakarta", "kota": "Bantul" },
-    "operasional": { "buka": "24 Jam", "tutup": "24 Jam" },
-    "tiket": { "lokal": 10000, "asing": 10000 }
+    "id": 8,
+    "nama": "Merapi Lava Tour",
+    "kategori": "Gunung",
+    "harga": 150000,
+    "gambar": "/img/merapi-lava.jpg",
+    "lokasi": { "provinsi": "Yogyakarta", "kota": "Sleman" },
+    "fasilitas": ["Jeep Wisata", "Guide", "Kamera"],
+    "kontak": { "telepon": "0818-556-7788", "website": "merapitour.com" }
   },
   {
-    "id": 20, "nama": "Labuan Bajo", "kategori": "Alam", "rating": 4.9, "gambar": "https://images.unsplash.com/photo-1602002418816-5c0aeef426aa?auto=format&fit=crop&w=500&q=60",
-    "lokasi": { "provinsi": "Nusa Tenggara Timur", "kota": "Manggarai Barat" },
-    "operasional": { "buka": "06:00", "tutup": "18:00" },
-    "tiket": { "lokal": 50000, "asing": 150000 }
+    "id": 9,
+    "nama": "Pantai Parangtritis",
+    "kategori": "Pantai",
+    "harga": 10000,
+    "gambar": "/img/parangtritis.jpg",
+    "lokasi": { "provinsi": "Yogyakarta", "kota": "Bantul" },
+    "fasilitas": ["Parkir", "ATV", "Warung"],
+    "kontak": { "telepon": "0819-223-4455", "website": "parangtritis.com" }
+  },
+  {
+    "id": 10,
+    "nama": "Tanah Lot",
+    "kategori": "Budaya",
+    "harga": 60000,
+    "gambar": "/img/tanah-lot.jpg",
+    "lokasi": { "provinsi": "Bali", "kota": "Tabanan" },
+    "fasilitas": ["Parkir", "Pura", "Restoran"],
+    "kontak": { "telepon": "0820-334-5566", "website": "tanahlot.com" }
+  },
+  {
+    "id": 11,
+    "nama": "Air Terjun Tumpak Sewu",
+    "kategori": "Air Terjun",
+    "harga": 25000,
+    "gambar": "/img/tumpak-sewu.jpg",
+    "lokasi": { "provinsi": "Jawa Timur", "kota": "Lumajang" },
+    "fasilitas": ["Parkir", "Guide", "Warung"],
+    "kontak": { "telepon": "0821-445-6677", "website": "tumpaksewu.com" }
+  },
+  {
+    "id": 12,
+    "nama": "Pantai Pink",
+    "kategori": "Pantai",
+    "harga": 0,
+    "gambar": "/img/pantai-pink.jpg",
+    "lokasi": { "provinsi": "Lombok", "kota": "Lombok Timur" },
+    "fasilitas": ["Snorkeling", "Toilet", "Parkir"],
+    "kontak": { "telepon": "0822-556-7788", "website": "lombokexplore.com" }
+  },
+  {
+    "id": 13,
+    "nama": "Gunung Rinjani",
+    "kategori": "Gunung",
+    "harga": 150000,
+    "gambar": "/img/rinjani.jpg",
+    "lokasi": { "provinsi": "Lombok", "kota": "Lombok Utara" },
+    "fasilitas": ["Guide", "Porter", "Camp"],
+    "kontak": { "telepon": "0823-667-8899", "website": "rinjanitrekking.com" }
+  },
+  {
+    "id": 14,
+    "nama": "Uluwatu Temple",
+    "kategori": "Budaya",
+    "harga": 50000,
+    "gambar": "/img/uluwatu.jpg",
+    "lokasi": { "provinsi": "Bali", "kota": "Badung" },
+    "fasilitas": ["Parkir", "Kecak Dance", "Restoran"],
+    "kontak": { "telepon": "0824-778-9900", "website": "uluwatutemple.com" }
+  },
+  {
+    "id": 15,
+    "nama": "Kawah Ijen",
+    "kategori": "Gunung",
+    "harga": 100000,
+    "gambar": "/img/kawah-ijen.jpg",
+    "lokasi": { "provinsi": "Jawa Timur", "kota": "Banyuwangi" },
+    "fasilitas": ["Parkir", "Guide", "Masker"],
+    "kontak": { "telepon": "0825-889-0011", "website": "kawahijen.com" }
+  },
+  {
+    "id": 16,
+    "nama": "Curug Cipendok",
+    "kategori": "Air Terjun",
+    "harga": 15000,
+    "gambar": "/img/cipendok.jpg",
+    "lokasi": { "provinsi": "Jawa Tengah", "kota": "Banyumas" },
+    "fasilitas": ["Parkir", "Warung", "Toilet"],
+    "kontak": { "telepon": "0826-990-1122", "website": "purwokertotravel.com" }
+  },
+  {
+    "id": 17,
+    "nama": "Pantai Sanur",
+    "kategori": "Pantai",
+    "harga": 0,
+    "gambar": "/img/pantai-sanur.jpg",
+    "lokasi": { "provinsi": "Bali", "kota": "Denpasar" },
+    "fasilitas": ["Hotel", "Restoran", "Snorkeling"],
+    "kontak": { "telepon": "0827-001-2233", "website": "sanurbali.com" }
+  },
+  {
+    "id": 18,
+    "nama": "Museum Nasional",
+    "kategori": "Budaya",
+    "harga": 10000,
+    "gambar": "/img/museum-nasional.jpg",
+    "lokasi": { "provinsi": "DKI Jakarta", "kota": "Jakarta Pusat" },
+    "fasilitas": ["Parkir", "Pameran", "Guide"],
+    "kontak": { "telepon": "0828-112-3344", "website": "museumnasional.or.id" }
+  },
+  {
+    "id": 19,
+    "nama": "Pantai Gili Trawangan",
+    "kategori": "Pantai",
+    "harga": 20000,
+    "gambar": "/img/gili-trawangan.jpg",
+    "lokasi": { "provinsi": "Lombok", "kota": "Lombok Utara" },
+    "fasilitas": ["Snorkeling", "Diving", "Hotel"],
+    "kontak": { "telepon": "0829-223-4455", "website": "gilitrawangan.com" }
+  },
+  {
+    "id": 20,
+    "nama": "Air Terjun Sekumpul",
+    "kategori": "Air Terjun",
+    "harga": 30000,
+    "gambar": "/img/sekumpul.jpg",
+    "lokasi": { "provinsi": "Bali", "kota": "Buleleng" },
+    "fasilitas": ["Guide", "Parkir", "Warung"],
+    "kontak": { "telepon": "0830-334-5566", "website": "balitrekking.com" }
   }
 ]
