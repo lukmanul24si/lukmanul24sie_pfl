@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom class untuk Coffee Shop kamu */
+@layer components {
+  .btn-coffee {
+    @apply bg-orange-800 text-white px-4 py-2 rounded-lg hover:bg-orange-900 transition-all active:scale-95 shadow-md;
+  }
+  
+  .card-coffee {
+    @apply bg-white border border-orange-100 rounded-xl p-4 hover:shadow-lg transition-shadow;
+  }
+}
+
+/* Scrollbar simpel */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-orange-200 rounded-full;
+}

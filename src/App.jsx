@@ -1,28 +1,33 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Home from './Home';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import MainLayout from './layouts/MainLayout';
+import Dashboard from './pages/main/Dashboard';
+import Orders from './pages/main/Orders';
+import Customers from './pages/main/Customers';
+import ErrorPage from './pages/main/ErrorPage';
+import Login from './pages/auth/Login'; // Import halaman Login baru kamu
 
-// Perhatikan huruf "T" besar menyesuaikan nama folder lu
-import BiodataDiri from './Tugas2/BiodataDiri'; 
-import PendaftaranEsports from './Tugas3/PendaftaranEsports'; 
-import WisataDashboard from './Tugas4/WisataDashboard';
-
-export default function App() {
+function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rute Halaman Utama (Dashboard) */}
-        <Route path="/" element={<Home />} />
-        
-        {/* Rute Modul 2 */}
-        <Route path="/tugas2" element={<BiodataDiri />} />
-        
-        {/* Rute Modul 3 */}
-        <Route path="/tugas3" element={<PendaftaranEsports />} />
+        {/* 1. Rute Login: ditaruh di luar MainLayout agar Sidebar tidak muncul */}
+        <Route path="/login" element={<Login />} />
 
-        {/* Rute Modul 3 */}
-        <Route path="/tugas4" element={<WisataDashboard />} />
-        
+        {/* 2. Redirect awal: Jika buka root (/) langsung ke /login */}
+        <Route path="/" element={<Navigate to="/login" />} />
+
+        {/* 3. Rute utama: Dibungkus MainLayout (Pakai Sidebar) */}
+        <Route element={<MainLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/customers" element={<Customers />} />
+        </Route>
+
+        {/* 4. Tangkap semua alamat salah ke ErrorPage */}
+        <Route path="*" element={<ErrorPage />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
+export default App;
