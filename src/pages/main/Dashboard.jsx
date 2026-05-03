@@ -40,29 +40,34 @@ const Dashboard = () => {
 
   // --- PROSES CHECKOUT ---
   const handleCheckout = () => {
-    if (!customerName) return alert("Masukkan nama pelanggan terlebih dahulu!");
-    if (cart.length === 0) return alert("Keranjang masih kosong!");
+  if (!customerName) return alert("Masukkan nama pelanggan!");
+  if (cart.length === 0) return alert("Keranjang kosong!");
 
-    const newOrder = {
-      id: `ORD-${Date.now()}`,
-      customer: customerName,
-      total: totalFinal,
-      status: 'Process',
-      date: new Date().toLocaleDateString(),
-      items: cart
-    };
-
-    addOrder(newOrder);
-    setCart([]);
-    setCustomerName('');
-    alert(isEligibleForDiscount ? "Pesanan Berhasil! (Diskon 10% diterapkan)" : "Pesanan Berhasil!");
+  const newOrder = {
+    id: `ORD-${Date.now()}`,
+    customer: customerName,
+    total: totalFinal,
+    status: 'Process',
+    date: new Date().toLocaleString(), // Pakai toLocaleString agar ada jamnya
+    items: cart
   };
+
+  addOrder(newOrder); // Memanggil fungsi dari Context
+  setCart([]);
+  setCustomerName('');
+  alert("Pesanan Berhasil!");
+};
 
   const getImageUrl = (img) => {
-    if (!img) return "https://via.placeholder.com/150";
-    if (img.startsWith('blob:') || img.startsWith('http')) return img;
-    return new URL(`../../assets/${img}`, import.meta.url).href;
-  };
+  if (!img) return "https://via.placeholder.com/150";
+  
+  // Jika gambar hasil upload baru (Base64)
+  if (img.startsWith('data:image')) return img;
+  
+  // Jika gambar dari folder assets (Data Dummy)
+  // Pastikan path-nya mundur ke folder src/assets
+  return new URL(`../../assets/${img}`, import.meta.url).href;
+};
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 animate-fade-in min-h-screen p-2">
@@ -83,7 +88,7 @@ const Dashboard = () => {
 
         {/* Filter Kategori */}
         <div className="flex gap-3 mb-8 overflow-x-auto pb-2 scrollbar-hide">
-          {['All', 'Hot', 'Ice', 'Non-Coffee', 'Cemilan', 'Makanan'].map((cat) => (
+          {['All', 'Coffee', 'Non-Coffee', 'Cemilan', 'Makanan'].map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}

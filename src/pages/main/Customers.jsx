@@ -2,34 +2,53 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 
 const Customers = () => {
-  const { customers } = useApp();
+  const { orders } = useApp(); // Pastikan orders di Context menyimpan data checkout
 
   return (
-    <div className="animate-fade-in p-2">
-      <div className="mb-8">
-        <h2 className="text-3xl font-black text-gray-800">Pelanggan Loyal 🌟</h2>
-        <p className="text-gray-500">Daftar member otomatis yang belanja di atas Rp 120.000.</p>
+    <div className="animate-fade-in">
+      <div className="mb-10">
+        <h1 className="text-4xl font-black text-[#1a120b] tracking-tighter uppercase">Riwayat <span className="text-[#8c6d52]">Customers</span></h1>
+        <p className="text-gray-400 font-bold text-xs tracking-widest uppercase mt-1">Daftar transaksi yang telah selesai</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {customers.length > 0 ? customers.map((cust) => (
-          <div key={cust.id} className="bg-white p-6 rounded-[2rem] shadow-sm border border-orange-100 flex items-center gap-5 hover:shadow-md transition-all">
-            <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl flex items-center justify-center text-2xl text-white shadow-lg shadow-orange-200">
-              👤
-            </div>
-            <div>
-              <h4 className="font-bold text-xl text-gray-800">{cust.name}</h4>
-              <div className="flex flex-col">
-                <span className="text-xs font-black text-orange-600 uppercase tracking-widest">{cust.status}</span>
-                <span className="text-sm text-gray-400 font-medium">Total: Rp {cust.totalSpent.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-        )) : (
-          <div className="col-span-full py-20 text-center bg-white rounded-[2rem] border-2 border-dashed border-gray-100">
-            <p className="text-gray-400 italic font-medium">Belum ada pelanggan loyal terdeteksi...</p>
-          </div>
-        )}
+      <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+        <table className="w-full text-left">
+          <thead className="bg-[#fbf9f6] border-b border-gray-100">
+            <tr>
+              <th className="px-8 py-6 text-[10px] font-black uppercase text-gray-400">Customer</th>
+              <th className="px-8 py-6 text-[10px] font-black uppercase text-gray-400">Pesanan</th>
+              <th className="px-8 py-6 text-[10px] font-black uppercase text-gray-400">Tanggal</th>
+              <th className="px-8 py-6 text-[10px] font-black uppercase text-gray-400 text-right">Total Bayar</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {orders.length > 0 ? orders.map((order) => (
+              <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
+                <td className="px-8 py-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#eae0d5] rounded-full flex items-center justify-center font-black text-[#8c6d52]">{order.customer[0]}</div>
+                    <span className="font-bold text-[#1a120b]">{order.customer}</span>
+                  </div>
+                </td>
+                <td className="px-8 py-6">
+                  <div className="flex flex-col gap-1">
+                    {order.items.map((item, idx) => (
+                      <span key={idx} className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md w-fit">
+                        {item.qty}x {item.name}
+                      </span>
+                    ))}
+                  </div>
+                </td>
+                <td className="px-8 py-6 text-sm text-gray-400 font-bold">{order.date}</td>
+                <td className="px-8 py-6 text-right font-black text-[#1a120b]">Rp {order.total.toLocaleString()}</td>
+              </tr>
+            )) : (
+              <tr>
+                <td colSpan="4" className="text-center py-20 text-gray-300 font-bold italic">Belum ada riwayat transaksi.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

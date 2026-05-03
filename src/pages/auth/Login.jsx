@@ -20,8 +20,8 @@ const Login = () => {
     <div className="min-h-screen bg-[#fdfaf7] flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl p-10 border border-orange-50">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-black text-[#1a120b] tracking-tighter">BEANS & CO.</h1>
-          <p className="text-gray-400 font-medium mt-2">Login Kasir Gacor</p>
+          <h1 className="text-4xl font-black text-[#1a120b] tracking-tighter">Bogeng.Store</h1>
+          <p className="text-gray-400 font-medium mt-2">Login Dulu Bro !</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
