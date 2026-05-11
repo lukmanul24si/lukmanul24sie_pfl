@@ -1,102 +1,71 @@
-import React from "react";
-import { useNavigate } from "react-router-dom"; // Tambahkan ini
-import { useApp } from "../../context/AppContext";
+import React, { useState } from 'react';
+import { useApp } from '../../context/AppContext';
+import CustomerDetail from './CustomerDetail';
 
 const Customers = () => {
-  const { orders } = useApp();
-  const navigate = useNavigate(); // Inisialisasi navigate
+  const { customers, deleteCustomer } = useApp();
+  const [selectedCust, setSelectedCust] = useState(null);
+  const [search, setSearch] = useState("");
+
+  const filteredCust = customers.filter(c => 
+    c.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div className="animate-fade-in p-4 max-w-6xl mx-auto">
-      <div className="mb-10">
-        <h1 className="text-4xl font-black text-[#1a120b] tracking-tighter uppercase">
-          Riwayat <span className="text-[#8c6d52]">Customers</span>
-        </h1>
-        <p className="text-gray-400 font-bold text-xs tracking-widest uppercase mt-1">
-          Daftar transaksi yang telah selesai
-        </p>
+    <div className="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden shadow-sm p-8">
+      <div className="flex justify-between items-center mb-8">
+        <h3 className="font-black text-xl italic text-[#3C2A21]">Database Pelanggan</h3>
+        <input 
+          type="text" 
+          placeholder="Cari nama member..." 
+          className="bg-gray-50 px-6 py-2 rounded-full text-xs outline-none border border-transparent focus:border-[#6F4E37] w-64 font-bold"
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
-      <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-[#fbf9f6] border-b border-gray-100">
-            <tr>
-              <th className="px-8 py-6 text-[10px] font-black uppercase text-gray-400">
-                Customer
-              </th>
-              <th className="px-8 py-6 text-[10px] font-black uppercase text-gray-400">
-                Pesanan
-              </th>
-              <th className="px-8 py-6 text-[10px] font-black uppercase text-gray-400">
-                Tanggal
-              </th>
-              <th className="px-8 py-6 text-[10px] font-black uppercase text-gray-400 text-right">
-                Total Bayar
-              </th>
-              <th className="px-8 py-6 text-[10px] font-black uppercase text-gray-400 text-center">
-                Aksi
-              </th>
+      <table className="w-full text-left">
+        <thead className="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+          <tr>
+            <th className="px-6 py-5">Nama Lengkap</th>
+            <th className="px-6 py-5 text-center">Visits</th>
+            <th className="px-6 py-5 text-center">Status</th>
+            <th className="px-6 py-5 text-right">Aksi</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-50">
+          {filteredCust.map(cust => (
+            <tr key={cust.id} className="hover:bg-gray-50 transition-colors">
+              <td className="px-6 py-6 font-black uppercase text-gray-700">{cust.name}</td>
+              <td className="px-6 py-6 text-center font-bold text-gray-400">{cust.visits} Kali</td>
+              <td className="px-6 py-6 text-center">
+                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black ${
+                  cust.status === 'VIP' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'
+                }`}>
+                  {cust.status}
+                </span>
+              </td>
+              <td className="px-6 py-6 flex justify-end gap-2">
+                <button 
+                  onClick={() => setSelectedCust(cust)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black hover:scale-105 transition-all"
+                >
+                  HISTORY
+                </button>
+                <button 
+                  onClick={() => deleteCustomer(cust.id)}
+                  className="bg-red-50 text-red-500 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-red-500 hover:text-white transition-all"
+                >
+                  REMOVE
+                </button>
+              </td>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {orders.length > 0 ? (
-              orders.map((order) => (
-                <tr
-                  key={order.id}
-                  className="hover:bg-gray-50/50 transition-colors"
-                >
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#eae0d5] rounded-full flex items-center justify-center font-black text-[#8c6d52]">
-                        {order.customer[0]}
-                      </div>
-                      <span className="font-bold text-[#1a120b]">
-                        {order.customer}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-8 py-6">
-                    <div className="flex flex-col gap-1">
-                      {order.items.map((item, idx) => (
-                        <span
-                          key={idx}
-                          className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md w-fit"
-                        >
-                          {item.qty}x {item.name}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-8 py-6 text-sm text-gray-400 font-bold">
-                    {order.date}
-                  </td>
-                  <td className="px-8 py-6 text-right font-black text-[#1a120b]">
-                    Rp {order.total.toLocaleString()}
-                  </td>
-                  <td className="px-8 py-6 text-center">
-                    {/* Tombol Detail CRM 2 - Berdasarkan Nama Customer */}
-                    <button 
-                      onClick={() => navigate(`/customers/${order.customer}`)}
-                      className="bg-[#1a120b] text-white text-[10px] font-black uppercase px-4 py-2 rounded-xl hover:bg-[#8c6d52] transition-all active:scale-95"
-                    >
-                      Profil Riwayat
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan="5"
-                  className="text-center py-20 text-gray-300 font-bold italic"
-                >
-                  Belum ada riwayat transaksi.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
+
+      {selectedCust && (
+        <CustomerDetail data={selectedCust} onClose={() => setSelectedCust(null)} />
+      )}
     </div>
   );
 };

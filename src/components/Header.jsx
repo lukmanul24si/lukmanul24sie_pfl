@@ -3,7 +3,7 @@ import React from 'react';
 const Header = () => (
   <header className="h-20 bg-white/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-10 border-b border-orange-50">
     <div className="flex items-center gap-2">
-      <span className="text-2xl">☕</span>
+      <span className="text-2xl"></span>
       <h1 className="text-lg font-black text-orange-900 uppercase tracking-tight">Coffee Shop POS</h1>
     </div>
     <div className="flex items-center gap-4 bg-orange-50 px-4 py-2 rounded-2xl">

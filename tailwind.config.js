@@ -5,7 +5,12 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        shop: ['Syne', 'sans-serif'], // Font Brand unik
+        sans: ['Lexend', 'sans-serif'], // Font UI bersih
+      },
+    },
   },
   plugins: [],
 }

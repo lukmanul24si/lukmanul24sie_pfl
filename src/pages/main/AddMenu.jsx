@@ -37,7 +37,7 @@ const handleImage = (e) => {
 
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-[3rem] p-10 shadow-xl border border-gray-100 animate-fade-in">
-      <h2 className="text-3xl font-black text-[#1a120b] mb-8 uppercase tracking-tighter text-center">Tambah Menu Baru ☕</h2>
+      <h2 className="text-3xl font-black text-[#1a120b] mb-8 uppercase tracking-tighter text-center">Tambah Menu Baru </h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         
         {/* Nama Produk */}

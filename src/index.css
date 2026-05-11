@@ -2,18 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer utilities {
-  .animate-fade-in {
-    animation: fadeIn 0.4s ease-out;
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+:root {
+  font-family: 'Lexend', sans-serif; /* Default body font */
 }
 
 body {
-  @apply antialiased text-slate-900;
-  font-family: 'Plus Jakarta Sans', sans-serif; /* Opsional: pakai font ini via Google Fonts */
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar Premium untuk Bogeng */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #6F4E37;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
 }

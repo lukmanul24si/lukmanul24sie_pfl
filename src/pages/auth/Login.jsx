@@ -1,58 +1,62 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // Validasi sederhana (Ganti sesuai kebutuhan)
-    if (email === 'admin@mail.com' && password === 'admin123') {
-      navigate('/dashboard'); // Jika berhasil, pindah ke dashboard
-    } else {
-      alert('Email atau Password salah! (Coba: admin@mail.com / admin123)');
-    }
+    // Logic: Simpan status login di localStorage
+    localStorage.setItem('bogeng_user', 'admin'); 
+    navigate('/dashboard');
+    window.location.reload(); 
   };
 
   return (
-    <div className="min-h-screen bg-[#fdfaf7] flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl p-10 border border-orange-50">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-black text-[#1a120b] tracking-tighter">Bogeng.Store</h1>
-          <p className="text-gray-400 font-medium mt-2">Login Dulu Bro !</p>
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#3C2A21] via-[#6F4E37] to-[#A67B5B] font-sans">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md p-10 bg-white/95 backdrop-blur-sm rounded-[3rem] shadow-2xl border border-white/20"
+      >
+        <div className="text-center mb-10">
+          <div className="inline-flex w-16 h-16 bg-[#6F4E37] rounded-2xl items-center justify-center text-white text-3xl font-black shadow-lg mb-4">
+            B
+          </div>
+          <h1 className="font-shop font-extrabold text-3xl tracking-tighter text-[#3C2A21]">
+            BOGENG <span className="text-[#6F4E37]">POS</span>
+          </h1>
+          <p className="text-gray-500 text-sm font-medium mt-2">Sistem Kasir Bogeng Coffee</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label className="text-xs font-black uppercase text-gray-400">Email Address</label>
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-4">Email</label>
             <input 
               type="email" 
+              placeholder="admin@bogeng.com"
+              className="w-full px-6 py-4 bg-gray-100 border border-transparent focus:border-[#6F4E37] rounded-full outline-none font-bold text-sm"
               required
-              className="w-full mt-1 p-4 bg-orange-50/50 border border-orange-100 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500"
-              placeholder="admin@mail.com"
-              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div>
-            <label className="text-xs font-black uppercase text-gray-400">Password</label>
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-4">Password</label>
             <input 
               type="password" 
-              required
-              className="w-full mt-1 p-4 bg-orange-50/50 border border-orange-100 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="••••••••"
-              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-6 py-4 bg-gray-100 border border-transparent focus:border-[#6F4E37] rounded-full outline-none font-bold text-sm"
+              required
             />
           </div>
           <button 
             type="submit"
-            className="w-full bg-[#1a120b] text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-orange-800 transition-all"
+            className="w-full py-4 bg-[#6F4E37] text-white rounded-full font-black text-sm shadow-xl hover:bg-[#5a3f2d] transition-all uppercase tracking-widest"
           >
-            MASUK
+            Sign In
           </button>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 };

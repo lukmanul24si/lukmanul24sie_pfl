@@ -1,49 +1,67 @@
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { AppProvider } from "./context/AppContext";
 import './App.css';
 
-// --- IMPLEMENTASI REACT LAZY (DAGING) ---
+// 1. Lazy Load Components
 const MainLayout = lazy(() => import("./layouts/MainLayout"));
 const Dashboard = lazy(() => import("./pages/main/Dashboard"));
 const Orders = lazy(() => import("./pages/main/Orders"));
-const OrderDetail = lazy(() => import("./pages/main/OrderDetail")); // Detail CRM 1
 const Customers = lazy(() => import("./pages/main/Customers"));
-const CustomerDetail = lazy(() => import("./pages/main/CustomerDetail")); // Detail CRM 2
-const AddMenu = lazy(() => import("./pages/main/AddMenu"));
-const ErrorPage = lazy(() => import("./pages/main/ErrorPage"));
 const Login = lazy(() => import("./pages/auth/Login"));
 
-// Loading screen sederhana saat pindah halaman
+// 2. Loading Component
 const Loading = () => (
-  <div className="h-screen w-full flex items-center justify-center bg-[#fbf9f6]">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-[#1a120b]"></div>
+  <div className="h-screen w-full flex items-center justify-center bg-[#F8F9FD]">
+    <div className="flex flex-col items-center gap-4">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#6F4E37]"></div>
+      <p className="font-shop font-bold text-[#6F4E37] animate-pulse text-sm">BOGENG POS...</p>
+    </div>
   </div>
 );
 
 function App() {
+  // Gunakan state agar React tahu kapan harus re-render saat login/logout
+  const [user, setUser] = useState(localStorage.getItem('bogeng_user'));
+
+  // Sinkronisasi status login setiap kali ada perubahan di localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setUser(localStorage.getItem('bogeng_user'));
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   return (
-    <Suspense fallback={<Loading />}>
-      <Routes>
-        {/* 1. Rute Login: Tanpa Sidebar */}
-        <Route path="/login" element={<Login />} />
+    <AppProvider>
+      <Suspense fallback={<Loading />}>
+        <Routes>
+          {/* Public Route: Login */}
+          <Route 
+            path="/login" 
+            element={!user ? <Login /> : <Navigate to="/dashboard" />} 
+          />
 
-        {/* 2. Redirect awal: Dari / ke /login */}
-        <Route path="/" element={<Navigate to="/login" />} />
-
-        {/* 3. Rute Utama: Pakai Sidebar (MainLayout) */}
-        <Route element={<MainLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/orders/:id" element={<OrderDetail />} /> {/* Detail Page 1 */}
-          <Route path="/customers" element={<Customers />} />
-          <Route path="/customers/:name" element={<CustomerDetail />} /> {/* Detail Page 2 */}
-          <Route path="/add-menu" element={<AddMenu />} />
-        </Route>
-
-        {/* 4. Halaman Error */}
-        <Route path="*" element={<ErrorPage />} />
-      </Routes>
-    </Suspense>
+          {/* Protected Routes Area */}
+          {user ? (
+            <Route element={<MainLayout />}>
+              {/* Redirect root (/) ke dashboard */}
+              <Route path="/" element={<Navigate to="/dashboard" />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/orders" element={<Orders />} />
+              <Route path="/customers" element={<Customers />} />
+              
+              {/* Fallback untuk rute aneh-aneh pas sudah login */}
+              <Route path="*" element={<Navigate to="/dashboard" />} />
+            </Route>
+          ) : (
+            /* Jika belum login, paksa ke halaman login */
+            <Route path="*" element={<Navigate to="/login" />} />
+          )}
+        </Routes>
+      </Suspense>
+    </AppProvider>
   );
 }
 

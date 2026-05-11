@@ -1,122 +1,70 @@
-import React from "react";
-import { useNavigate } from "react-router-dom"; // Tambahkan ini
-import { useApp } from "../../context/AppContext";
+import React, { useState } from 'react';
+import { useApp } from '../../context/AppContext';
+import OrderDetail from './OrderDetail';
 
 const Orders = () => {
-  const { orders, updateOrderStatus, deleteOrder } = useApp();
-  const navigate = useNavigate(); // Inisialisasi navigate
+  const { orders, deleteOrder } = useApp();
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [search, setSearch] = useState("");
+
+  const filteredOrders = orders.filter(o => 
+    o.customer.toLowerCase().includes(search.toLowerCase()) || o.id.includes(search)
+  );
 
   return (
-    <div className="max-w-5xl mx-auto p-4 animate-fade-in">
-      <div className="flex justify-between items-end mb-8">
-        <div>
-          <h2 className="text-4xl font-black text-[#1a120b] uppercase tracking-tighter">
-            Daftar Pesanan
-          </h2>
-          <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mt-1">
-            Manajemen antrean pelanggan
-          </p>
-        </div>
-        <div className="bg-[#1a120b] text-white px-4 py-2 rounded-2xl font-black text-xs">
-          TOTAL: {orders.length}
-        </div>
+    <div className="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden shadow-sm p-8">
+      <div className="flex justify-between items-center mb-8">
+        <h3 className="font-black text-xl italic text-[#3C2A21]">Riwayat Pesanan</h3>
+        <input 
+          type="text" 
+          placeholder="Cari Order ID / Nama..." 
+          className="bg-gray-50 px-6 py-2 rounded-full text-xs outline-none border border-transparent focus:border-[#6F4E37] w-64 font-bold"
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
-      {orders.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-gray-100">
-          <span className="text-5xl block mb-4">📝</span>
-          <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">
-            Belum ada pesanan masuk
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {orders.map((order) => (
-            <div
-              key={order.id}
-              className="bg-white rounded-[2.5rem] shadow-sm border border-gray-50 overflow-hidden flex flex-col"
-            >
-              {/* Header Card */}
-              <div className="p-6 pb-0 flex justify-between items-start">
-                <div>
-                  <span className="text-[10px] font-black text-[#8c6d52] uppercase tracking-[0.2em]">
-                    {order.id}
-                  </span>
-                  <h3 className="text-2xl font-black text-[#1a120b] uppercase tracking-tighter mt-1">
-                    {order.customer}
-                  </h3>
-                </div>
-                <div
-                  className={`px-4 py-1.5 rounded-xl font-black text-[10px] uppercase tracking-widest ${
-                    order.status === "Done"
-                      ? "bg-green-100 text-green-600"
-                      : "bg-[#fbf9f6] text-[#8c6d52] animate-pulse"
-                  }`}
+      <table className="w-full text-left">
+        <thead className="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+          <tr>
+            <th className="px-6 py-5">Order ID</th>
+            <th className="px-6 py-5">Pelanggan</th>
+            <th className="px-6 py-5 text-center">Status</th>
+            <th className="px-6 py-5 text-right">Aksi</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-50">
+          {filteredOrders.map(order => (
+            <tr key={order.id} className="hover:bg-gray-50 transition-colors group">
+              <td className="px-6 py-6 text-[10px] font-bold text-blue-500">{order.id}</td>
+              <td className="px-6 py-6 font-black uppercase text-gray-700">{order.customer}</td>
+              <td className="px-6 py-6 text-center">
+                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black ${
+                  order.status === 'DONE' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                }`}>
+                  {order.status}
+                </span>
+              </td>
+              <td className="px-6 py-6 flex justify-end gap-2">
+                <button 
+                  onClick={() => setSelectedOrder(order)}
+                  className="bg-[#6F4E37] text-white px-4 py-2 rounded-xl text-[10px] font-black hover:scale-105 transition-all"
                 >
-                  {order.status === "Done" ? "✅ Selesai" : "⏳ Proses"}
-                </div>
-              </div>
-
-              {/* Items List */}
-              <div className="p-6 flex-1">
-                <div className="bg-[#fbf9f6] rounded-3xl p-5 space-y-3">
-                  {order.items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex justify-between items-center"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="w-6 h-6 bg-[#1a120b] text-white text-[10px] font-black rounded-lg flex items-center justify-center">
-                          {item.qty}
-                        </span>
-                        <span className="font-bold text-[#1a120b] text-sm">
-                          {item.name}
-                        </span>
-                      </div>
-                      <span className="text-xs font-black text-gray-400">
-                        Rp {(item.qty * item.price).toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
-                  <div className="pt-3 border-t border-dashed border-gray-200 flex justify-between items-center">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                      Total Bayar
-                    </span>
-                    <span className="text-lg font-black text-[#1a120b]">
-                      Rp {order.total.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="px-6 pb-6 flex flex-wrap gap-3 items-center">
-                {order.status !== "Done" && (
-                  <button
-                    onClick={() => updateOrderStatus(order.id, "Done")}
-                    className="flex-[2] py-4 bg-[#1a120b] hover:bg-[#2d1e13] text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-black/10"
-                  >
-                    Selesaikan Pesanan
-                  </button>
-                )}
-                <button
+                  DETAIL
+                </button>
+                <button 
                   onClick={() => deleteOrder(order.id)}
-                  className="flex-1 py-4 bg-red-50 hover:bg-red-100 text-red-500 rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
+                  className="bg-red-50 text-red-500 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-red-500 hover:text-white transition-all"
                 >
-                  Hapus
+                  HAPUS
                 </button>
-
-                {/* Tombol Detail CRM 1 */}
-                <button
-                  onClick={() => navigate(`/orders/${order.id}`)}
-                  className="w-full mt-2 text-[10px] font-black uppercase text-[#8c6d52] hover:text-[#1a120b] transition-colors tracking-widest text-center"
-                >
-                  ─── Lihat Detail Invoice ───
-                </button>
-              </div>
-            </div>
+              </td>
+            </tr>
           ))}
-        </div>
+        </tbody>
+      </table>
+
+      {selectedOrder && (
+        <OrderDetail data={selectedOrder} onClose={() => setSelectedOrder(null)} />
       )}
     </div>
   );
