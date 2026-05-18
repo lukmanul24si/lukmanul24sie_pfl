@@ -1,10 +1,14 @@
 import React from 'react';
 
-const Loading = () => (
-  <div className="h-screen w-full flex flex-col items-center justify-center bg-orange-50">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-orange-600 border-opacity-50"></div>
-    <p className="mt-4 text-orange-800 font-medium italic">Menyeduh Kopi Anda...</p>
-  </div>
-);
+const Loading = ({ message = "BOGENG POS..." }) => {
+  return (
+    <div className="h-screen w-full flex items-center justify-center bg-[#F8F9FD]">
+      <div className="flex flex-col items-center gap-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#6F4E37]"></div>
+        <p className="font-shop font-bold text-[#6F4E37] animate-pulse text-sm uppercase tracking-widest">{message}</p>
+      </div>
+    </div>
+  );
+};
 
 export default Loading;

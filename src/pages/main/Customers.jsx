@@ -1,71 +1,203 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import CustomerDetail from './CustomerDetail';
+import { Search, Star, Award, Users, TrendingUp, ShoppingBag, Trash2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const Customers = () => {
-  const { customers, deleteCustomer } = useApp();
-  const [selectedCust, setSelectedCust] = useState(null);
-  const [search, setSearch] = useState("");
+  const { customers = [], orders = [], deleteCustomer } = useApp();
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredCust = customers.filter(c => 
-    c.name.toLowerCase().includes(search.toLowerCase())
+  const filteredCustomers = customers.filter(c => 
+    c.name ? c.name.toLowerCase().includes(searchQuery.toLowerCase()) : false
   );
 
+  // ================= ANALISIS DATA FINANSIAL UNTUK ADMIN =================
+  const validOrders = orders.filter(o => o.status !== "CANCEL");
+  const totalGrossRevenue = validOrders.reduce((acc, curr) => acc + Number(curr.total || 0), 0);
+  const estimatedNetProfit = totalGrossRevenue * 0.6;
+  const averageBasket = validOrders.length > 0 ? totalGrossRevenue / validOrders.length : 0;
+
+  // Variasi Framer Motion untuk List Berurutan
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.04 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 8 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 350, damping: 25 } }
+  };
+
   return (
-    <div className="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden shadow-sm p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h3 className="font-black text-xl italic text-[#3C2A21]">Database Pelanggan</h3>
-        <input 
-          type="text" 
-          placeholder="Cari nama member..." 
-          className="bg-gray-50 px-6 py-2 rounded-full text-xs outline-none border border-transparent focus:border-[#6F4E37] w-64 font-bold"
-          onChange={(e) => setSearch(e.target.value)}
-        />
+    <div className="flex flex-col h-full w-full bg-white text-[#313131] font-sans antialiased overflow-hidden p-2">
+      
+      {/* CARD ANALITIK BISNIS - ANIMATED POP-IN */}
+      <div className="grid grid-cols-3 gap-3 mb-4 shrink-0 px-1">
+        
+        {/* Omset Masuk */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95, y: 5 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.05 }}
+          whileHover={{ y: -2, boxShadow: "0 6px 12px rgba(0,0,0,0.02)" }}
+          className="bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] p-3 rounded-xl flex items-center gap-3 select-none"
+        >
+          <div className="w-8 h-8 bg-[#C67C4E]/10 text-[#C67C4E] rounded-lg flex items-center justify-center shrink-0">
+            <ShoppingBag size={15} strokeWidth={2.5} />
+          </div>
+          <div className="leading-tight truncate">
+            <p className="text-[8px] font-black text-[#9B9B9B] uppercase tracking-wider">Total Pendapatan (Gross)</p>
+            <h4 className="text-xs font-black text-[#313131] mt-0.5">Rp {totalGrossRevenue.toLocaleString('id-ID')}</h4>
+          </div>
+        </motion.div>
+
+        {/* Keuntungan Bersih */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95, y: 5 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.1 }}
+          whileHover={{ y: -2, boxShadow: "0 6px 12px rgba(0,0,0,0.02)" }}
+          className="bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] p-3 rounded-xl flex items-center gap-3 select-none"
+        >
+          <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center shrink-0">
+            <TrendingUp size={15} strokeWidth={2.5} />
+          </div>
+          <div className="leading-tight truncate">
+            <p className="text-[8px] font-black text-[#9B9B9B] uppercase tracking-wider">Estimasi Profit Kedai (60%)</p>
+            <h4 className="text-xs font-black text-emerald-600 mt-0.5">Rp {estimatedNetProfit.toLocaleString('id-ID')}</h4>
+          </div>
+        </motion.div>
+
+        {/* Nilai Rata-rata Belanja */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95, y: 5 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.15 }}
+          whileHover={{ y: -2, boxShadow: "0 6px 12px rgba(0,0,0,0.02)" }}
+          className="bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] p-3 rounded-xl flex items-center gap-3 select-none"
+        >
+          <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center shrink-0">
+            <Users size={15} strokeWidth={2.5} />
+          </div>
+          <div className="leading-tight truncate">
+            <p className="text-[8px] font-black text-[#9B9B9B] uppercase tracking-wider">Rata-rata Keranjang Belanja</p>
+            <h4 className="text-xs font-black text-blue-600 mt-0.5">Rp {Math.round(averageBasket).toLocaleString('id-ID')}</h4>
+          </div>
+        </motion.div>
       </div>
 
-      <table className="w-full text-left">
-        <thead className="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-          <tr>
-            <th className="px-6 py-5">Nama Lengkap</th>
-            <th className="px-6 py-5 text-center">Visits</th>
-            <th className="px-6 py-5 text-center">Status</th>
-            <th className="px-6 py-5 text-right">Aksi</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-50">
-          {filteredCust.map(cust => (
-            <tr key={cust.id} className="hover:bg-gray-50 transition-colors">
-              <td className="px-6 py-6 font-black uppercase text-gray-700">{cust.name}</td>
-              <td className="px-6 py-6 text-center font-bold text-gray-400">{cust.visits} Kali</td>
-              <td className="px-6 py-6 text-center">
-                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black ${
-                  cust.status === 'VIP' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'
-                }`}>
-                  {cust.status}
-                </span>
-              </td>
-              <td className="px-6 py-6 flex justify-end gap-2">
-                <button 
-                  onClick={() => setSelectedCust(cust)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black hover:scale-105 transition-all"
-                >
-                  HISTORY
-                </button>
-                <button 
-                  onClick={() => deleteCustomer(cust.id)}
-                  className="bg-red-50 text-red-500 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-red-500 hover:text-white transition-all"
-                >
-                  REMOVE
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Header & Search */}
+      <div className="flex justify-between items-center mb-3 shrink-0 px-2 select-none">
+        <div>
+          <h3 className="text-[10px] font-black tracking-wider uppercase text-[#313131]">
+            Database CRM & Peringkat Pelanggan
+          </h3>
+          <p className="text-[8px] text-[#9B9B9B] font-medium mt-0.5">Sistem Tingkatan: 3x Belanja = LOYAL, 5x Belanja = VIP</p>
+        </div>
 
-      {selectedCust && (
-        <CustomerDetail data={selectedCust} onClose={() => setSelectedCust(null)} />
-      )}
+        <div className="w-64 relative flex items-center">
+          <Search size={13} className="absolute left-3 text-[#9B9B9B]" strokeWidth={2} />
+          <input 
+            type="text"
+            placeholder="Cari nama pelanggan..." 
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] rounded-lg pl-8 pr-3 py-1.5 text-[10px] font-medium focus:outline-none focus:border-[#C67C4E] focus:bg-white transition-all text-[#313131] placeholder:text-[#B0B0B0]"
+          />
+        </div>
+      </div>
+
+      {/* Tabel Database CRM */}
+      <div className="flex-1 overflow-y-auto border-[0.5px] border-[#E3E3E3] rounded-xl overflow-hidden custom-scrollbar">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-[#FBF8F6] border-b border-[#E3E3E3] text-[9px] font-black tracking-wider text-[#9B9B9B] uppercase select-none">
+              <th className="py-3 px-6 w-[35%]">Nama Pelanggan</th>
+              <th className="py-3 px-6 w-[20%] text-center">Frekuensi Kunjungan</th>
+              <th className="py-3 px-6 w-[20%]">Poin Reward Terkumpul</th>
+              <th className="py-3 px-6 w-[15%] text-center">Tingkatan Tier</th>
+              <th className="py-3 px-6 w-[10%] text-right">Aksi</th>
+            </tr>
+          </thead>
+          
+          {/* Inject Motion ke tbody untuk stagger effect */}
+          <motion.tbody 
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="divide-y divide-[#E3E3E3]/60 text-[11px] font-medium"
+          >
+            {filteredCustomers.length === 0 ? (
+              <motion.tr variants={itemVariants}>
+                <td colSpan="5" className="text-center py-16 text-[#9B9B9B] text-[10px] font-bold">
+                  Belum ada data pelanggan yang terdaftar.
+                </td>
+              </motion.tr>
+            ) : (
+              filteredCustomers.map((cust) => {
+                const isVip = cust.status === 'VIP';
+                const isLoyal = cust.status === 'LOYAL';
+                return (
+                  <motion.tr 
+                    key={cust.id} 
+                    variants={itemVariants}
+                    whileHover={{ backgroundColor: "#FDFBF9", x: 2, transition: { duration: 0.1 } }}
+                    className="transition-colors"
+                  >
+                    {/* Profil Member */}
+                    <td className="py-2.5 px-6 flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-[#EDD6C8]/50 text-[#C67C4E] flex items-center justify-center font-black text-[9px] shrink-0 select-none">
+                        {cust.name ? cust.name.charAt(0).toUpperCase() : 'B'}
+                      </div>
+                      <div className="truncate">
+                        <p className="font-bold text-[#313131] tracking-tight">{cust.name}</p>
+                        <p className="text-[8px] text-[#9B9B9B]">{cust.email || '-'}</p>
+                      </div>
+                    </td>
+                    
+                    {/* Hitungan Kunjungan */}
+                    <td className="py-2.5 px-6 text-center font-black text-[#313131]">
+                      {cust.visits || 0}x transaksi
+                    </td>
+
+                    {/* Akumulasi Poin Asli */}
+                    <td className="py-2.5 px-6 font-bold text-[#C67C4E]">
+                      ✨ <span className="font-black text-[12px]">{cust.points || 0}</span> <span className="text-[9px] text-[#9B9B9B] font-medium">pts</span>
+                    </td>
+
+                    {/* Tag Tier Status Dinamis */}
+                    <td className="py-2.5 px-6 text-center">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[7px] font-black tracking-wider uppercase select-none ${
+                        isVip ? 'bg-[#313131] text-white shadow-sm animate-pulse' : 
+                        isLoyal ? 'bg-[#FEF3C7] text-[#D97706]' : 
+                        'bg-gray-100 text-gray-500'
+                      }`}>
+                        {isVip ? <Award size={8} strokeWidth={3} /> : <Star size={8} strokeWidth={3} />}
+                        {cust.status || 'MEMBER'}
+                      </span>
+                    </td>
+
+                    {/* Tombol Hapus Data Corrupt */}
+                    <td className="py-2.5 px-6 text-right">
+                      {deleteCustomer && (
+                        <button
+                          onClick={() => deleteCustomer(cust.id)}
+                          className="p-1 text-[#9B9B9B] hover:text-red-500 hover:bg-red-50 rounded transition-all"
+                        >
+                          <Trash2 size={12} strokeWidth={2.5} />
+                        </button>
+                      )}
+                    </td>
+
+                  </motion.tr>
+                );
+              })
+            )}
+          </motion.tbody>
+        </table>
+      </div>
     </div>
   );
 };

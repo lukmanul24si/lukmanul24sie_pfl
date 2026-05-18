@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import Badge from '../../components/Badge';
 
 const CustomerDetail = ({ data, onClose }) => {
   const { orders } = useApp();
@@ -15,19 +16,19 @@ const CustomerDetail = ({ data, onClose }) => {
             {data.name.charAt(0)}
           </div>
           <div>
-            <h2 className="text-2xl font-black italic text-[#3C2A21]">{data.name}</h2>
-            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">{data.status} MEMBER</p>
+            <h2 className="text-2xl font-black italic text-[#3C2A21] font-shop">{data.name}</h2>
+            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">{data.status} MEMBER</p>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-          <h3 className="font-black text-sm mb-4 border-b pb-2">RIWAYAT TRANSAKSI</h3>
+          <h3 className="font-black text-xs mb-4 border-b pb-2 tracking-wider text-gray-400 uppercase">Riwayat Transaksi</h3>
           <div className="space-y-4">
             {myHistory.length > 0 ? myHistory.map(order => (
               <div key={order.id} className="bg-gray-50 p-6 rounded-[2rem] border border-gray-100">
                 <div className="flex justify-between items-center mb-4">
-                  <span className="text-[10px] font-black text-blue-500">{order.id}</span>
-                  <span className="text-[10px] font-black text-gray-400">{order.date}</span>
+                  <span className="text-[10px] font-bold text-blue-500">{order.id}</span>
+                  <span className="text-[10px] font-bold text-gray-400">{order.date}</span>
                 </div>
                 <div className="space-y-2 mb-4">
                   {order.items.map((item, idx) => (
@@ -38,11 +39,13 @@ const CustomerDetail = ({ data, onClose }) => {
                   ))}
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-dashed border-gray-200">
-                  <span className={`text-[10px] font-black px-3 py-1 rounded-full ${order.status === 'DONE' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>{order.status}</span>
+                  <Badge status={order.status} />
                   <span className="font-black text-[#6F4E37]">Total Rp {order.total.toLocaleString()}</span>
                 </div>
               </div>
-            )) : <p className="text-center py-10 italic text-gray-400">Belum ada transaksi</p>}
+            )) : (
+              <p className="text-center py-10 italic text-gray-400 text-sm">Belum ada riwayat transaksi</p>
+            )}
           </div>
         </div>
       </div>

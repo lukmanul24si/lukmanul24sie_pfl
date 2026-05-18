@@ -1,89 +1,112 @@
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion'; 
-import logo from '../assets/logo.png';
-import bgBeans from '../assets/bg-coffee-beans.jpg'; 
+import { motion } from 'framer-motion';
+import { Coffee, ShoppingBag, Users, LogOut, Plus } from 'lucide-react';
 
-const Sidebar = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  // Menu sekarang bersih, cuma buat navigasi
-  const menus = [
-    { name: 'Dashboard', path: '/dashboard', icon: '☕' },
-    { name: 'Orders', path: '/orders', icon: '📝' },
-    { name: 'Customers', path: '/customers', icon: '👥' },
-    { name: 'Tambah Menu', path: '/add-menu', icon: '➕' }, 
+// Contoh dummy props/state, sesuaikan dengan logic routing asli lo bro (misal useNavigate / useLocation)
+const Sidebar = ({ currentPath = '/dashboard', onNavigate }) => {
+  
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: Coffee },
+    { id: 'orders', label: 'Daftar Pesanan', path: '/orders', icon: ShoppingBag },
+    { id: 'customers', label: 'Customers', path: '/customers', icon: Users },
   ];
 
-  const handleLogout = () => {
-    const confirmLogout = window.confirm("Apakah anda yakin ingin keluar?");
-    if (confirmLogout) navigate('/login');
-  };
-
   return (
-    <aside 
-      className="w-72 h-screen p-8 flex flex-col fixed left-0 top-0 z-50 overflow-hidden shadow-2xl border-r border-white/5"
-      style={{
-        backgroundImage: `linear-gradient(rgba(26, 18, 11, 0.85), rgba(26, 18, 11, 0.95)), url(${bgBeans})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
-    >
-      {/* Logo Section - Sekarang Bulat Sempurna & Rapi */}
-<div className="mb-14 flex items-center gap-4">
-  {/* Pembungkus Gambar (Container) */}
-  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shadow-lg bg-white/5 backdrop-blur-sm p-0.5 flex items-center justify-center shrink-0">
-    <img 
-      src={logo} 
-      alt="Bogeng Logo" 
-      className="w-full h-full rounded-full object-cover filter brightness-110" 
-    />
-  </div>
-  
-  {/* Teks Logo */}
-  <div className="flex flex-col">
-    <span className="text-xl font-black text-white tracking-tighter leading-none">BOGENG</span>
-    <span className="text-[10px] font-bold text-gray-400 tracking-[0.3em] uppercase">Coffee Store</span>
-  </div>
-</div>
-
-      {/* Navigation */}
-      <nav className="flex-1 space-y-4">
-        {menus.map((item) => (
-          <Link 
-            key={item.path} 
-            to={item.path} 
-            className="relative block group"
+    <div className="w-[240px] h-full bg-white border-r-[0.5px] border-[#E3E3E3] p-4 flex flex-col justify-between font-sans antialiased select-none">
+      
+      {/* BAGIAN ATAS: LOGO BOGENG COFFEE SHOP */}
+      <div className="flex flex-col">
+        <motion.div 
+          className="flex items-center gap-3 p-2 mb-6 cursor-pointer"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          {/* Logo Box Animasi Mengambang */}
+          <motion.div 
+            animate={{ y: [0, -3, 0] }}
+            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+            className="w-10 h-10 bg-[#C67C4E] rounded-xl flex items-center justify-center text-white shadow-md shadow-[#C67C4E]/20 font-black text-lg"
           >
-            <div className={`flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 relative z-10 ${
-              location.pathname === item.path ? 'text-[#1a120b]' : 'text-gray-400 hover:text-white'
-            }`}>
-              <span className="text-xl">{item.icon}</span>
-              <span className="font-bold">{item.name}</span>
-            </div>
+            B
+          </motion.div>
+          <div>
+            <h2 className="text-sm font-black text-[#313131] tracking-tight uppercase leading-none">Bogeng</h2>
+            <p className="text-[9px] font-bold text-[#B0B0B0] tracking-widest uppercase mt-0.5">Coffee Shop</p>
+          </div>
+        </motion.div>
 
-            {/* Indikator Menu Aktif */}
-            {location.pathname === item.path && (
-              <motion.div 
-                layoutId="activeTab"
-                className="absolute inset-0 bg-[#fdfaf7] rounded-2xl shadow-xl shadow-black/20"
-                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-              />
-            )}
-          </Link>
-        ))}
-      </nav>
+        {/* BAGIAN TENGAH: NAVIGASI MENU UTAMA */}
+        <nav className="space-y-1 relative">
+          {menuItems.map((item) => {
+            // Cek apakah tab sedang aktif berdasarkan path
+            const isActive = currentPath === item.path;
+            const Icon = item.icon;
 
-      {/* Logout Section */}
-      <button 
-        onClick={handleLogout}
-        className="flex items-center gap-4 px-6 py-4 rounded-2xl text-red-400 font-bold hover:bg-red-500/10 transition-all mt-auto border border-transparent hover:border-red-500/20"
-      >
-        <span>🚪</span>
-        <span>Logout</span>
-      </button>
-    </aside>
+            return (
+              <button
+                key={item.id}
+                onClick={() => onNavigate && onNavigate(item.path)}
+                className={`w-full relative flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black tracking-tight transition-colors duration-200 z-10 ${
+                  isActive ? 'text-white' : 'text-[#9B9B9B] hover:text-[#313131]'
+                }`}
+              >
+                {/* Efek Background Meloncat/Meluncur Mengikuti Tab Aktif */}
+                {isActive && (
+                  <motion.div
+                    layoutId="activeTrack"
+                    className="absolute inset-0 bg-[#C67C4E] rounded-xl -z-10 shadow-md shadow-[#C67C4E]/10"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+
+                {/* Icon Menu */}
+                <Icon size={16} strokeWidth={isActive ? 2.5 : 2} />
+                
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* BAGIAN BAWAH: LOGOUT & BUTTON NEW ORDER */}
+      <div className="space-y-4">
+        {/* Tombol Logout */}
+        <motion.button 
+          whileHover={{ x: 4, color: '#EF4444' }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          className="w-full flex items-center gap-3 px-4 py-2 text-xs font-black text-red-500 tracking-tight"
+        >
+          <LogOut size={16} strokeWidth={2.5} />
+          <span>Logout</span>
+        </motion.button>
+
+        {/* TOMBOL NEW ORDER DENGAN BREATHING EFFECT */}
+        <motion.button
+          whileHover={{ scale: 1.03, shadow: "0 10px 20px rgba(49,49,49,0.15)" }}
+          whileTap={{ scale: 0.97 }}
+          animate={{
+            boxShadow: [
+              "0 4px 10px rgba(49,49,49,0.1)",
+              "0 4px 20px rgba(198,124,78,0.25)",
+              "0 4px 10px rgba(49,49,49,0.1)"
+            ]
+          }}
+          transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+          className="w-full bg-[#313131] hover:bg-[#C67C4E] rounded-2xl p-3 flex flex-col items-center justify-center gap-2 relative overflow-hidden transition-colors duration-300 group"
+        >
+          {/* Ornamen Kilatan Cahaya Pas di Hover */}
+          <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
+
+          <span className="text-[8px] font-black tracking-widest text-[#E3E3E3] uppercase">New Order</span>
+          
+          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white group-hover:bg-white group-hover:text-[#C67C4E] transition-colors duration-300">
+            <Plus size={14} strokeWidth={3} />
+          </div>
+        </motion.button>
+      </div>
+
+    </div>
   );
 };
 
