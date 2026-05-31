@@ -3,6 +3,79 @@ import { useApp } from '../../context/AppContext';
 import { Search, Star, Award, Users, TrendingUp, ShoppingBag, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+// ================= AUDIO ENGINE AUDIO BROWSER =================
+let globalAudioCtx = null;
+
+const getAudioContext = () => {
+  if (!globalAudioCtx) {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) {
+      globalAudioCtx = new AudioContext();
+    }
+  }
+  if (globalAudioCtx && globalAudioCtx.state === "suspended") {
+    globalAudioCtx.resume();
+  }
+  return globalAudioCtx;
+};
+
+const playSoundEffect = (type) => {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    
+    if (type === "creamyKey") {
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = "sine";
+      const randomPitch = 140 + Math.random() * 40;
+      osc1.frequency.setValueAtTime(randomPitch, ctx.currentTime);
+      osc1.frequency.exponentialRampToValueAtTime(randomPitch * 0.4, ctx.currentTime + 0.04);
+      
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = "triangle";
+      osc2.frequency.setValueAtTime(450, ctx.currentTime);
+      osc2.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.03);
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(550, ctx.currentTime);
+
+      osc1.connect(gain1);
+      osc2.connect(gain2);
+      gain1.connect(filter);
+      gain2.connect(filter);
+      filter.connect(ctx.destination);
+
+      gain1.gain.setValueAtTime(0.4, ctx.currentTime);
+      gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+      
+      gain2.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
+
+      osc1.start(ctx.currentTime);
+      osc2.start(ctx.currentTime);
+      osc1.stop(ctx.currentTime + 0.05);
+      osc2.stop(ctx.currentTime + 0.05);
+    } else if (type === "clickDelete") {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(460, ctx.currentTime);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.04);
+    }
+  } catch (error) {
+    console.log("Audio Engine Error:", error);
+  }
+};
+
 const Customers = () => {
   const { customers = [], orders = [], deleteCustomer } = useApp();
   const [searchQuery, setSearchQuery] = useState("");
@@ -103,7 +176,10 @@ const Customers = () => {
           <input 
             type="text"
             placeholder="Cari nama pelanggan..." 
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              playSoundEffect("creamyKey"); // ➕ Efek ASMR ketikan creamy
+              setSearchQuery(e.target.value);
+            }}
             className="w-full bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] rounded-lg pl-8 pr-3 py-1.5 text-[10px] font-medium focus:outline-none focus:border-[#C67C4E] focus:bg-white transition-all text-[#313131] placeholder:text-[#B0B0B0]"
           />
         </div>
@@ -122,7 +198,6 @@ const Customers = () => {
             </tr>
           </thead>
           
-          {/* Inject Motion ke tbody untuk stagger effect */}
           <motion.tbody 
             variants={containerVariants}
             initial="hidden"
@@ -183,7 +258,10 @@ const Customers = () => {
                     <td className="py-2.5 px-6 text-right">
                       {deleteCustomer && (
                         <button
-                          onClick={() => deleteCustomer(cust.id)}
+                          onClick={() => {
+                            playSoundEffect("clickDelete"); // ➕ Efek suara saat klik hapus
+                            deleteCustomer(cust.id);
+                          }}
                           className="p-1 text-[#9B9B9B] hover:text-red-500 hover:bg-red-50 rounded transition-all"
                         >
                           <Trash2 size={12} strokeWidth={2.5} />

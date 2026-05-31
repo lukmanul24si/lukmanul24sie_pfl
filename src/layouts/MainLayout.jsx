@@ -4,6 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Import Icon Gacor Ramping Khas Figma
 import { Coffee, Receipt, Users, LogOut, Plus, User } from 'lucide-react';
 
+// =========================================================================
+// 🔴 INI YANG BARU DITAMBAH: IMPORT CUSTOM CURSOR GLOBAL
+// =========================================================================
+import CustomCursor from "../components/CustomCursor";
+
 const MainLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -16,6 +21,13 @@ const MainLayout = () => {
 
   return (
     <div className="min-h-screen bg-[#F9F2ED] p-4 flex justify-center items-center font-sans antialiased selection:bg-[#C67C4E]/20 text-[#313131]">
+      
+      {/* ========================================================================= */}
+      {/* 🔴 INI YANG BARU DITAMBAH: AKTIVASI TAMPILAN CURSOR HUMANIZED */}
+      {/* Diletakkan di layer terluar agar efek trailing meluncur mulus di seluruh UI */}
+      {/* ========================================================================= */}
+      <CustomCursor />
+
       <div className="w-full max-w-[1440px] h-[calc(100vh-2rem)] grid grid-cols-12 gap-4 relative overflow-hidden">
         
         {/* ========================================================= */}

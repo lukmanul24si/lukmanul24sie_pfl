@@ -1,23 +1,45 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+
+// IMPORT SESUAI ISI FOLDER ASSETS LO RIL:
 import espressoImg from '../assets/espresso.png';
 import caramelImg from '../assets/caramel_macchiato.png';
 import palmSugarImg from '../assets/palm_sugar_coffee.png';
 import matchaImg from '../assets/matcha_latte.png';
+import chococreamylavaImg from '../assets/chococreamy_lava.png';
+import redvelvetImg from '../assets/redvelvet.png';
 import cappuccinoImg from '../assets/cappuccino.png';
 import iceCafeLatteImg from '../assets/ice_cafe_latte.png';
 import dimsumImg from '../assets/dimsum.jpg';
+import nasigorengImg from '../assets/nasigoreng.jpg';
+import sandwichImg from '../assets/sandwich.jpg';
+import spagetiImg from '../assets/spageti.jpg';
+import frenchImg from '../assets/french.jpg';
+import cirengImg from '../assets/cire1.png'; 
+import coffeeExtraImg from '../assets/coffe1.png'; 
 
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const [menuList] = useState([
-    { id: 1, name: 'Espresso Bold', price: 25000, category: 'Coffee', img: espressoImg },
-    { id: 2, name: 'Caramel Macchiato', price: 35000, category: 'Coffee', img: caramelImg },
-    { id: 3, name: 'Palm Sugar Coffee', price: 28000, category: 'Coffee', img: palmSugarImg },
-    { id: 4, name: 'Matcha Latte Premium', price: 32000, category: 'Non-Coffee', img: matchaImg },
-    { id: 5, name: 'Cappuccino Hot', price: 30000, category: 'Coffee', img: cappuccinoImg },
-    { id: 6, name: 'Ice Cafe Latte', price: 28000, category: 'Coffee', img: iceCafeLatteImg },
-    { id: 7, name: 'Dimsum Platter', price: 25000, category: 'Snack', img: dimsumImg }
+    // ================= COFFEE (3 Menu) =================
+    { id: 101, name: 'Espresso Bold', price: 25000, category: 'Coffee', img: espressoImg, isBestSeller: true },
+    { id: 102, name: 'Caramel Macchiato', price: 35000, category: 'Coffee', img: caramelImg, isBestSeller: true },
+    { id: 103, name: 'Palm Sugar Coffee', price: 28000, category: 'Coffee', img: palmSugarImg, isBestSeller: false },
+    
+    // ================= NON-COFFEE (3 Menu) =================
+    { id: 201, name: 'Matcha Latte Premium', price: 32000, category: 'Non-Coffee', img: matchaImg, isBestSeller: false },
+    { id: 202, name: 'Choco Creamy Lava', price: 30000, category: 'Non-Coffee', img: chococreamylavaImg, isBestSeller: true },
+    { id: 203, name: 'Red Velvet Milky', price: 30000, category: 'Non-Coffee', img: redvelvetImg, isBestSeller: true },
+    
+    // ================= FOOD (3 Menu) =================
+    { id: 301, name: 'Nasi Goreng Gacor', price: 38000, category: 'Food', img: nasigorengImg, isBestSeller: true },
+    { id: 302, name: 'Club Sandwich', price: 33000, category: 'Food', img: sandwichImg, isBestSeller: false },
+    { id: 303, name: 'Spaghetti Carbonara', price: 42000, category: 'Food', img: spagetiImg, isBestSeller: true },
+    
+    // ================= SNACK (3 Menu) =================
+    { id: 401, name: 'Dimsum Platter', price: 25000, category: 'Snack', img: dimsumImg, isBestSeller: true },
+    { id: 402, name: 'Cireng Crispy Garing', price: 18000, category: 'Snack', img: cirengImg, isBestSeller: true }, 
+    { id: 403, name: 'French Fries Cheese', price: 22000, category: 'Snack', img: frenchImg, isBestSeller: false }
   ]);
 
   const [orders, setOrders] = useState(() => {
@@ -40,11 +62,8 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('bogeng_customers', JSON.stringify(customers));
   }, [orders, customers]);
 
-  // ================= RE-LOGIC CRM: AUTOMATIC TIERING SYSTEM BY ORDER COUNT =================
   const addOrder = (order) => {
     setOrders(prev => [order, ...prev]);
-
-    // Setiap belanja kelipatan Rp 10.000 dapet 1 Poin Reward resmi
     const earnedPoints = Math.floor((order.total || 0) / 10000);
 
     setCustomers(prevCust => {
@@ -52,7 +71,6 @@ export const AppProvider = ({ children }) => {
       
       if (exists) {
         const newVisits = exists.visits + 1;
-        // JIKA 3 KALI PESAN -> LOYAL, JIKA >= 5 KALI PESAN -> VIP (TERTINGGI)
         let newStatus = 'MEMBER';
         if (newVisits >= 5) {
           newStatus = 'VIP';
@@ -62,23 +80,17 @@ export const AppProvider = ({ children }) => {
 
         return prevCust.map(c => 
           c.name.toLowerCase() === order.customer.toLowerCase() 
-            ? { 
-                ...c, 
-                visits: newVisits, 
-                points: (c.points || 0) + earnedPoints,
-                status: newStatus
-              } 
+            ? { ...c, visits: newVisits, points: (c.points || 0) + earnedPoints, status: newStatus } 
             : c
         );
       } else {
-        // Pelanggan Baru pertama kali input nama di kasir
         return [...prevCust, {
           id: Date.now(),
           name: order.customer.toUpperCase(),
           email: `${order.customer.toLowerCase().replace(/\s/g, '')}@mail.com`,
           visits: 1,
           points: earnedPoints,
-          status: 'MEMBER' // Awal join status member biasa
+          status: 'MEMBER'
         }];
       }
     });
