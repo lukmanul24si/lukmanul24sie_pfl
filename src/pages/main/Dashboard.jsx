@@ -1,9 +1,19 @@
 import React, { useState } from "react";
 import { useApp } from "../../context/AppContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ShoppingBag, Plus, Trash2 } from "lucide-react";
+import { Search, ShoppingBag, Plus } from "lucide-react";
 
-import DialogReceipt from "../../components/DialogReceipt";
+// 🟢 IMPORT 3 KOMPONEN SHADCN UI (SELAIN BUTTON, INPUT, CARD, BADGE)
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
 import SwitchToggle from "../../components/SwitchToggle";
 
 let globalAudioCtx = null;
@@ -117,12 +127,12 @@ const Dashboard = () => {
   const [customerName, setCustomerName] = useState("");
 
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
-  
-  // 🔴 DIUBAH: Dari onlyShowMembers beralih ke state filter Best Seller
   const [showBestSellerOnly, setShowBestSellerOnly] = useState(false);
   const [lastOrderData, setLastOrderData] = useState(null);
+  
+  // State Baru untuk Menyimpan Tipe Orderan dari Select Component
+  const [orderType, setOrderType] = useState("dine-in");
 
-  // 🔴 LOGIKA FILTER BARU: Menggabungkan Kategori, Pencarian, & Status Best Seller
   const filteredMenu = menuList.filter((item) => {
     const matchesCategory = activeCategory === "All" || item.category === activeCategory;
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -178,6 +188,7 @@ const Dashboard = () => {
       items: cart,
       total: subtotal,
       status: "PROCESS",
+      type: orderType.toUpperCase(),
       date: new Date().toLocaleDateString("id-ID"),
     };
 
@@ -226,50 +237,55 @@ const Dashboard = () => {
 
         {/* Baris Filter */}
         <div className="flex justify-between items-center mb-4 shrink-0 select-none">
-          <div className="flex gap-2 overflow-x-auto no-scrollbar relative">
-            {categories.map((cat) => {
-              const isSelected = activeCategory === cat;
-              return (
-                <button
+          
+          {/* 🟢 KOMPONEN 1: SHADCN TABS (Navigasi Kategori Kasir Premium) */}
+          <Tabs value={activeCategory} onValueChange={(val) => {
+            playSoundEffect("clickQty");
+            setActiveCategory(val);
+          }} className="w-auto">
+            <TabsList className="bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] p-0.5 rounded-full flex gap-1">
+              {categories.map((cat) => (
+                <TabsTrigger
                   key={cat}
-                  onClick={() => {
-                    playSoundEffect("clickQty");
-                    setActiveCategory(cat);
-                  }}
-                  className={`relative px-4 py-1.5 rounded-full text-[10px] font-black tracking-wide transition-colors duration-300 ${
-                    isSelected ? "text-white" : "bg-[#FBF8F6] text-[#9B9B9B] hover:text-[#313131] border-[0.5px] border-[#E3E3E3]"
-                  }`}
+                  value={cat}
+                  className="px-4 py-1 rounded-full text-[10px] font-black tracking-wide transition-all data-[state=active]:bg-[#C67C4E] data-[state=active]:text-white data-[state=active]:shadow-sm"
                 >
-                  <span className="relative z-10">{cat}</span>
-                  {isSelected && (
-                    <motion.div
-                      layoutId="activeCategoryIndicator"
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                      className="absolute inset-0 bg-[#C67C4E] rounded-full shadow-sm shadow-[#C67C4E]/20"
-                    />
-                  )}
-                </button>
-              );
-            })}
+                  {cat}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+
+          {/* Wrapper Filter Kanan */}
+          <div className="flex items-center gap-2">
+            {/* 🟢 KOMPONEN 2: SHADCN SELECT (Pilih Metode Dine In / Take Away) */}
+            <Select value={orderType} onValueChange={(val) => setOrderType(val)}>
+              <SelectTrigger className="w-28 bg-white border-[0.5px] border-[#E3E3E3] px-2.5 py-1.5 h-auto text-[10px] font-black rounded-xl shadow-sm text-[#313131]">
+                <SelectValue placeholder="Tipe Order" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border rounded-xl p-1 shadow-md">
+                <SelectItem value="dine-in" className="text-[10px] font-bold rounded-lg cursor-pointer">🍽️ DINE IN</SelectItem>
+                <SelectItem value="take-away" className="text-[10px] font-bold rounded-lg cursor-pointer">🛍️ TAKE AWAY</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="bg-white border-[0.5px] border-[#E3E3E3] px-3 py-1.5 rounded-xl shadow-sm">
+              <SwitchToggle 
+                checked={showBestSellerOnly} 
+                onChange={(val) => {
+                  playSoundEffect("clickQty");
+                  setShowBestSellerOnly(val);
+                }} 
+                label="Menu Best Seller 🔥" 
+              />
+            </div>
           </div>
 
-          {/* 🔴 DIUBAH: Mengganti parameter prop ke Best Seller */}
-          <div className="bg-white border-[0.5px] border-[#E3E3E3] px-3 py-1.5 rounded-xl shadow-sm">
-            <SwitchToggle 
-              checked={showBestSellerOnly} 
-              onChange={(val) => {
-                playSoundEffect("clickQty");
-                setShowBestSellerOnly(val);
-              }} 
-              label="Menu Best Seller 🔥" 
-            />
-          </div>
         </div>
 
         {/* Grid Katalog */}
         <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
           <AnimatePresence mode="wait">
-            {/* 🔴 DITAMBAH: Memasukkan state showBestSellerOnly ke key animate biar trigger refresh layout mulus */}
             <motion.div
               key={activeCategory + searchQuery + showBestSellerOnly}
               variants={containerVariants}
@@ -298,8 +314,6 @@ const Dashboard = () => {
                       whileHover={{ scale: 1.08 }}
                       transition={{ duration: 0.3, ease: "easeOut" }}
                     />
-                    
-                    {/* 🔴 TAMBAHAN VISUAL: Badge penanda Best Seller otomatis di atas gambar */}
                     {item.isBestSeller && (
                       <div className="absolute top-1.5 right-1.5 bg-[#C67C4E] text-white text-[7px] font-black uppercase px-1.5 py-0.5 rounded shadow-sm tracking-wider">
                         Best Seller
@@ -475,13 +489,64 @@ const Dashboard = () => {
 
       </div>
 
-      <DialogReceipt
-        isOpen={isReceiptOpen}
-        onClose={handleCloseReceipt}
-        customerName={lastOrderData?.customer}
-        totalAmount={lastOrderData?.total}
-        orderId={lastOrderData?.id}
-      />
+      {/* ========================================================================================= */}
+      {/* 🟢 KOMPONEN 3: SHADCN DIALOG (Pop-up Struk Nota Otomatis Menggantikan File Lama) */}
+      {/* ========================================================================================= */}
+      <Dialog open={isReceiptOpen} onOpenChange={(open) => !open && handleCloseReceipt()}>
+        <DialogContent className="bg-white border border-[#E3E3E3] rounded-2xl p-6 max-w-sm mx-auto shadow-2xl font-sans text-[#313131]">
+          <DialogHeader className="text-center flex flex-col items-center">
+            <DialogTitle className="text-sm font-black tracking-widest text-[#C67C4E] uppercase">
+              ☕ BOGENG COFFEE RECEIPT
+            </DialogTitle>
+            <DialogDescription className="text-[9px] font-bold text-[#9B9B9B] uppercase tracking-wider mt-0.5">
+              Sukses Dicetak via CRM System
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Isi Nota Belanja */}
+          <div className="mt-4 border-t border-dashed border-[#E3E3E3] pt-4 space-y-2.5 text-[10px]">
+            <div className="flex justify-between text-[#9B9B9B] font-medium">
+              <span>ID Order:</span>
+              <span className="font-bold text-[#313131] font-mono">{lastOrderData?.id}</span>
+            </div>
+            <div className="flex justify-between text-[#9B9B9B] font-medium">
+              <span>Pelanggan:</span>
+              <span className="font-black text-[#313131] uppercase">{lastOrderData?.customer}</span>
+            </div>
+            <div className="flex justify-between text-[#9B9B9B] font-medium">
+              <span>Tipe Servis:</span>
+              <span className="font-black text-[#C67C4E] uppercase">
+                {lastOrderData?.type === "DINE-IN" ? "🍽️ Dine In" : "🛍️ Take Away"}
+              </span>
+            </div>
+
+            <div className="border-t border-dashed border-[#E3E3E3] my-2 pt-2.5">
+              <p className="font-black text-[9px] uppercase tracking-wider text-[#9B9B9B] mb-2">Daftar Item:</p>
+              {lastOrderData?.items.map((item) => (
+                <div key={item.id} className="flex justify-between font-medium text-[#313131] mb-1">
+                  <span>{item.name} <span className="text-[#C67C4E] font-bold">x{item.qty}</span></span>
+                  <span>Rp {(item.price * item.qty).toLocaleString("id-ID")}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t border-amber-900/10 pt-2.5 flex justify-between items-center text-[#313131]">
+              <span className="font-black uppercase tracking-wider text-[9px]">Total Akhir:</span>
+              <span className="font-black text-sm text-[#C67C4E]">
+                Rp {lastOrderData?.total.toLocaleString("id-ID")}
+              </span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleCloseReceipt}
+            className="w-full mt-5 bg-[#313131] hover:bg-[#C67C4E] text-white font-black text-[9px] tracking-widest uppercase py-2 rounded-xl transition-all shadow-md cursor-pointer"
+          >
+            Tutup & Selesai
+          </button>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };
