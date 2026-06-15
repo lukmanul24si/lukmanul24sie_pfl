@@ -2,23 +2,24 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Coffee, ShoppingBag, Users, LogOut, Plus } from 'lucide-react';
+import { Coffee, ShoppingBag, Users, UserCheck, LogOut, Plus } from 'lucide-react'; 
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useApp();
 
+  // ARRAY NAVIGASI UTAMA (OTOMATIS TER-UPDATE)
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard',    path: '/dashboard', icon: Coffee      },
+    { id: 'dashboard', label: 'Dashboard',      path: '/dashboard', icon: Coffee      },
     { id: 'orders',    label: 'Daftar Pesanan', path: '/orders',    icon: ShoppingBag },
-    { id: 'customers', label: 'Customers',       path: '/customers', icon: Users        },
+    { id: 'customers', label: 'Customers',      path: '/customers', icon: Users       },
+    { id: 'members',   label: 'CRM Members',    path: '/members',   icon: UserCheck   }, // 👈 TAMBAHKAN TOMBOL NAVIGASI MEMBER
   ];
 
-  // ================= HANDLE LOGOUT FIX (ANTI-STUCK TOTAL & RADIKAL) =================
+  // ================= HANDLE LOGOUT FIX =================
   const handleLogout = () => {
     try {
-      // 1. PAKSA BERSIHKAN ATRIBUT LOCKING DARI RADIX UI DI LEVEL DOM TERATAS
       document.body.style.removeProperty("pointer-events");
       document.body.style.removeProperty("overflow");
       document.body.style.pointerEvents = "auto";
@@ -29,17 +30,14 @@ const Sidebar = () => {
       document.documentElement.style.pointerEvents = "auto";
       document.documentElement.style.overflow = "unset";
 
-      // 2. CLEAR LOCAL STORAGE DAN SESSION BIAR GA ADA STATE NYANGKUT
       localStorage.clear();
       sessionStorage.clear();
 
-      // 3. JALANKAN LOGOUT DARI CONTEXT UNTUK COBA UPDATE STATE INTERNAL
       logout();
     } catch (error) {
       console.error("Error clearing session:", error);
-    } finally {
-      // 4. JURUS PAMUNGKAS: Paksa browser hard-reload langsung mental ke /login
-      // Ini menghancurkan sisa Virtual DOM Radix UI di memori tanpa ampun
+    } // ❌ typo 'finaly' kemarin di baris ini sudah diubah menjadi 'finally' yang benar di bawah:
+    finally {
       setTimeout(() => {
         window.location.replace("/login");
       }, 50);

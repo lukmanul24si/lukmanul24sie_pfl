@@ -1,31 +1,66 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-// Import Icon Gacor Ramping Khas Figma
-import { Coffee, Receipt, Users, LogOut, Plus, User } from 'lucide-react';
+// ✅ UPDATE: Menambahkan ikon UserCheck ke dalam import
+import { Coffee, Receipt, Users, UserCheck, LogOut, Plus, User } from 'lucide-react';
 
 // =========================================================================
-// 🔴 INI YANG BARU DITAMBAH: IMPORT CUSTOM CURSOR GLOBAL
+// 🔴 CUSTOM CURSOR GLOBAL
 // =========================================================================
 import CustomCursor from "../components/CustomCursor";
+import { useApp } from '../context/AppContext'; // ✅ TAMBAHAN: Import context untuk fungsi logout
 
 const MainLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useApp(); // ✅ TAMBAHAN: Ambil fungsi logout dari AppContext
 
+  // ✅ UPDATE: Menambahkan menu CRM Members ke dalam array navigasi figma kedai
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: Coffee },
     { name: 'Daftar Pesanan', path: '/orders', icon: Receipt },
     { name: 'Customers', path: '/customers', icon: Users },
+    { name: 'CRM Members', path: '/members', icon: UserCheck }, // 👈 MENU BARU LU NONGOL DI SINI SEKARANG!
   ];
+
+  // =========================================================================
+  // 🔴 HANDLE LOGOUT FIX (ANTI-STUCK TOTAL & RADIKAL)
+  // =========================================================================
+  const handleLogout = () => {
+    if (confirm("Keluar dari aplikasi POS Bogeng Coffee?")) {
+      try {
+        // 1. Paksa bersihkan sisa backdrop modal/dialog Radix UI di root HTML
+        document.body.style.removeProperty("pointer-events");
+        document.body.style.removeProperty("overflow");
+        document.body.style.pointerEvents = "auto";
+        document.body.style.overflow = "unset";
+
+        document.documentElement.style.removeProperty("pointer-events");
+        document.documentElement.style.removeProperty("overflow");
+        document.documentElement.style.pointerEvents = "auto";
+        document.documentElement.style.overflow = "unset";
+
+        // 2. Hancurkan semua token session biar ga ada data nyangkut
+        localStorage.clear();
+        sessionStorage.clear();
+
+        // 3. Update state global user di context menjadi null
+        logout();
+      } catch (error) {
+        console.error("Gagal membersihkan sesi login:", error);
+      } finally {
+        // 4. Hard-bounce redirect langsung ke login (Virtual DOM dibersihkan total)
+        setTimeout(() => {
+          window.location.replace("/login");
+        }, 50);
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F9F2ED] p-4 flex justify-center items-center font-sans antialiased selection:bg-[#C67C4E]/20 text-[#313131]">
       
-      {/* ========================================================================= */}
-      {/* 🔴 INI YANG BARU DITAMBAH: AKTIVASI TAMPILAN CURSOR HUMANIZED */}
-      {/* Diletakkan di layer terluar agar efek trailing meluncur mulus di seluruh UI */}
-      {/* ========================================================================= */}
+      {/* 🔴 AKTIVASI TAMPILAN CURSOR HUMANIZED */}
       <CustomCursor />
 
       <div className="w-full max-w-[1440px] h-[calc(100vh-2rem)] grid grid-cols-12 gap-4 relative overflow-hidden">
@@ -36,7 +71,7 @@ const MainLayout = () => {
         <aside className="col-span-2 bg-white rounded-xl p-4 flex flex-col justify-between border-[0.5px] border-[#E3E3E3] shadow-[0_2px_12px_rgba(0,0,0,0.01)] select-none">
           <div className="flex flex-col gap-6">
             
-            {/* Logo Brand "BOGENG" dengan Dekorasi Organik & Sparkles */}
+            {/* Logo Brand "BOGENG" */}
             <motion.div 
               className="flex items-center gap-3 px-1 py-1 cursor-pointer relative group/logo"
               whileHover={{ scale: 1.02 }}
@@ -44,17 +79,14 @@ const MainLayout = () => {
               onClick={() => navigate('/dashboard')}
             >
               <div className="relative">
-                {/* HIASAN 1: TUNAS DAUN KOPI DI ATAS LOGO (MURNI CODE) */}
+                {/* Tunas Daun Kopi */}
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex justify-center items-end pointer-events-none z-20 origin-bottom animate-[leafSway_4s_ease-in-out_infinite]">
-                  {/* Batang Kecil */}
                   <div className="w-[1.5px] h-2 bg-[#5D4037]" />
-                  {/* Daun Kiri */}
                   <div className="absolute bottom-1 right-0 w-2.5 h-1.5 bg-[#81C784] rounded-tl-full rounded-br-full border-[0.5px] border-[#3E2723] rotate-[-20deg]" />
-                  {/* Daun Kanan */}
                   <div className="absolute bottom-1.5 left-0 w-2.5 h-1.5 bg-[#4CAF50] rounded-tr-full rounded-bl-full border-[0.5px] border-[#3E2723] rotate-[20deg]" />
                 </div>
 
-                {/* Kotak Logo Utama "B" */}
+                {/* Kotak Logo "B" */}
                 <motion.div 
                   animate={{ y: [0, -2, 0] }}
                   transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
@@ -64,9 +96,8 @@ const MainLayout = () => {
                 </motion.div>
               </div>
 
-              {/* Teks Nama Brand & Sparkles */}
+              {/* Teks Nama Brand */}
               <div className="flex flex-col leading-none relative">
-                {/* HIASAN 2: BINTANG SPARKLES YANG BERKEDIP */}
                 <span className="absolute -top-2.5 -right-4 text-[9px] animate-[sparkle_1.5s_ease-in-out_infinite]">✨</span>
                 <span className="absolute top-2 -right-3 text-[6px] animate-[sparkle_2s_ease-in-out_infinite_0.5s]">✨</span>
 
@@ -76,16 +107,10 @@ const MainLayout = () => {
                 <span className="text-[8px] font-bold tracking-[0.12em] text-[#9B9B9B] mt-0.5 block uppercase">
                   COFFEE SHOP
                 </span>
-
-                {/* HIASAN 3: BIJI KOPI KECIL (MUNCUL PAS DI-HOVER) */}
-                <div className="absolute -bottom-2.5 left-0 flex gap-0.5 opacity-0 group-hover/logo:opacity-100 transition-opacity duration-300">
-                  <div className="w-1.5 h-1 bg-[#5D4037] rounded-full rotate-45 border-[0.5px] border-[#3E2723]" />
-                  <div className="w-1 h-0.5 bg-[#4E342E] rounded-full -rotate-12 border-[0.5px] border-[#3E2723] mt-0.5" />
-                </div>
               </div>
             </motion.div>
 
-            {/* Menu Navigasi */}
+            {/* Menu Navigasi Dinamis */}
             <nav className="flex flex-col gap-1 relative">
               {menuItems.map((item) => {
                 const isActive = location.pathname === item.path;
@@ -99,7 +124,7 @@ const MainLayout = () => {
                       <span className="tracking-tight truncate">{item.name}</span>
                     </div>
 
-                    {/* Background Slider Aktif (Efek Meluncur Lembut Anti Hampa) */}
+                    {/* Background Slider Aktif */}
                     {isActive && (
                       <motion.div
                         layoutId="activeNavigationIndicator"
@@ -111,11 +136,11 @@ const MainLayout = () => {
                 );
               })}
 
-              {/* Tombol Logout dengan Efek Geser Sedikit */}
+              {/* Tombol Logout Sesuai Request Projek Kasir */}
               <motion.button 
                 whileHover={{ x: 2 }}
-                onClick={() => { if(confirm("Keluar aplikasi POS?")) navigate('/login'); }}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-bold text-[11px] text-red-500 hover:bg-red-50/50 transition-all mt-2 text-left w-full"
+                onClick={handleLogout} // ✅ UPDATE: Memanggil fungsi pembersihan radikal di atas
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-bold text-[11px] text-red-500 hover:bg-red-50/50 transition-all mt-2 text-left w-full cursor-pointer"
               >
                 <LogOut size={14} className="shrink-0" strokeWidth={2} />
                 <span className="tracking-tight">Logout</span>
@@ -123,7 +148,7 @@ const MainLayout = () => {
             </nav>
           </div>
 
-          {/* QUICK ACTION: NEW ORDER DENGAN BREATHING GLOW & KILATAN LUAR NALAR */}
+          {/* QUICK ACTION: NEW ORDER */}
           <motion.div 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -138,16 +163,10 @@ const MainLayout = () => {
             className="relative overflow-hidden bg-[#313131] hover:bg-[#C67C4E] p-3 rounded-xl border-[0.5px] border-[#313131] hover:border-[#C67C4E] flex flex-col items-center gap-2 text-center group cursor-pointer transition-colors duration-300"
             onClick={() => navigate('/dashboard')}
           >
-            {/* Efek Kilatan Shimmer Cahaya Menyapu Lewat saat Hover */}
             <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.2s_ease-in-out_infinite] pointer-events-none" />
-
             <p className="text-[7px] font-black text-gray-300 uppercase tracking-widest relative z-10 transition-colors group-hover:text-white">New Order</p>
-            
-            {/* Tombol Plus Bulat dengan Efek Rotasi & Denyut Aura */}
             <div className="w-7 h-7 bg-white/10 group-hover:bg-white text-white group-hover:text-[#C67C4E] rounded-full flex items-center justify-center font-bold transition-all duration-300 relative z-10 shadow-inner">
               <Plus size={14} strokeWidth={3} className="transition-transform duration-500 group-hover:rotate-180" />
-              
-              {/* Efek Gelombang Aura Denut Statis */}
               <span className="absolute inline-flex h-full w-full rounded-full bg-white/20 opacity-75 animate-ping pointer-events-none group-hover:bg-[#C67C4E]/30" />
             </div>
           </motion.div>
@@ -158,16 +177,13 @@ const MainLayout = () => {
         {/* ========================================================= */}
         <main className="col-span-10 flex flex-col h-full overflow-hidden">
           
-          {/* Header Workspace (Sapaan Gaul & Elegant Animasi) */}
+          {/* Header Workspace */}
           <header className="flex justify-between items-center pb-3 px-1 shrink-0 select-none">
             <div className="flex items-center gap-2.5">
-              
-              {/* Cangkir Kopi Interaktif Melayang Lembut */}
               <div className="relative flex items-center justify-center w-7 h-7 rounded-xl bg-[#EDD6C8]/50 text-[#C67C4E] animate-[float_3s_ease-in-out_infinite] border-[0.5px] border-[#EDD6C8] shadow-sm">
                 <span className="text-[14px]">☕</span>
                 <span className="absolute -top-1.5 -right-1.5 text-[8px] animate-pulse">✨</span>
               </div>
-
               <div className="leading-tight">
                 <h2 className="text-[13px] font-black tracking-tight text-[#313131]">
                   Yo, Semangat Brew Hari Ini, <span className="text-[#C67C4E] underline decoration-wavy decoration-[#EDD6C8]/80 underline-offset-4 font-black">Lukman</span>! 🙌
@@ -207,7 +223,7 @@ const MainLayout = () => {
 
       </div>
 
-      {/* CSS Injected Keyframes untuk Shimmer & Floating Animasi Lengkap */}
+      {/* CSS Injected Keyframes */}
       <style>{`
         @keyframes shimmer {
           0% { transform: translateX(-100%); }
