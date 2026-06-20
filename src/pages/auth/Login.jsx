@@ -1,119 +1,314 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+// src/pages/auth/Login.jsx
+// Halaman login Bogeng — visual matching dengan landing page (cream + terracotta)
+// Fix: tidak ada overlay gelap dari page-exit landing page
+
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Eye, EyeOff, Coffee, ArrowRight, Sparkles } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
-const Login = () => {
-  // AMBIL FUNGSI login TERPUSAT (Bukan setUser lagi)
-  const { login } = useApp(); 
+// Gambar kafe untuk background kanan (sama vibe dengan spotlight di landing)
+const BG_URL = 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1200&q=85';
+
+export default function Login() {
+  const { login } = useApp();
+  const navigate   = useNavigate();
+
   const [credentials, setCredentials] = useState({ email: '', password: '' });
+  const [showPass,    setShowPass]    = useState(false);
+  const [loading,     setLoading]     = useState(false);
+  const [error,       setError]       = useState('');
+  const [mounted,     setMounted]     = useState(false);
 
-  const handleLogin = (e) => {
+  // Fade-in saat halaman pertama load — bukan overlay dari luar
+  useEffect(() => { const t = setTimeout(() => setMounted(true), 40); return () => clearTimeout(t); }, []);
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (!credentials.email || !credentials.password) return alert('Isi email dan password!');
+    setError('');
 
-    // Panggil fungsi login bawaan context. 
-    // Ini otomatis nge-set state user dan mengunci localStorage detik ini juga!
+    if (!credentials.email || !credentials.password) {
+      setError('Email dan password wajib diisi.');
+      return;
+    }
+
+    // Demo credential check
+    if (credentials.email !== 'admin@bogeng.com' || credentials.password !== 'admin123') {
+      setError('Email atau password salah. Cek info demo di bawah.');
+      return;
+    }
+
+    setLoading(true);
+    // Sedikit delay agar terasa "proses" lalu masuk
+    await new Promise((r) => setTimeout(r, 700));
     login('admin');
-    
-    // TIDAK perlu navigate() — PublicRoute otomatis redirect ke /dashboard
-    // saat state 'user' berubah menjadi terisi.
+    // PublicRoute akan otomatis redirect ke /dashboard setelah user terisi
   };
 
+  const fillDemo = () => {
+    setCredentials({ email: 'admin@bogeng.com', password: 'admin123' });
+    setError('');
+  };
+
+  // 🔴 UPDATE: paksa background html/body terang selama di halaman Login.
+  // Ini jaga-jaga kalau index.css masih bawa default Vite (#242424 / dark
+  // color-scheme) yang bisa nongol di belakang konten sebelum/selagi fade-in.
+  useEffect(() => {
+    const prevHtmlBg = document.documentElement.style.backgroundColor;
+    const prevBodyBg = document.body.style.backgroundColor;
+    document.documentElement.style.backgroundColor = '#FAF7F2';
+    document.body.style.backgroundColor = '#FAF7F2';
+    return () => {
+      document.documentElement.style.backgroundColor = prevHtmlBg;
+      document.body.style.backgroundColor = prevBodyBg;
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F9F5F0] font-sans p-6">
-      <div className="bg-white p-8 md:p-10 rounded-[2.5rem] w-full max-w-md shadow-[0_20px_50px_rgba(60,42,33,0.05)] border border-[#F2EAE1] flex flex-col">
+    <div
+      className="min-h-screen w-full flex font-sans overflow-hidden bg-[#FAF7F2]"
+      style={{
+        opacity: mounted ? 1 : 0,
+        transition: 'opacity 0.35s ease-out',
+      }}
+    >
+      {/* ── KIRI: Form ─────────────────────────────────────────────── */}
+      <div className="relative flex flex-col justify-center items-center w-full lg:w-[48%] bg-[#FAF7F2] px-8 sm:px-14 py-12 z-10">
 
-        {/* Header Logo Area */}
-        <div className="text-center mb-9">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#F5EBE1] text-3xl mb-4 animate-bounce">
-            ☕
+        {/* Logo kiri atas */}
+        <motion.div
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute top-7 left-8 sm:left-14 flex items-center gap-2"
+        >
+          <div className="w-7 h-7 bg-[#C67C4E] rounded-lg flex items-center justify-center text-white font-black text-xs shadow-md shadow-[#C67C4E]/20">
+            B
           </div>
-          <h2 className="text-3xl font-black text-[#3C2A21] tracking-tighter uppercase font-shop italic">
-            BOGENG
-          </h2>
-          <div className="inline-block bg-[#EADBC8] text-[#3C2A21] text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full mt-1.5">
-            Coffee Shop & CRM
-          </div>
-        </div>
+          <span className="text-sm font-black tracking-tight font-serif italic text-[#2F2D2C]">
+            Bogeng<span className="text-[#C67C4E]">.</span>
+          </span>
+        </motion.div>
 
-        {/* Form Input Area */}
-        <form onSubmit={handleLogin} className="space-y-5">
-          {/* Email Address */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-[#8B7E74] uppercase ml-1 tracking-wider block">
-              Email Address
-            </label>
-            <input
-              type="email"
-              placeholder="admin@bogeng.com"
-              value={credentials.email}
-              onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
-              className="w-full pl-5 pr-4 py-4 bg-[#FDFBF9] rounded-2xl outline-none border border-[#EADBC8] focus:border-[#3C2A21] focus:ring-1 focus:ring-[#3C2A21] font-bold text-[#3C2A21] text-sm transition-all placeholder-gray-300"
-            />
-          </div>
-
-          {/* Password */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center px-1">
-              <label className="text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider">
-                Password
-              </label>
-              <Link to="/forgot" className="text-[11px] font-black text-[#C67C4E] uppercase tracking-wider hover:underline">
-                Forgot?
-              </Link>
-            </div>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={credentials.password}
-              onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-              className="w-full pl-5 pr-4 py-4 bg-[#FDFBF9] rounded-2xl outline-none border border-[#EADBC8] focus:border-[#3C2A21] focus:ring-1 focus:ring-[#3C2A21] font-bold text-[#3C2A21] text-sm transition-all placeholder-gray-300"
-            />
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full mt-2 py-4 bg-[#3C2A21] text-white rounded-2xl font-black text-xs tracking-widest uppercase shadow-lg shadow-amber-900/10 hover:bg-[#2A1D16] transition-all active:scale-[0.98] cursor-pointer"
+        {/* Tombol kembali ke landing */}
+        <motion.div
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.55, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute top-7 right-8 sm:right-14"
+        >
+          <Link
+            to="/"
+            className="text-[11px] font-bold text-gray-400 hover:text-[#C67C4E] uppercase tracking-wider transition-colors flex items-center gap-1.5"
           >
-            Masuk ke Sistem
-          </button>
-        </form>
+            ← Kembali ke beranda
+          </Link>
+        </motion.div>
 
-        {/* Footer Link Daftar */}
-        <div className="text-center mt-6 mb-5">
-          <p className="text-[#8B7E74] text-xs font-bold">
-            Belum punya akun barista?{' '}
-            <Link to="/register" className="text-[#C67C4E] font-black hover:underline ml-1">
+        {/* ── Form Card ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 28, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.65, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-[400px]"
+        >
+          {/* Heading */}
+          <div className="mb-8">
+            <span className="inline-block text-[10px] font-black text-[#C67C4E] uppercase tracking-[0.3em] mb-3 bg-[#C67C4E]/10 px-3 py-1.5 rounded-full">
+              Kasir & Admin
+            </span>
+            <h1 className="text-3xl sm:text-4xl font-black leading-[1.05] text-[#2F2D2C] mb-2">
+              Selamat<br />
+              <span className="font-serif italic text-[#C67C4E]">datang kembali.</span>
+            </h1>
+            <p className="text-sm text-gray-400">
+              Masuk ke sistem kasir Bogeng Coffee untuk mulai melayani.
+            </p>
+          </div>
+
+          {/* Error notice */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.97 }}
+                transition={{ duration: 0.25 }}
+                className="mb-5 px-4 py-3 bg-red-50 border border-red-100 rounded-2xl text-xs font-bold text-red-500"
+              >
+                ⚠ {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            {/* Email */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider block ml-1">
+                Email
+              </label>
+              <input
+                type="email"
+                placeholder="admin@bogeng.com"
+                value={credentials.email}
+                onChange={(e) => {
+                  setCredentials({ ...credentials, email: e.target.value });
+                  setError('');
+                }}
+                autoComplete="email"
+                className="w-full px-5 py-3.5 bg-white border-2 border-[#EFE6DC] hover:border-[#C67C4E]/40 focus:border-[#C67C4E] rounded-2xl outline-none font-bold text-sm text-[#2F2D2C] placeholder-gray-300 transition-all duration-200 shadow-sm"
+              />
+            </div>
+
+            {/* Password */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center ml-1 mr-1">
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider">
+                  Password
+                </label>
+                <Link
+                  to="/forgot"
+                  className="text-[11px] font-black text-[#C67C4E] hover:underline uppercase tracking-wider"
+                >
+                  Lupa?
+                </Link>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPass ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={credentials.password}
+                  onChange={(e) => {
+                    setCredentials({ ...credentials, password: e.target.value });
+                    setError('');
+                  }}
+                  autoComplete="current-password"
+                  className="w-full px-5 py-3.5 bg-white border-2 border-[#EFE6DC] hover:border-[#C67C4E]/40 focus:border-[#C67C4E] rounded-2xl outline-none font-bold text-sm text-[#2F2D2C] placeholder-gray-300 transition-all duration-200 shadow-sm pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass((v) => !v)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-[#C67C4E] transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <motion.button
+              type="submit"
+              disabled={loading}
+              whileHover={{ scale: loading ? 1 : 1.02 }}
+              whileTap={{ scale: loading ? 1 : 0.97 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              className="w-full mt-2 py-4 bg-[#2F2D2C] hover:bg-[#C67C4E] text-white rounded-2xl font-black text-xs tracking-widest uppercase transition-colors duration-300 flex items-center justify-center gap-2 shadow-lg shadow-black/10 disabled:opacity-60 cursor-pointer"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Memverifikasi…
+                </>
+              ) : (
+                <>
+                  Masuk ke Sistem <ArrowRight size={14} />
+                </>
+              )}
+            </motion.button>
+          </form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-[#EFE6DC]" />
+            <span className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">atau</span>
+            <div className="flex-1 h-px bg-[#EFE6DC]" />
+          </div>
+
+          {/* Demo Box — klik untuk isi otomatis */}
+          <motion.button
+            type="button"
+            onClick={fillDemo}
+            whileHover={{ scale: 1.01, y: -1 }}
+            whileTap={{ scale: 0.99 }}
+            className="w-full bg-white border-2 border-[#EFE6DC] hover:border-[#C67C4E]/30 rounded-2xl p-4 text-left transition-all duration-200 shadow-sm group"
+          >
+            <div className="flex items-center gap-2 mb-2.5">
+              <Sparkles size={13} className="text-[#C67C4E]" />
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#2F2D2C]">
+                Akun Demo Kasir
+              </span>
+              <span className="ml-auto text-[9px] font-bold text-[#C67C4E] group-hover:underline uppercase tracking-wide">
+                Klik untuk isi otomatis →
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-[#FAF7F2] px-3 py-1.5 rounded-xl border border-[#EFE6DC]">
+                <p className="text-[9px] font-bold text-gray-400 uppercase mb-0.5">Email</p>
+                <code className="text-[11px] font-black text-[#2F2D2C]">admin@bogeng.com</code>
+              </div>
+              <div className="bg-[#FAF7F2] px-3 py-1.5 rounded-xl border border-[#EFE6DC]">
+                <p className="text-[9px] font-bold text-gray-400 uppercase mb-0.5">Password</p>
+                <code className="text-[11px] font-black text-[#2F2D2C]">admin123</code>
+              </div>
+            </div>
+          </motion.button>
+
+          <p className="text-center text-xs text-gray-400 font-bold mt-5">
+            Belum punya akun?{' '}
+            <Link to="/register" className="text-[#C67C4E] font-black hover:underline">
               Daftar Sekarang
             </Link>
           </p>
-        </div>
-
-        {/* ================= SECTION BOX AKUN DEMO KASIR ================= */}
-        <div className="bg-[#FAF6F0] rounded-2xl p-4 border border-[#EADBC8]/60 flex flex-col gap-2.5">
-          <div className="flex items-center gap-2">
-            <span className="text-xs">💡</span>
-            <h4 className="text-[11px] font-black uppercase tracking-wider text-[#3C2A21]">
-              Informasi Login Kasir (Demo)
-            </h4>
-          </div>
-          
-          <div className="space-y-1.5 text-xs text-[#6B5E54]">
-            <div className="flex justify-between items-center bg-white/70 px-3 py-2 rounded-xl border border-[#F2EAE1]">
-              <span className="font-medium text-[11px] text-[#8B7E74]">ID / EMAIL :</span>
-              <code className="font-mono font-bold text-[#3C2A21] text-[11px]">admin@bogeng.com</code>
-            </div>
-            <div className="flex justify-between items-center bg-white/70 px-3 py-2 rounded-xl border border-[#F2EAE1]">
-              <span className="font-medium text-[11px] text-[#8B7E74]">PASSWORD :</span>
-              <code className="font-mono font-bold text-[#3C2A21] text-[11px]">admin123</code>
-            </div>
-          </div>
-        </div>
-
+        </motion.div>
       </div>
+
+      {/* ── KANAN: Foto Kafe (desktop only) ─────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, x: 40 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+        className="hidden lg:block flex-1 relative overflow-hidden"
+      >
+        {/* Gambar kafe */}
+        <div
+          className="absolute inset-0 bg-center bg-cover"
+          style={{ backgroundImage: `url(${BG_URL})` }}
+        />
+        {/* Overlay gradient kiri agar menyatu dengan form */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#FAF7F2] via-[#FAF7F2]/10 to-transparent" />
+        {/* Overlay gelap bawah untuk teks */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+        {/* Quote di kanan bawah */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute bottom-12 left-10 right-10"
+        >
+          <p className="text-white/90 text-2xl font-black font-serif italic leading-snug mb-2">
+            "Kopi yang diingat,<br />bukan cuma diminum."
+          </p>
+          <p className="text-white/50 text-xs font-bold uppercase tracking-widest">
+            Bogeng Coffee — Pekanbaru
+          </p>
+        </motion.div>
+
+        {/* Badge floating */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.55, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute top-10 right-10 bg-white/15 backdrop-blur-md border border-white/25 rounded-2xl px-4 py-3 text-white"
+        >
+          <div className="flex items-center gap-2">
+            <Coffee size={14} className="text-[#C67C4E]" />
+            <span className="text-xs font-black uppercase tracking-wider">Roasted Daily</span>
+          </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
-};
-
-export default Login;
+}

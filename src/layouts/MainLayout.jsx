@@ -1,8 +1,9 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-// ✅ UPDATE: Menambahkan ikon UserCheck ke dalam import
-import { Coffee, Receipt, Users, UserCheck, LogOut, Plus, User } from 'lucide-react';
+// ✅ UPDATE: Menambahkan ikon UserCheck dan Home ke dalam import
+import { Coffee, Receipt, Users, UserCheck, LogOut, Plus, User, Home } from 'lucide-react';
+import { MessageSquareText } from 'lucide-react';
 
 // =========================================================================
 // 🔴 CUSTOM CURSOR GLOBAL
@@ -17,11 +18,12 @@ const MainLayout = () => {
 
   // ✅ UPDATE: Menambahkan menu CRM Members ke dalam array navigasi figma kedai
   const menuItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: Coffee },
-    { name: 'Daftar Pesanan', path: '/orders', icon: Receipt },
-    { name: 'Customers', path: '/customers', icon: Users },
-    { name: 'CRM Members', path: '/members', icon: UserCheck }, // 👈 MENU BARU LU NONGOL DI SINI SEKARANG!
-  ];
+  { name: 'Dashboard', path: '/dashboard', icon: Coffee },
+  { name: 'Daftar Pesanan', path: '/orders', icon: Receipt },
+  { name: 'Customers', path: '/customers', icon: Users },
+  { name: 'CRM Members', path: '/members', icon: UserCheck },
+  { name: 'Ulasan Pelanggan', path: '/reviews', icon: MessageSquareText }, // 👈 baris baru
+];
 
   // =========================================================================
   // 🔴 HANDLE LOGOUT FIX (ANTI-STUCK TOTAL & RADIKAL)
@@ -135,6 +137,14 @@ const MainLayout = () => {
                   </Link>
                 );
               })}
+
+              {/* 🟢 UPDATE TAMBAHAN: AKSES HUBUNGAN LUAR KE LANDING PAGE */}
+              <Link to="/" className="relative py-0.5 block group/item">
+                <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-bold text-[11px] text-amber-700 hover:bg-amber-50/60 transition-colors duration-200 relative z-10">
+                  <Home size={14} className="shrink-0" strokeWidth={2} />
+                  <span className="tracking-tight truncate">Landing Page</span>
+                </div>
+              </Link>
 
               {/* Tombol Logout Sesuai Request Projek Kasir */}
               <motion.button 

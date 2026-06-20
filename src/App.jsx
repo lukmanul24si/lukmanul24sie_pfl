@@ -4,18 +4,20 @@ import { useApp } from "./context/AppContext";
 import Logout from "./pages/main/Logout";
 
 // LAZY LOADING LAYOUTS & PAGES
-const MainLayout  = lazy(() => import("./layouts/MainLayout"));
-const Dashboard   = lazy(() => import("./pages/main/Dashboard"));
-const Orders      = lazy(() => import("./pages/main/Orders"));
-const Customers   = lazy(() => import("./pages/main/Customers"));
-const MembersPage = lazy(() => import("./pages/main/MembersPage")); // 👈 1. ADD LAZY LOADING HALAMAN MEMBER LU DI SINI
-const AdminUsers  = lazy(() => import("./pages/main/AdminUsers")); 
-const Login       = lazy(() => import("./pages/auth/Login"));
-const Register    = lazy(() => import("./pages/auth/Register"));
-const Forgot      = lazy(() => import("./pages/auth/Forgot"));
-const ErrorPage   = lazy(() => import("./pages/main/ErrorPage"));
+const MainLayout        = lazy(() => import("./layouts/MainLayout"));
+const BogengLandingPage = lazy(() => import("./pages/main/BogengLandingPage"));
+const Dashboard         = lazy(() => import("./pages/main/Dashboard"));
+const Orders            = lazy(() => import("./pages/main/Orders"));
+const Customers         = lazy(() => import("./pages/main/Customers"));
+const MembersPage       = lazy(() => import("./pages/main/MembersPage"));
+const ReviewModeration  = lazy(() => import("./pages/main/ReviewModeration"));
+const AdminUsers        = lazy(() => import("./pages/main/AdminUsers"));
+const Login             = lazy(() => import("./pages/auth/Login"));
+const Register          = lazy(() => import("./pages/auth/Register"));
+const Forgot            = lazy(() => import("./pages/auth/Forgot"));
+const ErrorPage         = lazy(() => import("./pages/main/ErrorPage"));
 
-// LOADING SPINNER INTERAKTIF (BOGENG BRANDING)
+// ─── LOADING SPINNER BOGENG ────────────────────────────────────────────────
 const Loading = () => (
   <div className="h-screen w-full flex items-center justify-center bg-[#F9F2ED]">
     <div className="flex flex-col items-center gap-3">
@@ -27,13 +29,15 @@ const Loading = () => (
   </div>
 );
 
-// 1. GUARD PUBLIC
+// ─── GUARD: hanya untuk yang BELUM login ──────────────────────────────────
+// Jika sudah login → tendang ke /dashboard
 const PublicRoute = () => {
   const { user } = useApp();
   return user ? <Navigate to="/dashboard" replace /> : <Outlet />;
 };
 
-// 2. GUARD PROTECTED
+// ─── GUARD: hanya untuk yang SUDAH login ──────────────────────────────────
+// Jika belum login → tendang ke /login
 const ProtectedRoute = () => {
   const { user } = useApp();
   return user ? <Outlet /> : <Navigate to="/login" replace />;
@@ -44,33 +48,33 @@ function App() {
     <Suspense fallback={<Loading />}>
       <Routes>
 
-        {/* REDIRECT ROOT UTAMA */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        {/* ── LANDING PAGE (publik, selalu bisa diakses) ─────────────── */}
+        <Route path="/" element={<BogengLandingPage />} />
 
-        {/* ================= AREA PUBLIK (AUTH ROUTES) ================= */}
+        {/* ── AUTH ROUTES (redirect ke /dashboard kalau sudah login) ─── */}
         <Route element={<PublicRoute />}>
           <Route path="/login"    element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot"   element={<Forgot />} />
         </Route>
 
-        {/* ================= AREA TERPROTEKSI (KASIR UTAMA) ================= */}
+        {/* ── AREA TERPROTEKSI (kasir/admin) ─────────────────────────── */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             <Route path="/dashboard"   element={<Dashboard />} />
             <Route path="/orders"      element={<Orders />} />
             <Route path="/customers"   element={<Customers />} />
-            <Route path="/members"     element={<MembersPage />} /> {/* 👈 2. RUTE BARU HALAMAN MANAGEMENT MEMBER */}
-            <Route path="/admin/users" element={<AdminUsers />} /> 
-            
+            <Route path="/members"     element={<MembersPage />} />
+            <Route path="/reviews"     element={<ReviewModeration />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="*"            element={<ErrorPage />} />
           </Route>
         </Route>
 
-        {/* ================= RUTE LOGOUT INDEPENDEN ================= */}
+        {/* ── LOGOUT INDEPENDEN ───────────────────────────────────────── */}
         <Route path="/logout" element={<Logout />} />
 
-        {/* ================= GLOBAL FALLBACK ================= */}
+        {/* ── GLOBAL FALLBACK: URL tak dikenal → login ───────────────── */}
         <Route path="*" element={<Navigate to="/login" replace />} />
 
       </Routes>

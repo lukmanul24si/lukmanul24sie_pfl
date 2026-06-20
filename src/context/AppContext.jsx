@@ -59,13 +59,15 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // 🟢 UPDATE: seed disesuaikan supaya status awal konsisten sama logika tier baru
+  //    (lihat getMemberTier di bawah — sebelumnya seed ini nyimpang dari aturan sendiri)
   const [customers, setCustomers] = useState(() => {
     const saved = localStorage.getItem('bogeng_customers');
     return saved ? JSON.parse(saved) : [
-      { id: 1, name: 'CHARLEY SMITH', email: 'charley@mail.com', visits: 4, status: 'LOYAL',  points: 40  },
-      { id: 2, name: 'JANE DOE',      email: 'jane@mail.com',    visits: 2, status: 'MEMBER', points: 15  },
-      { id: 3, name: 'JOHN SMITH',    email: 'john@mail.com',    visits: 6, status: 'VIP',    points: 90  },
-      { id: 4, name: 'LUKMAN HAKIM',  email: 'lukman@mail.com',  visits: 8, status: 'VIP',    points: 120 },
+      { id: 1, name: 'CHARLEY SMITH', email: 'charley@mail.com', visits: 4, totalSpend: 400000,  status: 'MEMBER', points: 40  },
+      { id: 2, name: 'JANE DOE',      email: 'jane@mail.com',    visits: 2, totalSpend: 150000,  status: 'MEMBER', points: 15  },
+      { id: 3, name: 'JOHN SMITH',    email: 'john@mail.com',    visits: 6, totalSpend: 900000,  status: 'VIP',    points: 90  },
+      { id: 4, name: 'LUKMAN HAKIM',  email: 'lukman@mail.com',  visits: 8, totalSpend: 1200000, status: 'VIP',    points: 120 },
     ];
   });
 
@@ -73,6 +75,18 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('bogeng_orders',    JSON.stringify(orders));
     localStorage.setItem('bogeng_customers', JSON.stringify(customers));
   }, [orders, customers]);
+
+  // ================= LOGIKA TIER MEMBER ==============================
+  // 🟢 UPDATE: disamain persis sama kartu "Keuntungan Pelanggan Setia" di landing page
+  //   - Reguler     : default, aktif otomatis sejak transaksi pertama
+  //   - Loyal Member: minimal 10x transaksi
+  //   - VIP Member  : minimal 25x transaksi ATAU total belanja >= Rp500.000
+  // Status 'MEMBER' di data = label "Reguler" di tampilan landing page.
+  const getMemberTier = (visits, totalSpend) => {
+    if (visits >= 25 || totalSpend >= 500000) return 'VIP';
+    if (visits >= 10) return 'LOYAL';
+    return 'MEMBER';
+  };
 
   // ================= ORDER FUNCTIONS =================
   const addOrder = (order) => {
@@ -103,21 +117,31 @@ export const AppProvider = ({ children }) => {
       );
 
       if (exists) {
-        const newVisits = exists.visits + 1;
-        const newStatus = newVisits >= 5 ? 'VIP' : newVisits >= 3 ? 'LOYAL' : 'MEMBER';
+        const newVisits     = exists.visits + 1;
+        const newTotalSpend = (exists.totalSpend || 0) + finalSubtotal;
+        const newStatus     = getMemberTier(newVisits, newTotalSpend);
+
         return prevCust.map(c =>
           c.name.toLowerCase() === order.customer.toLowerCase()
-            ? { ...c, visits: newVisits, points: (c.points || 0) + earnedPoints, status: newStatus }
+            ? {
+                ...c,
+                visits:     newVisits,
+                totalSpend: newTotalSpend,
+                points:     (c.points || 0) + earnedPoints,
+                status:     newStatus,
+              }
             : c
         );
       } else {
+        const newTotalSpend = finalSubtotal;
         return [...prevCust, {
-          id:     Date.now(),
-          name:   order.customer.toUpperCase(),
-          email:  `${order.customer.toLowerCase().replace(/\s/g, '')}@mail.com`,
-          visits: 1,
-          points: earnedPoints,
-          status: 'MEMBER',
+          id:         Date.now(),
+          name:       order.customer.toUpperCase(),
+          email:      `${order.customer.toLowerCase().replace(/\s/g, '')}@mail.com`,
+          visits:     1,
+          totalSpend: newTotalSpend,
+          points:     earnedPoints,
+          status:     getMemberTier(1, newTotalSpend),
         }];
       }
     });
@@ -148,6 +172,8 @@ export const AppProvider = ({ children }) => {
       // Actions
       addOrder, updateOrderStatus,
       deleteOrder, deleteCustomer,
+      // Helper tier (dipakai kalau ada halaman lain mau ngecek tier manual)
+      getMemberTier,
     }}>
       {children}
     </AppContext.Provider>
