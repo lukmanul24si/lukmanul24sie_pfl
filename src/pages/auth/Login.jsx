@@ -51,23 +51,9 @@ export default function Login() {
     setError('');
   };
 
-  // 🔴 UPDATE: paksa background html/body terang selama di halaman Login.
-  // Ini jaga-jaga kalau index.css masih bawa default Vite (#242424 / dark
-  // color-scheme) yang bisa nongol di belakang konten sebelum/selagi fade-in.
-  useEffect(() => {
-    const prevHtmlBg = document.documentElement.style.backgroundColor;
-    const prevBodyBg = document.body.style.backgroundColor;
-    document.documentElement.style.backgroundColor = '#FAF7F2';
-    document.body.style.backgroundColor = '#FAF7F2';
-    return () => {
-      document.documentElement.style.backgroundColor = prevHtmlBg;
-      document.body.style.backgroundColor = prevBodyBg;
-    };
-  }, []);
-
   return (
     <div
-      className="min-h-screen w-full flex font-sans overflow-hidden bg-[#FAF7F2]"
+      className="min-h-screen flex font-sans overflow-hidden"
       style={{
         opacity: mounted ? 1 : 0,
         transition: 'opacity 0.35s ease-out',
@@ -256,9 +242,9 @@ export default function Login() {
           </motion.button>
 
           <p className="text-center text-xs text-gray-400 font-bold mt-5">
-            Belum punya akun?{' '}
-            <Link to="/register" className="text-[#C67C4E] font-black hover:underline">
-              Daftar Sekarang
+            Kamu pelanggan?{' '}
+            <Link to="/member-login" className="text-[#C67C4E] font-black hover:underline">
+              Portal Member →
             </Link>
           </p>
         </motion.div>

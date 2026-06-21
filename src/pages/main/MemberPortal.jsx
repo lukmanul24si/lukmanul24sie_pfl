@@ -25,7 +25,7 @@ import redvelvetImg     from '../../assets/redvelvet.png';
 import nasigorengImg    from '../../assets/nasigoreng.jpg';
 import sandwichImg      from '../../assets/sandwich.jpg';
 import spagetiImg       from '../../assets/spageti.jpg';
-import dimsumImg        from '../../assets/dimsum.g';
+import dimsumImg        from '../../assets/dimsum.jpg';
 import cirengImg        from '../../assets/cire1.png';
 import frenchImg        from '../../assets/french.jpg';
 

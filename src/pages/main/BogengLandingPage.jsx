@@ -1,6 +1,17 @@
 // src/pages/main/BogengLandingPage.jsx
 //
 // Landing page publik Bogeng Coffee Shop — project akhir.
+// Fitur di file ini:
+//   1. Cursor custom (lingkaran ngikutin mouse, membesar di tombol/link)
+//   2. Background daun kopi bergerak halus pas di-scroll (opacity rendah, tenang)
+//   3. Hero dengan menu yang muter/melayang melingkar (orbit), klik -> detail
+//   4. Katalog menu lengkap per kategori (Kopi / Non-Kopi / Makanan / Cemilan)
+//   5. Penjelasan tingkatan Member (Reguler / Loyal / VIP) tanpa istilah "CRM"
+//   6. Ulasan pelanggan — tampil hanya yang sudah disetujui admin (lihat
+//      ReviewModeration.jsx & utils/reviewsStore.js)
+//   7. Form kirim ulasan baru (otomatis masuk status "pending")
+//   8. FAQ accordion
+//   9. Kontak & form keluhan/saran yang langsung kebuka ke WhatsApp
 //
 // Tema: terang/cream (sesuai request), bukan dark mode.
 
@@ -12,7 +23,6 @@ import {
   useTransform,
   useAnimationFrame,
   useSpring,
-  useScroll,
 } from 'framer-motion';
 import {
   Coffee,
@@ -25,8 +35,6 @@ import {
   Clock,
   Phone,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   ArrowRight,
   Menu as MenuIcon,
   X,
@@ -247,7 +255,8 @@ function FollowCursor() {
 }
 
 // =====================================================================
-// BACKGROUND DAUN KOPI — opacity rendah, gerak pelan + parallax scroll
+// BACKGROUND DAUN + BIJI KOPI — pure CSS animation, NO useScroll/fixed
+// will-change: transform supaya browser composites di GPU layer terpisah
 // =====================================================================
 function LeafShape({ className, style }) {
   return (
@@ -258,44 +267,82 @@ function LeafShape({ className, style }) {
   );
 }
 
-function AmbientLeaves() {
-  const { scrollYProgress } = useScroll();
-  const slow = useTransform(scrollYProgress, [0, 1], [0, -70]);
-  const fast = useTransform(scrollYProgress, [0, 1], [0, 130]);
+function CoffeeBeanShape({ className, style }) {
+  return (
+    <svg viewBox="0 0 60 40" className={className} style={style} fill="currentColor">
+      <ellipse cx="30" cy="20" rx="28" ry="18" />
+      <path d="M30 4 Q38 12 38 20 Q38 28 30 36" stroke="rgba(255,255,255,0.3)" strokeWidth="2" fill="none" />
+      <path d="M30 4 Q22 12 22 20 Q22 28 30 36" stroke="rgba(255,255,255,0.3)" strokeWidth="2" fill="none" />
+    </svg>
+  );
+}
 
-  // 🟢 UPDATE: daun ditambah & disebar dari top:0% sampe ~98%, biar kebagian
-  // di SEMUA section (menu, member, ulasan, faq, kontak) — bukan numpuk di
-  // hero doang kayak sebelumnya.
+function AmbientLeaves() {
+  // Pakai absolute bukan fixed — tidak trigger compositing layer global
   const leaves = [
-    { top: '2%',  left: '-5%', size: 220, rotate: -18, color: 'text-[#8B5E34]', parallax: slow, dur: 22 },
-    { top: '16%', left: '90%', size: 150, rotate: 22,  color: 'text-[#6F8F5C]', parallax: fast, dur: 18 },
-    { top: '28%', left: '6%',  size: 130, rotate: -8,  color: 'text-[#6F8F5C]', parallax: slow, dur: 20 },
-    { top: '38%', left: '94%', size: 170, rotate: 14,  color: 'text-[#8B5E34]', parallax: fast, dur: 24 },
-    { top: '48%', left: '-4%', size: 180, rotate: 6,   color: 'text-[#6F8F5C]', parallax: fast, dur: 26 },
-    { top: '58%', left: '92%', size: 150, rotate: -16, color: 'text-[#8B5E34]', parallax: slow, dur: 19 },
-    { top: '68%', left: '4%',  size: 200, rotate: 10,  color: 'text-[#6F8F5C]', parallax: slow, dur: 23 },
-    { top: '78%', left: '95%', size: 160, rotate: -22, color: 'text-[#8B5E34]', parallax: fast, dur: 21 },
-    { top: '88%', left: '2%',  size: 190, rotate: 18,  color: 'text-[#6F8F5C]', parallax: slow, dur: 25 },
-    { top: '96%', left: '90%', size: 140, rotate: -12, color: 'text-[#8B5E34]', parallax: fast, dur: 17 },
+    { top: '2%',  left: '-5%',  size: 200, rotate: -18, color: '#8B5E34', dur: 22, delay: 0    },
+    { top: '18%', left: '91%',  size: 140, rotate: 22,  color: '#6F8F5C', dur: 18, delay: -5   },
+    { top: '44%', left: '-4%',  size: 170, rotate: 6,   color: '#6F8F5C', dur: 26, delay: -8   },
+    { top: '65%', left: '93%',  size: 210, rotate: -10, color: '#8B5E34', dur: 20, delay: -12  },
+    { top: '85%', left: '5%',   size: 140, rotate: 28,  color: '#6F8F5C', dur: 24, delay: -3   },
+  ];
+
+  const beans = [
+    { top: '10%', left: '8%',   size: 36, rotate: 25,  color: '#8B5E34', dur: 16, delay: -6   },
+    { top: '30%', left: '87%',  size: 28, rotate: -15, color: '#6F4E37', dur: 20, delay: -2   },
+    { top: '52%', left: '12%',  size: 32, rotate: 40,  color: '#8B5E34', dur: 18, delay: -9   },
+    { top: '72%', left: '80%',  size: 30, rotate: -35, color: '#6F4E37', dur: 22, delay: -4   },
+    { top: '88%', left: '45%',  size: 26, rotate: 15,  color: '#8B5E34', dur: 14, delay: -7   },
+    { top: '5%',  left: '55%',  size: 22, rotate: -20, color: '#6F4E37', dur: 19, delay: -1   },
+    { top: '40%', left: '50%',  size: 34, rotate: 50,  color: '#8B5E34', dur: 17, delay: -11  },
   ];
 
   return (
-    <div
-      className="absolute inset-0 pointer-events-none overflow-hidden z-[15]"
-      aria-hidden="true"
-    >
-      {leaves.map((leaf, i) => (
-        <motion.div
-          key={i}
-          style={{ position: 'absolute', top: leaf.top, left: leaf.left, y: leaf.parallax }}
-          animate={{ rotate: [leaf.rotate, leaf.rotate + 6, leaf.rotate - 4, leaf.rotate], x: [0, 8, -6, 0] }}
-          transition={{ repeat: Infinity, duration: leaf.dur, ease: 'easeInOut' }}
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+      <style>{`
+        @keyframes leafFloat {
+          0%,100% { transform: var(--base-t) rotate(0deg) translateX(0px) translateY(0px); }
+          33%      { transform: var(--base-t) rotate(5deg)  translateX(6px)  translateY(-5px); }
+          66%      { transform: var(--base-t) rotate(-3deg) translateX(-4px) translateY(3px); }
+        }
+        @keyframes beanFloat {
+          0%,100% { transform: var(--base-t) rotate(0deg) translateY(0px); }
+          50%      { transform: var(--base-t) rotate(8deg)  translateY(-7px); }
+        }
+        .leaf-anim  { animation: leafFloat var(--dur) ease-in-out infinite; animation-delay: var(--delay); will-change: transform; }
+        .bean-anim  { animation: beanFloat var(--dur) ease-in-out infinite; animation-delay: var(--delay); will-change: transform; }
+      `}</style>
+
+      {leaves.map((l, i) => (
+        <div
+          key={`leaf-${i}`}
+          className="leaf-anim absolute opacity-[0.055]"
+          style={{
+            top: l.top, left: l.left,
+            '--base-t': `rotate(${l.rotate}deg)`,
+            '--dur': `${l.dur}s`,
+            '--delay': `${l.delay}s`,
+            color: l.color,
+          }}
         >
-          <LeafShape
-            className={`${leaf.color} opacity-[0.05]`}
-            style={{ width: leaf.size, height: leaf.size * 1.3 }}
-          />
-        </motion.div>
+          <LeafShape style={{ width: l.size, height: l.size * 1.3 }} className="fill-current" />
+        </div>
+      ))}
+
+      {beans.map((b, i) => (
+        <div
+          key={`bean-${i}`}
+          className="bean-anim absolute opacity-[0.08]"
+          style={{
+            top: b.top, left: b.left,
+            '--base-t': `rotate(${b.rotate}deg)`,
+            '--dur': `${b.dur}s`,
+            '--delay': `${b.delay}s`,
+            color: b.color,
+          }}
+        >
+          <CoffeeBeanShape style={{ width: b.size, height: b.size * 0.67 }} className="fill-current" />
+        </div>
       ))}
     </div>
   );
@@ -374,10 +421,10 @@ function OrbitItem({ item, cfg, rotation, selected, onSelect }) {
 function OrbitMenu({ items, selectedId, onSelect }) {
   const rotation = useMotionValue(0);
   useAnimationFrame((_, delta) => {
-    rotation.set(rotation.get() + delta * 0.005);
+    // Diperlambat dari 0.005 → 0.003 supaya orbit lebih ringan
+    rotation.set(rotation.get() + delta * 0.003);
   });
 
-  // pakai ORBIT_CONFIGS, potong/loop sesuai jumlah item
   const configs = ORBIT_CONFIGS.slice(0, items.length);
 
   return (
@@ -739,68 +786,76 @@ function RevealSection({ children, className = '', id }) {
 
 // =====================================================================
 // HERO SPOTLIGHT — cursor mengungkap gambar suasana kafe di balik bg cream
-// Radius & gambar bisa diganti sesuai kebutuhan
+// OPTIMASI: pakai ref + direct DOM manipulation, BUKAN setState
 // =====================================================================
 const SPOTLIGHT_R = 220;
 
-// Dua suasana kafe Bogeng yang akan berganti-ganti saat spotlight melewatinya
-// Bisa diganti URL gambar asli kamu nanti
 const CAFE_SCENES = [
-  'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1600&q=85', // kopi di meja kayu warm
-  'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1600&q=85', // suasana cafe cozy
+  'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1600&q=85',
+  'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1600&q=85',
 ];
 
 function HeroSpotlightBg() {
-  // 🔴 UPDATE PERFORMA: versi lama pakai canvas.toDataURL() tiap frame mouse
-  // gerak (60x/detik) — itu operasi paling berat di browser, bikin landing
-  // page jadi "berat" & klik jadi telat ke-detect. Sekarang ganti total ke
-  // CSS mask-image radial-gradient, dikerjain GPU, gak ada canvas sama sekali.
-  // Cursor tracking juga dipindah ke sini (ref-only, TANPA setState per
-  // frame) biar komponen utama (BogengLandingPage) gak ikut re-render tiap
-  // mouse gerak.
-  const revealRef    = useRef(null);
-  const [sceneIdx, setSceneIdx] = useState(0);
-  const lastZoneRef  = useRef(-1);
-  const mouseRef     = useRef({ x: -999, y: -999 });
-  const smoothRef    = useRef({ x: -999, y: -999 });
-  const rafRef       = useRef(null);
+  const canvasRef   = useRef(null);
+  const revealRef   = useRef(null);
+  const sceneRef    = useRef(0);
+  const lastZoneRef = useRef(-1);
+  // store cursor WITHOUT setState — no re-render
+  const posRef      = useRef({ x: -999, y: -999 });
+  const rafRef      = useRef(null);
 
   useEffect(() => {
+    const canvas  = canvasRef.current;
+    const reveal  = revealRef.current;
+    if (!canvas || !reveal) return;
+
+    const fit = () => {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    fit();
+    window.addEventListener('resize', fit);
+
     const onMove = (e) => {
-      mouseRef.current.x = e.clientX;
-      mouseRef.current.y = e.clientY;
+      posRef.current = { x: e.clientX, y: e.clientY };
+
+      // Zone change → swap scene image
+      const zone = e.clientX < window.innerWidth / 2 ? 0 : 1;
+      if (zone !== lastZoneRef.current) {
+        lastZoneRef.current = zone;
+        sceneRef.current    = zone % CAFE_SCENES.length;
+        reveal.style.backgroundImage = `url(${CAFE_SCENES[sceneRef.current]})`;
+      }
     };
     window.addEventListener('mousemove', onMove, { passive: true });
 
-    const loop = () => {
-      smoothRef.current.x += (mouseRef.current.x - smoothRef.current.x) * 0.10;
-      smoothRef.current.y += (mouseRef.current.y - smoothRef.current.y) * 0.10;
-      const x = smoothRef.current.x;
-      const y = smoothRef.current.y;
-
-      // Update mask langsung manipulasi style DOM — murah, gak nyentuh React.
-      if (revealRef.current) {
-        const mask = `radial-gradient(circle ${SPOTLIGHT_R}px at ${x}px ${y}px, ` +
-          `rgba(255,255,255,1) 0%, rgba(255,255,255,1) 35%, ` +
-          `rgba(255,255,255,0.80) 60%, rgba(255,255,255,0.35) 80%, ` +
-          `rgba(255,255,255,0.08) 92%, rgba(255,255,255,0) 100%)`;
-        revealRef.current.style.maskImage = mask;
-        revealRef.current.style.webkitMaskImage = mask;
-      }
-
-      // Ganti scene cuma pas kursor pindah zona kiri/kanan — jarang terjadi,
-      // jadi setState di sini aman (gak tiap frame).
-      const zone = x < window.innerWidth / 2 ? 0 : 1;
-      if (zone !== lastZoneRef.current) {
-        lastZoneRef.current = zone;
-        setSceneIdx(zone % CAFE_SCENES.length);
-      }
-
-      rafRef.current = requestAnimationFrame(loop);
+    // Paint mask tanpa setState — langsung ke DOM
+    const paint = () => {
+      const { x, y } = posRef.current;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, SPOTLIGHT_R);
+      grad.addColorStop(0,    'rgba(255,255,255,1)');
+      grad.addColorStop(0.35, 'rgba(255,255,255,1)');
+      grad.addColorStop(0.60, 'rgba(255,255,255,0.80)');
+      grad.addColorStop(0.80, 'rgba(255,255,255,0.35)');
+      grad.addColorStop(0.92, 'rgba(255,255,255,0.08)');
+      grad.addColorStop(1,    'rgba(255,255,255,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(x, y, SPOTLIGHT_R, 0, Math.PI * 2);
+      ctx.fill();
+      const url = canvas.toDataURL();
+      reveal.style.maskImage       = `url(${url})`;
+      reveal.style.webkitMaskImage = `url(${url})`;
+      reveal.style.maskSize        = '100% 100%';
+      reveal.style.webkitMaskSize  = '100% 100%';
+      rafRef.current = requestAnimationFrame(paint);
     };
-    rafRef.current = requestAnimationFrame(loop);
+    rafRef.current = requestAnimationFrame(paint);
 
     return () => {
+      window.removeEventListener('resize', fit);
       window.removeEventListener('mousemove', onMove);
       cancelAnimationFrame(rafRef.current);
     };
@@ -808,18 +863,14 @@ function HeroSpotlightBg() {
 
   return (
     <>
-      {/* Layer gambar cafe yang diungkap cursor */}
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
       <div
         ref={revealRef}
-        className="absolute inset-0 pointer-events-none z-[5] bg-center bg-cover bg-no-repeat transition-[background-image] duration-700"
-        style={{ backgroundImage: `url(${CAFE_SCENES[sceneIdx]})` }}
+        className="absolute inset-0 pointer-events-none z-[5] bg-center bg-cover bg-no-repeat"
+        style={{ backgroundImage: `url(${CAFE_SCENES[0]})` }}
       />
-
-      {/* Vignette cream tipis di tepi agar konten tetap terbaca */}
       <div className="absolute inset-0 pointer-events-none z-[6]"
-        style={{
-          background: 'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 45%, rgba(255,253,248,0.55) 100%)',
-        }}
+        style={{ background: 'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 45%, rgba(255,253,248,0.55) 100%)' }}
       />
     </>
   );
@@ -831,6 +882,7 @@ function HeroSpotlightBg() {
 function Navbar() {
   const [mobileOpen, setMobileOpen]       = useState(false);
   const [activeSection, setActiveSection] = useState('beranda');
+  const [leaving, setLeaving]             = useState(false);
   const navigate                          = useNavigate();
 
   const navLinks = [
@@ -866,11 +918,27 @@ function Navbar() {
 
   const handleGoLogin = (e) => {
     e.preventDefault();
-    navigate('/login');
+    if (leaving) return;
+    setLeaving(true);
+    // Langsung navigate tanpa setTimeout — overlay CSS transition cukup
+    setTimeout(() => navigate('/login'), 280);
   };
 
   return (
     <>
+      {/* Overlay tipis — hanya pakai inline style, BUKAN AnimatePresence
+          agar tidak "bocor" ke halaman Login setelah unmount */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: '#2F2D2C',
+          opacity: leaving ? 1 : 0,
+          pointerEvents: 'none',
+          transition: 'opacity 0.28s ease-in-out',
+        }}
+      />
+
       <nav className="fixed top-0 left-0 right-0 z-[100] px-6 sm:px-10 py-4 bg-white/85 backdrop-blur-md border-b border-gray-100">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button
@@ -908,16 +976,18 @@ function Navbar() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Tombol PORTAL MEMBER — beda dari tombol Masuk admin */}
-            <button
+            {/* Tombol Portal Member — untuk pelanggan */}
+            <motion.button
               onClick={() => navigate('/member-login')}
               data-cursor-hover
-              className="hidden sm:inline-flex items-center gap-1.5 border border-[#C67C4E]/40 text-[#C67C4E] hover:bg-[#C67C4E]/10 px-4 py-2.5 rounded-full font-bold text-[11px] uppercase tracking-wider transition-colors"
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              className="hidden sm:inline-flex items-center gap-1.5 border-2 border-[#C67C4E] text-[#C67C4E] hover:bg-[#C67C4E] hover:text-white px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-wider transition-colors duration-300 cursor-pointer"
             >
-              Portal Member
-            </button>
-
-            {/* Tombol MASUK admin */}
+              <Heart size={11} /> Portal Member
+            </motion.button>
+            {/* Tombol MASUK — untuk admin/kasir */}
             <motion.button
               onClick={handleGoLogin}
               data-cursor-hover
@@ -964,18 +1034,19 @@ function Navbar() {
                     {link.label}
                   </motion.a>
                 ))}
-                <button
-                  onClick={() => navigate('/member-login')}
-                  className="mt-2 text-center border border-[#C67C4E]/40 text-[#C67C4E] px-5 py-3 rounded-full font-bold text-xs uppercase tracking-wider w-full"
+                <motion.button
+                  onClick={() => { navigate('/member-login'); setMobileOpen(false); }}
+                  whileTap={{ scale: 0.96 }}
+                  className="mt-1 text-center border-2 border-[#C67C4E] text-[#C67C4E] px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider w-full"
                 >
                   Portal Member
-                </button>
+                </motion.button>
                 <motion.button
                   onClick={handleGoLogin}
                   whileTap={{ scale: 0.96 }}
-                  className="mt-2 text-center bg-[#2F2D2C] text-white px-5 py-3 rounded-full font-bold text-xs uppercase tracking-wider w-full"
+                  className="mt-1 text-center bg-[#2F2D2C] text-white px-5 py-3 rounded-full font-bold text-xs uppercase tracking-wider w-full"
                 >
-                  Masuk
+                  Masuk (Admin)
                 </motion.button>
               </div>
             </motion.div>
@@ -993,7 +1064,6 @@ export default function BogengLandingPage() {
   const [selectedMenu, setSelectedMenu] = useState(null);
   const [activeFaq, setActiveFaq] = useState(null);
   const [approvedReviews, setApprovedReviews] = useState([]);
-  const navigate = useNavigate(); // 🟢 BARU: dipakai buat CTA Portal Member di section #member
 
   useEffect(() => {
     setApprovedReviews(getApprovedReviews());
@@ -1009,7 +1079,7 @@ export default function BogengLandingPage() {
 
       {/* ============================== HERO ============================== */}
       <section id="beranda" className="relative pt-32 pb-16 sm:pt-40 sm:pb-24 overflow-hidden">
-        {/* Spotlight reveal background — gambar kafe muncul di bawah kursor */}
+        {/* Spotlight reveal background — self-contained, zero re-render */}
         <HeroSpotlightBg />
 
         <div className="max-w-7xl mx-auto px-6 sm:px-10 grid grid-cols-1 lg:grid-cols-2 gap-14 items-center relative z-10">
@@ -1039,14 +1109,13 @@ export default function BogengLandingPage() {
               >
                 Lihat Menu <ArrowRight size={14} />
               </a>
-              <a
-                href="#member"
-                onClick={(e) => { e.preventDefault(); smoothScrollTo('member'); }}
+              <button
+                onClick={() => navigate('/member-login')}
                 data-cursor-hover
                 className="inline-flex items-center gap-2 bg-white border border-gray-200 hover:border-[#C67C4E] px-6 py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-gray-600 transition-colors"
               >
-                Kenalan sama Member
-              </a>
+                Portal Member
+              </button>
             </div>
           </motion.div>
 
@@ -1112,7 +1181,8 @@ export default function BogengLandingPage() {
               Makin Sering Mampir, Makin Banyak Untungnya
             </h2>
             <p className="text-sm text-gray-500 leading-relaxed">
-              Gak perlu daftar ribet. Cukup nama & nomor HP, kami yang ngitung semuanya buat naikin levelmu otomatis.
+              Gak perlu daftar ribet. Cukup kasih nama atau nomor HP saat bayar, sistem kasir kami yang
+              ngitung semuanya buat naikin levelmu otomatis.
             </p>
           </div>
 
@@ -1145,28 +1215,35 @@ export default function BogengLandingPage() {
             })}
           </div>
 
-          {/* 🟢 BARU: CTA ke Member Portal — masuk kalau udah daftar, atau daftar baru */}
+          {/* ── CTA Banner Portal Member ── */}
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="mt-10 flex flex-wrap items-center gap-3"
+            transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-10 bg-[#2F2D2C] rounded-3xl p-7 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5"
           >
-            <button
+            <div>
+              <p className="text-[10px] font-black text-[#C67C4E] uppercase tracking-[0.3em] mb-2">
+                Sudah terdaftar?
+              </p>
+              <h3 className="text-xl sm:text-2xl font-black text-white leading-tight">
+                Masuk ke Portal Member<br />
+                <span className="font-serif italic text-[#C67C4E]">dan mulai pesan sekarang.</span>
+              </h3>
+              <p className="text-xs text-gray-400 font-bold mt-2">
+                Lihat riwayat pesanan, cek progress tier, dan nikmati diskon otomatis member.
+              </p>
+            </div>
+            <motion.button
               onClick={() => navigate('/member-login')}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.96 }}
               data-cursor-hover
-              className="inline-flex items-center gap-2 bg-[#2F2D2C] hover:bg-[#C67C4E] text-white px-6 py-3.5 rounded-full font-bold text-xs uppercase tracking-wider transition-colors"
+              className="shrink-0 flex items-center gap-2 bg-[#C67C4E] hover:bg-white hover:text-[#2F2D2C] text-white font-black text-xs uppercase tracking-wider px-6 py-3.5 rounded-full transition-all duration-300 shadow-lg shadow-[#C67C4E]/20 cursor-pointer"
             >
-              Masuk Member
-            </button>
-            <button
-              onClick={() => navigate('/member-register')}
-              data-cursor-hover
-              className="inline-flex items-center gap-2 bg-white border border-gray-200 hover:border-[#C67C4E] px-6 py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-gray-600 transition-colors"
-            >
-              Daftar Member Baru <ArrowRight size={14} />
-            </button>
+              <Heart size={13} /> Masuk Portal Member
+            </motion.button>
           </motion.div>
         </div>
       </RevealSection>
@@ -1182,36 +1259,68 @@ export default function BogengLandingPage() {
           </h2>
         </div>
 
-        {approvedReviews.length > 0 ? (
-          <div className="relative w-full overflow-x-hidden py-2 mb-16">
-            <div className="flex gap-5 animate-marquee w-max">
-              {[...approvedReviews, ...approvedReviews].map((rev, i) => (
-                <div
-                  key={`${rev.id}-${i}`}
-                  className="w-[290px] sm:w-[320px] bg-[#FAF7F2] p-6 rounded-2xl border border-gray-100 shrink-0"
-                >
-                  <Stars count={rev.rating} />
-                  <p className="text-xs text-gray-500 leading-relaxed italic my-3">"{rev.text}"</p>
-                  <div className="flex items-center gap-2.5 pt-3 border-t border-gray-200/60">
-                    <div className="w-8 h-8 bg-[#C67C4E] rounded-full flex items-center justify-center text-white font-black text-xs">
-                      {rev.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <h5 className="font-bold text-xs text-[#2F2D2C]">{rev.name}</h5>
-                      <span className="text-[9px] font-bold text-amber-700 uppercase tracking-wider">
-                        {rev.tier}
-                      </span>
-                    </div>
-                  </div>
+        {/* Inject CSS marquee — pure CSS, zero JS overhead */}
+        <style>{`
+          @keyframes marqueeLeft  { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+          @keyframes marqueeRight { from { transform: translateX(-50%) } to { transform: translateX(0) } }
+          .marquee-left  { animation: marqueeLeft  36s linear infinite; }
+          .marquee-right { animation: marqueeRight 40s linear infinite; }
+          .marquee-left:hover, .marquee-right:hover { animation-play-state: paused; }
+        `}</style>
+
+        {(() => {
+          // Data dummy yang selalu ada supaya 2 baris tidak pernah kosong
+          const DUMMY = [
+            { id: 'd1', name: 'Aldi R.',    tier: 'Loyal Member', rating: 5, text: 'Espresso Bold-nya mantap banget, pas banget buat nemenin kerja pagi!' },
+            { id: 'd2', name: 'Sari W.',    tier: 'Reguler',      rating: 5, text: 'Caramel Macchiato di sini juara, creamy dan nggak terlalu manis.' },
+            { id: 'd3', name: 'Dimas F.',   tier: 'VIP Member',   rating: 4, text: 'Tempatnya cozy banget, cocok buat ngerjain tugas sambil ngopi.' },
+            { id: 'd4', name: 'Reza M.',    tier: 'Loyal Member', rating: 5, text: 'Palm Sugar Coffee-nya khas banget, rasa gula aren-nya kerasa asli.' },
+            { id: 'd5', name: 'Nadia K.',   tier: 'Reguler',      rating: 5, text: 'Matcha Latte Premium disini beda dari yang lain, worth it banget!' },
+            { id: 'd6', name: 'Bagas P.',   tier: 'VIP Member',   rating: 5, text: 'Sistem member-nya keren, nggak perlu download app apapun.' },
+            { id: 'd7', name: 'Fitri A.',   tier: 'Loyal Member', rating: 4, text: 'Red Velvet Cream-nya enak banget, jadi favorit baru aku.' },
+            { id: 'd8', name: 'Hendra S.',  tier: 'Reguler',      rating: 5, text: 'Nasi Goreng Spesialnya porsi besar, rasanya nggak kaleng-kaleng!' },
+          ];
+
+          // Gabung ulasan asli + dummy, min 6 item per baris
+          const all = [...approvedReviews, ...DUMMY];
+          // Bagi dua baris
+          const half = Math.ceil(all.length / 2);
+          const row1 = all.slice(0, half);
+          const row2 = all.slice(half);
+
+          // Double untuk seamless loop
+          const r1 = [...row1, ...row1];
+          const r2 = [...row2, ...row2];
+
+          const Card = ({ rev }) => (
+            <div className="w-[270px] sm:w-[300px] shrink-0 bg-[#FAF7F2] p-5 rounded-2xl border border-gray-100 mx-2.5">
+              <Stars count={rev.rating} />
+              <p className="text-xs text-gray-500 leading-relaxed italic my-3 line-clamp-3">"{rev.text}"</p>
+              <div className="flex items-center gap-2.5 pt-3 border-t border-gray-200/60">
+                <div className="w-8 h-8 bg-[#C67C4E] rounded-full flex items-center justify-center text-white font-black text-xs shrink-0">
+                  {rev.name.charAt(0).toUpperCase()}
                 </div>
-              ))}
+                <div>
+                  <h5 className="font-bold text-xs text-[#2F2D2C]">{rev.name}</h5>
+                  <span className="text-[9px] font-bold text-amber-700 uppercase tracking-wider">{rev.tier}</span>
+                </div>
+              </div>
             </div>
-          </div>
-        ) : (
-          <p className="text-center text-xs text-gray-400 font-bold mb-16">
-            Belum ada ulasan yang tayang. Jadilah yang pertama menulis!
-          </p>
-        )}
+          );
+
+          return (
+            <div className="flex flex-col gap-4 overflow-hidden mb-16">
+              {/* Baris 1 — gerak kiri */}
+              <div className="flex w-max marquee-left">
+                {r1.map((rev, i) => <Card key={`r1-${rev.id}-${i}`} rev={rev} />)}
+              </div>
+              {/* Baris 2 — gerak kanan */}
+              <div className="flex w-max marquee-right">
+                {r2.map((rev, i) => <Card key={`r2-${rev.id}-${i}`} rev={rev} />)}
+              </div>
+            </div>
+          );
+        })()}
 
         <div className="px-6">
           <ReviewForm />
@@ -1319,18 +1428,8 @@ export default function BogengLandingPage() {
       </footer>
 
       <style>{`
-        @keyframes marquee {
-          0% { transform: translateX(0%); }
-          100% { transform: translateX(-50%); }
-        }
-        .animate-marquee {
-          animation: marquee 32s linear infinite;
-        }
-        .animate-marquee:hover {
-          animation-play-state: paused;
-        }
         @media (prefers-reduced-motion: reduce) {
-          .animate-marquee { animation: none !important; }
+          .marquee-left, .marquee-right, .leaf-anim, .bean-anim { animation: none !important; }
         }
       `}</style>
     </div>

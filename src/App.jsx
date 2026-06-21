@@ -13,12 +13,12 @@ const MembersPage       = lazy(() => import("./pages/main/MembersPage"));
 const ReviewModeration  = lazy(() => import("./pages/main/ReviewModeration"));
 const AdminUsers        = lazy(() => import("./pages/main/AdminUsers"));
 const Login             = lazy(() => import("./pages/auth/Login"));
-const Register          = lazy(() => import("./pages/auth/Register"));
 const Forgot            = lazy(() => import("./pages/auth/Forgot"));
 const ErrorPage         = lazy(() => import("./pages/main/ErrorPage"));
 
 // 🟢 HALAMAN MEMBER (akun pelanggan, bukan admin)
 const MemberLogin       = lazy(() => import("./pages/auth/MemberLogin"));
+const MemberRegister    = lazy(() => import("./pages/auth/MemberRegister"));
 const MemberPortal      = lazy(() => import("./pages/main/MemberPortal"));
 
 // ─── LOADING SPINNER BOGENG ────────────────────────────────────────────────
@@ -40,11 +40,19 @@ const PublicRoute = () => {
   return user ? <Navigate to="/dashboard" replace /> : <Outlet />;
 };
 
-// ─── GUARD: hanya untuk yang SUDAH login ──────────────────────────────────
+// ─── GUARD: hanya untuk yang SUDAH login (admin) ──────────────────────────
 // Jika belum login → tendang ke /login
 const ProtectedRoute = () => {
   const { user } = useApp();
   return user ? <Outlet /> : <Navigate to="/login" replace />;
+};
+
+// ─── GUARD: khusus member pelanggan (cek localStorage, BUKAN AppContext) ──
+// Member login pakai username+HP via Supabase, tidak pakai sistem user admin.
+// Jika belum login member → tendang ke /member-login
+const MemberRoute = () => {
+  const session = localStorage.getItem('bogeng_member_session');
+  return session ? <Outlet /> : <Navigate to="/member-login" replace />;
 };
 
 function App() {
@@ -55,16 +63,22 @@ function App() {
         {/* ── LANDING PAGE (publik, selalu bisa diakses) ─────────────── */}
         <Route path="/" element={<BogengLandingPage />} />
 
-        {/* ── AUTH ROUTES (redirect ke /dashboard kalau sudah login) ─── */}
+        {/* ── AUTH ROUTES ADMIN (redirect ke /dashboard kalau sudah login) ─── */}
         <Route element={<PublicRoute />}>
-          <Route path="/login"    element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot"   element={<Forgot />} />
+          <Route path="/login"  element={<Login />} />
+          <Route path="/forgot" element={<Forgot />} />
         </Route>
 
-        {/* ── MEMBER ROUTES (autentikasi via Supabase, terpisah dari admin) ── */}
-        <Route path="/member-login" element={<MemberLogin />} />
-        <Route path="/member"       element={<MemberPortal />} />
+        {/* ── MEMBER ROUTES ─────────────────────────────────────────────
+            /member-login    → login pakai username + nomor HP
+            /member-register → daftar member baru (langsung auto-login)
+            /member          → portal member (wajib sudah login member)
+        ── */}
+        <Route path="/member-login"    element={<MemberLogin />} />
+        <Route path="/member-register" element={<MemberRegister />} />
+        <Route element={<MemberRoute />}>
+          <Route path="/member" element={<MemberPortal />} />
+        </Route>
 
         {/* ── AREA TERPROTEKSI (kasir/admin) ─────────────────────────── */}
         <Route element={<ProtectedRoute />}>

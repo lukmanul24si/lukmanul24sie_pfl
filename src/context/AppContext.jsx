@@ -20,21 +20,18 @@ export const AppProvider = ({ children }) => {
   // ================= AUTH STATE TEROPTIMALISASI =================
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('bogeng_user');
-    // Bersihkan nilai aneh hasil sisa debug jika ada
     if (saved === 'null' || saved === 'undefined' || !saved) return null;
     return saved;
   });
 
-  // FUNGSI UTAMA UNTUK LOGIN BARISTA
   const login = (userData) => {
     localStorage.setItem('bogeng_user', userData);
     setUser(userData);
   };
 
-  // FUNGSI UTAMA LOGOUT INSTAN (DIJAMIN LANGSUNG MENTAL KE LOGIN)
   const logout = () => {
-    localStorage.removeItem('bogeng_user'); // Hapus detik ini juga!
-    setUser(null);                          // State null detik ini juga!
+    localStorage.removeItem('bogeng_user');
+    setUser(null);
   };
 
   // ================= MENU LIST DATA =================
@@ -59,15 +56,17 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // 🟢 UPDATE: seed disesuaikan supaya status awal konsisten sama logika tier baru
-  //    (lihat getMemberTier di bawah — sebelumnya seed ini nyimpang dari aturan sendiri)
+  // 🟢 UPDATE: customer sekarang bisa punya field `phone` (no HP) — dipakai
+  // sebagai kredensial login Member Portal. Customer yang dibuat otomatis dari
+  // kasir (Dashboard) belum punya `phone` sampai pelanggannya "klaim" lewat
+  // halaman /member-register.
   const [customers, setCustomers] = useState(() => {
     const saved = localStorage.getItem('bogeng_customers');
     return saved ? JSON.parse(saved) : [
-      { id: 1, name: 'CHARLEY SMITH', email: 'charley@mail.com', visits: 4, totalSpend: 400000,  status: 'MEMBER', points: 40  },
-      { id: 2, name: 'JANE DOE',      email: 'jane@mail.com',    visits: 2, totalSpend: 150000,  status: 'MEMBER', points: 15  },
-      { id: 3, name: 'JOHN SMITH',    email: 'john@mail.com',    visits: 6, totalSpend: 900000,  status: 'VIP',    points: 90  },
-      { id: 4, name: 'LUKMAN HAKIM',  email: 'lukman@mail.com',  visits: 8, totalSpend: 1200000, status: 'VIP',    points: 120 },
+      { id: 1, name: 'CHARLEY SMITH', email: 'charley@mail.com', phone: null, visits: 4, totalSpend: 400000,  status: 'MEMBER', points: 40  },
+      { id: 2, name: 'JANE DOE',      email: 'jane@mail.com',    phone: null, visits: 2, totalSpend: 150000,  status: 'MEMBER', points: 15  },
+      { id: 3, name: 'JOHN SMITH',    email: 'john@mail.com',    phone: null, visits: 6, totalSpend: 900000,  status: 'VIP',    points: 90  },
+      { id: 4, name: 'LUKMAN HAKIM',  email: 'lukman@mail.com',  phone: null, visits: 8, totalSpend: 1200000, status: 'VIP',    points: 120 },
     ];
   });
 
@@ -77,11 +76,6 @@ export const AppProvider = ({ children }) => {
   }, [orders, customers]);
 
   // ================= LOGIKA TIER MEMBER ==============================
-  // 🟢 UPDATE: disamain persis sama kartu "Keuntungan Pelanggan Setia" di landing page
-  //   - Reguler     : default, aktif otomatis sejak transaksi pertama
-  //   - Loyal Member: minimal 10x transaksi
-  //   - VIP Member  : minimal 25x transaksi ATAU total belanja >= Rp500.000
-  // Status 'MEMBER' di data = label "Reguler" di tampilan landing page.
   const getMemberTier = (visits, totalSpend) => {
     if (visits >= 25 || totalSpend >= 500000) return 'VIP';
     if (visits >= 10) return 'LOYAL';
@@ -138,6 +132,7 @@ export const AppProvider = ({ children }) => {
           id:         Date.now(),
           name:       order.customer.toUpperCase(),
           email:      `${order.customer.toLowerCase().replace(/\s/g, '')}@mail.com`,
+          phone:      null,
           visits:     1,
           totalSpend: newTotalSpend,
           points:     earnedPoints,
@@ -163,24 +158,99 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // ================= 🟢 BARU: REGISTRASI MEMBER (Self Sign-up) ================
+  // Dipanggil dari halaman /member-register. Logikanya:
+  //   1. Cari dulu apakah nama ini SUDAH ada di data customer (mungkin pernah
+  //      dicatat kasir lewat Dashboard tapi belum punya nomor HP/akun member).
+  //   2a. Kalau ada & belum punya phone -> "klaim" record itu, tempelkan
+  //       nomor HP-nya. Histori transaksi & tier lama otomatis kebawa, gak
+  //       reset ke nol. Ini behavior yang paling adil buat pelanggan lama.
+  //   2b. Kalau ada & phone-nya BEDA -> nama ini udah dipakai orang lain,
+  //       tolak (suruh pakai nama lain atau ke /member-login).
+  //   3. Kalau belum ada sama sekali -> bikin customer baru dari nol.
+  // Return: { customer, error } — error null kalau sukses.
+  const registerMember = ({ name, phone }) => {
+    const cleanName  = name.trim();
+    const cleanPhone = phone.trim();
+    if (!cleanName || !cleanPhone) {
+      return { customer: null, error: 'Nama dan nomor HP wajib diisi.' };
+    }
+
+    const existing = customers.find(
+      (c) => c.name.toLowerCase() === cleanName.toLowerCase()
+    );
+
+    if (existing) {
+      if (existing.phone && existing.phone !== cleanPhone) {
+        return {
+          customer: null,
+          error: 'Nama ini sudah terdaftar dengan nomor HP lain. Coba /member-login atau hubungi kasir.',
+        };
+      }
+      // Klaim record lama (atau phone-nya sama persis, re-register aman)
+      let claimed = existing;
+      setCustomers((prev) =>
+        prev.map((c) => {
+          if (c.id === existing.id) {
+            claimed = { ...c, phone: cleanPhone };
+            return claimed;
+          }
+          return c;
+        })
+      );
+      return { customer: { ...existing, phone: cleanPhone }, error: null };
+    }
+
+    // Cek juga: nomor HP yang sama gak boleh dipakai 2 nama berbeda
+    const phoneTaken = customers.find((c) => c.phone === cleanPhone);
+    if (phoneTaken) {
+      return {
+        customer: null,
+        error: 'Nomor HP ini sudah terdaftar atas nama lain. Coba /member-login.',
+      };
+    }
+
+    const newCustomer = {
+      id:         Date.now(),
+      name:       cleanName.toUpperCase(),
+      email:      `${cleanName.toLowerCase().replace(/\s/g, '')}@mail.com`,
+      phone:      cleanPhone,
+      visits:     0,
+      totalSpend: 0,
+      points:     0,
+      status:     'MEMBER',
+    };
+    setCustomers((prev) => [...prev, newCustomer]);
+    return { customer: newCustomer, error: null };
+  };
+
+  // ================= 🟢 BARU: LOGIN MEMBER (validasi nama + no HP) =========
+  const loginMember = ({ name, phone }) => {
+    const cleanName  = name.trim().toLowerCase();
+    const cleanPhone = phone.trim();
+    const found = customers.find(
+      (c) => c.name.toLowerCase() === cleanName && c.phone === cleanPhone
+    );
+    if (!found) {
+      return { customer: null, error: 'Nama atau nomor HP gak ketemu di sistem kami. Belum daftar? Klik Daftar Member Baru.' };
+    }
+    return { customer: found, error: null };
+  };
+
   return (
     <AppContext.Provider value={{
-      // Auth data & actions
       user, login, logout,
-      // Data
       menuList, orders, customers,
-      // Actions
       addOrder, updateOrderStatus,
       deleteOrder, deleteCustomer,
-      // Helper tier (dipakai kalau ada halaman lain mau ngecek tier manual)
       getMemberTier,
+      registerMember, loginMember, // 🟢 BARU
     }}>
       {children}
     </AppContext.Provider>
   );
 };
 
-// 🚨 PENYESUAIAN BARU: EXPORT NAMED FUNCTION KETAT AGAR VITE GAK SALAH BACA MODULE 🚨
 export function useApp() {
   const context = useContext(AppContext);
   if (!context) {

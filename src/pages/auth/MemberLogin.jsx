@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Coffee, User, Phone } from 'lucide-react';
+import { ArrowRight, Coffee, User, Phone, UserPlus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 const BG_URL = 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1200&q=85';
@@ -183,14 +183,20 @@ export default function MemberLogin() {
             </motion.button>
           </form>
 
-          {/* Info */}
+          {/* Info daftar member */}
           <div className="mt-6 bg-[#FAF7F2] border-2 border-[#EFE6DC] rounded-2xl p-4">
             <p className="text-[10px] font-black text-[#2F2D2C] mb-2 flex items-center gap-1.5">
               <Coffee size={12} className="text-[#C67C4E]" /> Belum terdaftar sebagai member?
             </p>
-            <p className="text-[11px] text-gray-400 font-bold leading-relaxed">
-              Kunjungi langsung kasir Bogeng dan minta didaftarkan sebagai member. Gratis!
+            <p className="text-[11px] text-gray-400 font-bold leading-relaxed mb-3">
+              Daftarkan dirimu sekarang, gratis! Nikmati keuntungan member eksklusif Bogeng.
             </p>
+            <Link
+              to="/member-register"
+              className="inline-flex items-center gap-1.5 bg-[#C67C4E] hover:bg-[#A05C32] text-white font-black text-[10px] uppercase tracking-wider px-4 py-2.5 rounded-xl transition-colors duration-200 w-full justify-center"
+            >
+              <UserPlus size={12} /> Daftar Member Sekarang
+            </Link>
           </div>
 
           <p className="text-center text-xs text-gray-400 font-bold mt-5">
