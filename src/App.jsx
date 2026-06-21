@@ -17,6 +17,10 @@ const Register          = lazy(() => import("./pages/auth/Register"));
 const Forgot            = lazy(() => import("./pages/auth/Forgot"));
 const ErrorPage         = lazy(() => import("./pages/main/ErrorPage"));
 
+// 🟢 HALAMAN MEMBER (akun pelanggan, bukan admin)
+const MemberLogin       = lazy(() => import("./pages/auth/MemberLogin"));
+const MemberPortal      = lazy(() => import("./pages/main/MemberPortal"));
+
 // ─── LOADING SPINNER BOGENG ────────────────────────────────────────────────
 const Loading = () => (
   <div className="h-screen w-full flex items-center justify-center bg-[#F9F2ED]">
@@ -57,6 +61,10 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot"   element={<Forgot />} />
         </Route>
+
+        {/* ── MEMBER ROUTES (autentikasi via Supabase, terpisah dari admin) ── */}
+        <Route path="/member-login" element={<MemberLogin />} />
+        <Route path="/member"       element={<MemberPortal />} />
 
         {/* ── AREA TERPROTEKSI (kasir/admin) ─────────────────────────── */}
         <Route element={<ProtectedRoute />}>

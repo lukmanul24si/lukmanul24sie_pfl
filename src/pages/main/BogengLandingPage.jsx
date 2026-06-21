@@ -1,17 +1,6 @@
 // src/pages/main/BogengLandingPage.jsx
 //
 // Landing page publik Bogeng Coffee Shop — project akhir.
-// Fitur di file ini:
-//   1. Cursor custom (lingkaran ngikutin mouse, membesar di tombol/link)
-//   2. Background daun kopi bergerak halus pas di-scroll (opacity rendah, tenang)
-//   3. Hero dengan menu yang muter/melayang melingkar (orbit), klik -> detail
-//   4. Katalog menu lengkap per kategori (Kopi / Non-Kopi / Makanan / Cemilan)
-//   5. Penjelasan tingkatan Member (Reguler / Loyal / VIP) tanpa istilah "CRM"
-//   6. Ulasan pelanggan — tampil hanya yang sudah disetujui admin (lihat
-//      ReviewModeration.jsx & utils/reviewsStore.js)
-//   7. Form kirim ulasan baru (otomatis masuk status "pending")
-//   8. FAQ accordion
-//   9. Kontak & form keluhan/saran yang langsung kebuka ke WhatsApp
 //
 // Tema: terang/cream (sesuai request), bukan dark mode.
 
@@ -875,9 +864,6 @@ function Navbar() {
     setMobileOpen(false);
   };
 
-  // 🔴 UPDATE: overlay page-exit DIHAPUS TOTAL — sempat bikin layar gelap
-  // nyangkut di halaman Login kalau timing unmount meleset. Sekarang navigate
-  // langsung, gak ada elemen fixed/overlay yang bisa ketinggalan di DOM.
   const handleGoLogin = (e) => {
     e.preventDefault();
     navigate('/login');
@@ -922,7 +908,16 @@ function Navbar() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Tombol MASUK — animasi press + page-exit sebelum navigate */}
+            {/* Tombol PORTAL MEMBER — beda dari tombol Masuk admin */}
+            <button
+              onClick={() => navigate('/member-login')}
+              data-cursor-hover
+              className="hidden sm:inline-flex items-center gap-1.5 border border-[#C67C4E]/40 text-[#C67C4E] hover:bg-[#C67C4E]/10 px-4 py-2.5 rounded-full font-bold text-[11px] uppercase tracking-wider transition-colors"
+            >
+              Portal Member
+            </button>
+
+            {/* Tombol MASUK admin */}
             <motion.button
               onClick={handleGoLogin}
               data-cursor-hover
@@ -969,6 +964,12 @@ function Navbar() {
                     {link.label}
                   </motion.a>
                 ))}
+                <button
+                  onClick={() => navigate('/member-login')}
+                  className="mt-2 text-center border border-[#C67C4E]/40 text-[#C67C4E] px-5 py-3 rounded-full font-bold text-xs uppercase tracking-wider w-full"
+                >
+                  Portal Member
+                </button>
                 <motion.button
                   onClick={handleGoLogin}
                   whileTap={{ scale: 0.96 }}
@@ -992,6 +993,7 @@ export default function BogengLandingPage() {
   const [selectedMenu, setSelectedMenu] = useState(null);
   const [activeFaq, setActiveFaq] = useState(null);
   const [approvedReviews, setApprovedReviews] = useState([]);
+  const navigate = useNavigate(); // 🟢 BARU: dipakai buat CTA Portal Member di section #member
 
   useEffect(() => {
     setApprovedReviews(getApprovedReviews());
@@ -1110,8 +1112,7 @@ export default function BogengLandingPage() {
               Makin Sering Mampir, Makin Banyak Untungnya
             </h2>
             <p className="text-sm text-gray-500 leading-relaxed">
-              Gak perlu daftar ribet. Cukup kasih nama atau nomor HP saat bayar, sistem kasir kami yang
-              ngitung semuanya buat naikin levelmu otomatis.
+              Gak perlu daftar ribet. Cukup nama & nomor HP, kami yang ngitung semuanya buat naikin levelmu otomatis.
             </p>
           </div>
 
@@ -1143,6 +1144,30 @@ export default function BogengLandingPage() {
               );
             })}
           </div>
+
+          {/* 🟢 BARU: CTA ke Member Portal — masuk kalau udah daftar, atau daftar baru */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="mt-10 flex flex-wrap items-center gap-3"
+          >
+            <button
+              onClick={() => navigate('/member-login')}
+              data-cursor-hover
+              className="inline-flex items-center gap-2 bg-[#2F2D2C] hover:bg-[#C67C4E] text-white px-6 py-3.5 rounded-full font-bold text-xs uppercase tracking-wider transition-colors"
+            >
+              Masuk Member
+            </button>
+            <button
+              onClick={() => navigate('/member-register')}
+              data-cursor-hover
+              className="inline-flex items-center gap-2 bg-white border border-gray-200 hover:border-[#C67C4E] px-6 py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-gray-600 transition-colors"
+            >
+              Daftar Member Baru <ArrowRight size={14} />
+            </button>
+          </motion.div>
         </div>
       </RevealSection>
 
