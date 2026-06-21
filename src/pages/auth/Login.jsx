@@ -1,54 +1,61 @@
 // src/pages/auth/Login.jsx
 // Halaman login Bogeng — visual matching dengan landing page (cream + terracotta)
 // Fix: tidak ada overlay gelap dari page-exit landing page
-
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Coffee, ArrowRight, Sparkles } from 'lucide-react';
-import { useApp } from '../../context/AppContext';
+import logoImg from "../../assets/logo.png";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { Eye, EyeOff, Coffee, ArrowRight, Sparkles } from "lucide-react";
+import { useApp } from "../../context/AppContext";
 
 // Gambar kafe untuk background kanan (sama vibe dengan spotlight di landing)
-const BG_URL = 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1200&q=85';
+const BG_URL =
+  "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1200&q=85";
 
 export default function Login() {
   const { login } = useApp();
-  const navigate   = useNavigate();
+  const navigate = useNavigate();
 
-  const [credentials, setCredentials] = useState({ email: '', password: '' });
-  const [showPass,    setShowPass]    = useState(false);
-  const [loading,     setLoading]     = useState(false);
-  const [error,       setError]       = useState('');
-  const [mounted,     setMounted]     = useState(false);
+  const [credentials, setCredentials] = useState({ email: "", password: "" });
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [mounted, setMounted] = useState(false);
 
   // Fade-in saat halaman pertama load — bukan overlay dari luar
-  useEffect(() => { const t = setTimeout(() => setMounted(true), 40); return () => clearTimeout(t); }, []);
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 40);
+    return () => clearTimeout(t);
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (!credentials.email || !credentials.password) {
-      setError('Email dan password wajib diisi.');
+      setError("Email dan password wajib diisi.");
       return;
     }
 
     // Demo credential check
-    if (credentials.email !== 'admin@bogeng.com' || credentials.password !== 'admin123') {
-      setError('Email atau password salah. Cek info demo di bawah.');
+    if (
+      credentials.email !== "admin@bogeng.com" ||
+      credentials.password !== "admin123"
+    ) {
+      setError("Email atau password salah. Cek info demo di bawah.");
       return;
     }
 
     setLoading(true);
     // Sedikit delay agar terasa "proses" lalu masuk
     await new Promise((r) => setTimeout(r, 700));
-    login('admin');
+    login("admin");
     // PublicRoute akan otomatis redirect ke /dashboard setelah user terisi
   };
 
   const fillDemo = () => {
-    setCredentials({ email: 'admin@bogeng.com', password: 'admin123' });
-    setError('');
+    setCredentials({ email: "admin@bogeng.com", password: "admin123" });
+    setError("");
   };
 
   return (
@@ -56,12 +63,11 @@ export default function Login() {
       className="min-h-screen flex font-sans overflow-hidden"
       style={{
         opacity: mounted ? 1 : 0,
-        transition: 'opacity 0.35s ease-out',
+        transition: "opacity 0.35s ease-out",
       }}
     >
       {/* ── KIRI: Form ─────────────────────────────────────────────── */}
       <div className="relative flex flex-col justify-center items-center w-full lg:w-[48%] bg-[#FAF7F2] px-8 sm:px-14 py-12 z-10">
-
         {/* Logo kiri atas */}
         <motion.div
           initial={{ opacity: 0, y: -16 }}
@@ -69,9 +75,11 @@ export default function Login() {
           transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
           className="absolute top-7 left-8 sm:left-14 flex items-center gap-2"
         >
-          <div className="w-7 h-7 bg-[#C67C4E] rounded-lg flex items-center justify-center text-white font-black text-xs shadow-md shadow-[#C67C4E]/20">
-            B
-          </div>
+          <img
+            src={logoImg}
+            alt="Logo Bogeng"
+            className="w-7 h-7 rounded-lg object-cover shadow-md shadow-[#C67C4E]/20"
+          />
           <span className="text-sm font-black tracking-tight font-serif italic text-[#2F2D2C]">
             Bogeng<span className="text-[#C67C4E]">.</span>
           </span>
@@ -105,8 +113,11 @@ export default function Login() {
               Kasir & Admin
             </span>
             <h1 className="text-3xl sm:text-4xl font-black leading-[1.05] text-[#2F2D2C] mb-2">
-              Selamat<br />
-              <span className="font-serif italic text-[#C67C4E]">datang kembali.</span>
+              Selamat
+              <br />
+              <span className="font-serif italic text-[#C67C4E]">
+                datang kembali.
+              </span>
             </h1>
             <p className="text-sm text-gray-400">
               Masuk ke sistem kasir Bogeng Coffee untuk mulai melayani.
@@ -140,7 +151,7 @@ export default function Login() {
                 value={credentials.email}
                 onChange={(e) => {
                   setCredentials({ ...credentials, email: e.target.value });
-                  setError('');
+                  setError("");
                 }}
                 autoComplete="email"
                 className="w-full px-5 py-3.5 bg-white border-2 border-[#EFE6DC] hover:border-[#C67C4E]/40 focus:border-[#C67C4E] rounded-2xl outline-none font-bold text-sm text-[#2F2D2C] placeholder-gray-300 transition-all duration-200 shadow-sm"
@@ -162,12 +173,15 @@ export default function Login() {
               </div>
               <div className="relative">
                 <input
-                  type={showPass ? 'text' : 'password'}
+                  type={showPass ? "text" : "password"}
                   placeholder="••••••••"
                   value={credentials.password}
                   onChange={(e) => {
-                    setCredentials({ ...credentials, password: e.target.value });
-                    setError('');
+                    setCredentials({
+                      ...credentials,
+                      password: e.target.value,
+                    });
+                    setError("");
                   }}
                   autoComplete="current-password"
                   className="w-full px-5 py-3.5 bg-white border-2 border-[#EFE6DC] hover:border-[#C67C4E]/40 focus:border-[#C67C4E] rounded-2xl outline-none font-bold text-sm text-[#2F2D2C] placeholder-gray-300 transition-all duration-200 shadow-sm pr-12"
@@ -189,7 +203,7 @@ export default function Login() {
               disabled={loading}
               whileHover={{ scale: loading ? 1 : 1.02 }}
               whileTap={{ scale: loading ? 1 : 0.97 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              transition={{ type: "spring", stiffness: 400, damping: 20 }}
               className="w-full mt-2 py-4 bg-[#2F2D2C] hover:bg-[#C67C4E] text-white rounded-2xl font-black text-xs tracking-widest uppercase transition-colors duration-300 flex items-center justify-center gap-2 shadow-lg shadow-black/10 disabled:opacity-60 cursor-pointer"
             >
               {loading ? (
@@ -208,7 +222,9 @@ export default function Login() {
           {/* Divider */}
           <div className="flex items-center gap-3 my-6">
             <div className="flex-1 h-px bg-[#EFE6DC]" />
-            <span className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">atau</span>
+            <span className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">
+              atau
+            </span>
             <div className="flex-1 h-px bg-[#EFE6DC]" />
           </div>
 
@@ -231,19 +247,30 @@ export default function Login() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-[#FAF7F2] px-3 py-1.5 rounded-xl border border-[#EFE6DC]">
-                <p className="text-[9px] font-bold text-gray-400 uppercase mb-0.5">Email</p>
-                <code className="text-[11px] font-black text-[#2F2D2C]">admin@bogeng.com</code>
+                <p className="text-[9px] font-bold text-gray-400 uppercase mb-0.5">
+                  Email
+                </p>
+                <code className="text-[11px] font-black text-[#2F2D2C]">
+                  admin@bogeng.com
+                </code>
               </div>
               <div className="bg-[#FAF7F2] px-3 py-1.5 rounded-xl border border-[#EFE6DC]">
-                <p className="text-[9px] font-bold text-gray-400 uppercase mb-0.5">Password</p>
-                <code className="text-[11px] font-black text-[#2F2D2C]">admin123</code>
+                <p className="text-[9px] font-bold text-gray-400 uppercase mb-0.5">
+                  Password
+                </p>
+                <code className="text-[11px] font-black text-[#2F2D2C]">
+                  admin123
+                </code>
               </div>
             </div>
           </motion.button>
 
           <p className="text-center text-xs text-gray-400 font-bold mt-5">
-            Kamu pelanggan?{' '}
-            <Link to="/member-login" className="text-[#C67C4E] font-black hover:underline">
+            Kamu pelanggan?{" "}
+            <Link
+              to="/member-login"
+              className="text-[#C67C4E] font-black hover:underline"
+            >
               Portal Member →
             </Link>
           </p>
@@ -275,7 +302,9 @@ export default function Login() {
           className="absolute bottom-12 left-10 right-10"
         >
           <p className="text-white/90 text-2xl font-black font-serif italic leading-snug mb-2">
-            "Kopi yang diingat,<br />bukan cuma diminum."
+            "Kopi yang diingat,
+            <br />
+            bukan cuma diminum."
           </p>
           <p className="text-white/50 text-xs font-bold uppercase tracking-widest">
             Bogeng Coffee — Pekanbaru
@@ -291,7 +320,9 @@ export default function Login() {
         >
           <div className="flex items-center gap-2">
             <Coffee size={14} className="text-[#C67C4E]" />
-            <span className="text-xs font-black uppercase tracking-wider">Roasted Daily</span>
+            <span className="text-xs font-black uppercase tracking-wider">
+              Roasted Daily
+            </span>
           </div>
         </motion.div>
       </motion.div>

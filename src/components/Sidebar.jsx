@@ -14,7 +14,6 @@ const Sidebar = () => {
     { id: 'dashboard', label: 'Dashboard',      path: '/dashboard', icon: Coffee      },
     { id: 'orders',    label: 'Daftar Pesanan', path: '/orders',    icon: ShoppingBag },
     { id: 'customers', label: 'Customers',      path: '/customers', icon: Users       },
-    { id: 'members',   label: 'CRM Members',    path: '/members',   icon: UserCheck   }, // 👈 TAMBAHKAN TOMBOL NAVIGASI MEMBER
   ];
 
   // ================= HANDLE LOGOUT FIX =================

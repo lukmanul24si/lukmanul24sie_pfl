@@ -9,7 +9,6 @@ const BogengLandingPage = lazy(() => import("./pages/main/BogengLandingPage"));
 const Dashboard         = lazy(() => import("./pages/main/Dashboard"));
 const Orders            = lazy(() => import("./pages/main/Orders"));
 const Customers         = lazy(() => import("./pages/main/Customers"));
-const MembersPage       = lazy(() => import("./pages/main/MembersPage"));
 const ReviewModeration  = lazy(() => import("./pages/main/ReviewModeration"));
 const AdminUsers        = lazy(() => import("./pages/main/AdminUsers"));
 const Login             = lazy(() => import("./pages/auth/Login"));
@@ -86,7 +85,6 @@ function App() {
             <Route path="/dashboard"   element={<Dashboard />} />
             <Route path="/orders"      element={<Orders />} />
             <Route path="/customers"   element={<Customers />} />
-            <Route path="/members"     element={<MembersPage />} />
             <Route path="/reviews"     element={<ReviewModeration />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="*"            element={<ErrorPage />} />

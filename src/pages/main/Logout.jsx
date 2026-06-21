@@ -1,6 +1,7 @@
+// src/pages/main/Logout.jsx
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useApp } from "../../context/AppContext"; // Sesuaikan jika struktur folder berbeda
+import { useApp } from "../../context/AppContext";
 
 const Logout = () => {
   const { logout } = useApp();
@@ -9,12 +10,13 @@ const Logout = () => {
   useEffect(() => {
     const triggerLogout = async () => {
       try {
-        // 1. Eksekusi fungsi logout dari context untuk bersihkan state user
+        // 1. Eksekusi fungsi logout dari context untuk bersihkan state user admin
         await logout();
         
-        // 2. Bersihkan storage lokal secara siber untuk memastikan tidak ada token tersisa
-        localStorage.clear();
-        sessionStorage.clear();
+        // 2. 🟢 PERBAIKAN KRUSIAL: Hapus token autentikasi secara spesifik (TIDAK BOLEH MEMAKAI localStorage.clear())
+        localStorage.removeItem('bogeng_user');             // Hapus sesi Admin/Kasir
+        localStorage.removeItem('bogeng_member_session');    // Hapus sesi Member/Pelanggan
+        sessionStorage.clear();                              // Aman karena hanya membersihkan temporary tab saja
         
         // 3. Hapus style overlay Radix UI yang berpotensi mengunci layar
         document.body.removeAttribute("style");
@@ -25,12 +27,11 @@ const Logout = () => {
       } catch (error) {
         console.error("Gagal memproses logout:", error);
       } finally {
-        // 4. Setelah bersih, tendang kasir kembali ke halaman login
+        // 4. Setelah bersih, tendang kembali ke halaman login utama
         navigate("/login", { replace: true });
       }
     };
 
-    // Jalankan pembersihan saat komponen pertama kali dimuat (unmount)
     triggerLogout();
   }, [logout, navigate]);
 

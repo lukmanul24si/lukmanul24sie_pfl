@@ -3,19 +3,14 @@ import { useApp } from '../../context/AppContext';
 import { Search, Star, Award, Users, TrendingUp, ShoppingBag, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-// ================= AUDIO ENGINE AUDIO BROWSER =================
+// ================= AUDIO ENGINE =================
 let globalAudioCtx = null;
-
 const getAudioContext = () => {
   if (!globalAudioCtx) {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (AudioContext) {
-      globalAudioCtx = new AudioContext();
-    }
+    if (AudioContext) globalAudioCtx = new AudioContext();
   }
-  if (globalAudioCtx && globalAudioCtx.state === "suspended") {
-    globalAudioCtx.resume();
-  }
+  if (globalAudioCtx && globalAudioCtx.state === "suspended") globalAudioCtx.resume();
   return globalAudioCtx;
 };
 
@@ -23,7 +18,6 @@ const playSoundEffect = (type) => {
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
-    
     if (type === "creamyKey") {
       const osc1 = ctx.createOscillator();
       const gain1 = ctx.createGain();
@@ -31,45 +25,31 @@ const playSoundEffect = (type) => {
       const randomPitch = 140 + Math.random() * 40;
       osc1.frequency.setValueAtTime(randomPitch, ctx.currentTime);
       osc1.frequency.exponentialRampToValueAtTime(randomPitch * 0.4, ctx.currentTime + 0.04);
-      
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
       osc2.type = "triangle";
       osc2.frequency.setValueAtTime(450, ctx.currentTime);
       osc2.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.03);
-
       const filter = ctx.createBiquadFilter();
       filter.type = "lowpass";
       filter.frequency.setValueAtTime(550, ctx.currentTime);
-
-      osc1.connect(gain1);
-      osc2.connect(gain2);
-      gain1.connect(filter);
-      gain2.connect(filter);
-      filter.connect(ctx.destination);
-
+      osc1.connect(gain1); osc2.connect(gain2);
+      gain1.connect(filter); gain2.connect(filter); filter.connect(ctx.destination);
       gain1.gain.setValueAtTime(0.4, ctx.currentTime);
       gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
-      
       gain2.gain.setValueAtTime(0.25, ctx.currentTime);
       gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
-
-      osc1.start(ctx.currentTime);
-      osc2.start(ctx.currentTime);
-      osc1.stop(ctx.currentTime + 0.05);
-      osc2.stop(ctx.currentTime + 0.05);
+      osc1.start(ctx.currentTime); osc2.start(ctx.currentTime);
+      osc1.stop(ctx.currentTime + 0.05); osc2.stop(ctx.currentTime + 0.05);
     } else if (type === "clickDelete") {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      
+      osc.connect(gain); gain.connect(ctx.destination);
       osc.type = "sine";
       osc.frequency.setValueAtTime(460, ctx.currentTime);
       gain.gain.setValueAtTime(0.08, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.04);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.04);
     }
   } catch (error) {
     console.log("Audio Engine Error:", error);
@@ -77,28 +57,27 @@ const playSoundEffect = (type) => {
 };
 
 const Customers = () => {
-  const { customers = [], orders = [], deleteCustomer } = useApp();
+  const { customers = [], orders = [], deleteCustomer, getMemberTier } = useApp();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredCustomers = customers.filter(c => 
+  const filteredCustomers = customers.filter(c =>
     c.name ? c.name.toLowerCase().includes(searchQuery.toLowerCase()) : false
   );
 
-  // ================= ANALISIS DATA FINANSIAL UNTUK ADMIN =================
+  // Hitung tier live dari fungsi yang sama dengan member portal
+  const tierOf = (cust) =>
+    getMemberTier ? getMemberTier(cust.visits || 0, cust.totalSpend || 0) : (cust.status || 'MEMBER');
+
+  // ================= ANALISIS FINANSIAL =================
   const validOrders = orders.filter(o => o.status !== "CANCEL");
   const totalGrossRevenue = validOrders.reduce((acc, curr) => acc + Number(curr.total || 0), 0);
   const estimatedNetProfit = totalGrossRevenue * 0.6;
   const averageBasket = validOrders.length > 0 ? totalGrossRevenue / validOrders.length : 0;
 
-  // Variasi Framer Motion untuk List Berurutan
   const containerVariants = {
     hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.04 }
-    }
+    show: { opacity: 1, transition: { staggerChildren: 0.04 } }
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 8 },
     show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 350, damping: 25 } }
@@ -106,18 +85,13 @@ const Customers = () => {
 
   return (
     <div className="flex flex-col h-full w-full bg-white text-[#313131] font-sans antialiased overflow-hidden p-2">
-      
-      {/* CARD ANALITIK BISNIS - ANIMATED POP-IN */}
+
+      {/* CARD ANALITIK */}
       <div className="grid grid-cols-3 gap-3 mb-4 shrink-0 px-1">
-        
-        {/* Omset Masuk */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95, y: 5 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
+        <motion.div initial={{ opacity: 0, scale: 0.95, y: 5 }} animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.05 }}
           whileHover={{ y: -2, boxShadow: "0 6px 12px rgba(0,0,0,0.02)" }}
-          className="bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] p-3 rounded-xl flex items-center gap-3 select-none"
-        >
+          className="bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] p-3 rounded-xl flex items-center gap-3 select-none">
           <div className="w-8 h-8 bg-[#C67C4E]/10 text-[#C67C4E] rounded-lg flex items-center justify-center shrink-0">
             <ShoppingBag size={15} strokeWidth={2.5} />
           </div>
@@ -127,14 +101,10 @@ const Customers = () => {
           </div>
         </motion.div>
 
-        {/* Keuntungan Bersih */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95, y: 5 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
+        <motion.div initial={{ opacity: 0, scale: 0.95, y: 5 }} animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.1 }}
           whileHover={{ y: -2, boxShadow: "0 6px 12px rgba(0,0,0,0.02)" }}
-          className="bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] p-3 rounded-xl flex items-center gap-3 select-none"
-        >
+          className="bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] p-3 rounded-xl flex items-center gap-3 select-none">
           <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center shrink-0">
             <TrendingUp size={15} strokeWidth={2.5} />
           </div>
@@ -144,14 +114,10 @@ const Customers = () => {
           </div>
         </motion.div>
 
-        {/* Nilai Rata-rata Belanja */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95, y: 5 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
+        <motion.div initial={{ opacity: 0, scale: 0.95, y: 5 }} animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.15 }}
           whileHover={{ y: -2, boxShadow: "0 6px 12px rgba(0,0,0,0.02)" }}
-          className="bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] p-3 rounded-xl flex items-center gap-3 select-none"
-        >
+          className="bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] p-3 rounded-xl flex items-center gap-3 select-none">
           <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center shrink-0">
             <Users size={15} strokeWidth={2.5} />
           </div>
@@ -168,24 +134,19 @@ const Customers = () => {
           <h3 className="text-[10px] font-black tracking-wider uppercase text-[#313131]">
             Database CRM & Peringkat Pelanggan
           </h3>
-          <p className="text-[8px] text-[#9B9B9B] font-medium mt-0.5">Sistem Tingkatan: 3x Belanja = LOYAL, 5x Belanja = VIP</p>
+          <p className="text-[8px] text-[#9B9B9B] font-medium mt-0.5">
+            Sistem Tingkatan: 10x Transaksi / Rp250rb = LOYAL · 25x Transaksi / Rp500rb = VIP
+          </p>
         </div>
-
         <div className="w-64 relative flex items-center">
           <Search size={13} className="absolute left-3 text-[#9B9B9B]" strokeWidth={2} />
-          <input 
-            type="text"
-            placeholder="Cari nama pelanggan..." 
-            onChange={(e) => {
-              playSoundEffect("creamyKey"); // ➕ Efek ASMR ketikan creamy
-              setSearchQuery(e.target.value);
-            }}
-            className="w-full bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] rounded-lg pl-8 pr-3 py-1.5 text-[10px] font-medium focus:outline-none focus:border-[#C67C4E] focus:bg-white transition-all text-[#313131] placeholder:text-[#B0B0B0]"
-          />
+          <input type="text" placeholder="Cari nama pelanggan..."
+            onChange={(e) => { playSoundEffect("creamyKey"); setSearchQuery(e.target.value); }}
+            className="w-full bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] rounded-lg pl-8 pr-3 py-1.5 text-[10px] font-medium focus:outline-none focus:border-[#C67C4E] focus:bg-white transition-all text-[#313131] placeholder:text-[#B0B0B0]" />
         </div>
       </div>
 
-      {/* Tabel Database CRM */}
+      {/* Tabel CRM */}
       <div className="flex-1 overflow-y-auto border-[0.5px] border-[#E3E3E3] rounded-xl overflow-hidden custom-scrollbar">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -197,13 +158,8 @@ const Customers = () => {
               <th className="py-3 px-6 w-[10%] text-right">Aksi</th>
             </tr>
           </thead>
-          
-          <motion.tbody 
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            className="divide-y divide-[#E3E3E3]/60 text-[11px] font-medium"
-          >
+          <motion.tbody variants={containerVariants} initial="hidden" animate="show"
+            className="divide-y divide-[#E3E3E3]/60 text-[11px] font-medium">
             {filteredCustomers.length === 0 ? (
               <motion.tr variants={itemVariants}>
                 <td colSpan="5" className="text-center py-16 text-[#9B9B9B] text-[10px] font-bold">
@@ -212,16 +168,13 @@ const Customers = () => {
               </motion.tr>
             ) : (
               filteredCustomers.map((cust) => {
-                const isVip = cust.status === 'VIP';
-                const isLoyal = cust.status === 'LOYAL';
+                const tier = tierOf(cust);
+                const isVip = tier === 'VIP';
+                const isLoyal = tier === 'LOYAL';
                 return (
-                  <motion.tr 
-                    key={cust.id} 
-                    variants={itemVariants}
+                  <motion.tr key={cust.id} variants={itemVariants}
                     whileHover={{ backgroundColor: "#FDFBF9", x: 2, transition: { duration: 0.1 } }}
-                    className="transition-colors"
-                  >
-                    {/* Profil Member */}
+                    className="transition-colors">
                     <td className="py-2.5 px-6 flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-[#EDD6C8]/50 text-[#C67C4E] flex items-center justify-center font-black text-[9px] shrink-0 select-none">
                         {cust.name ? cust.name.charAt(0).toUpperCase() : 'B'}
@@ -231,44 +184,30 @@ const Customers = () => {
                         <p className="text-[8px] text-[#9B9B9B]">{cust.email || '-'}</p>
                       </div>
                     </td>
-                    
-                    {/* Hitungan Kunjungan */}
                     <td className="py-2.5 px-6 text-center font-black text-[#313131]">
                       {cust.visits || 0}x transaksi
                     </td>
-
-                    {/* Akumulasi Poin Asli */}
                     <td className="py-2.5 px-6 font-bold text-[#C67C4E]">
                       ✨ <span className="font-black text-[12px]">{cust.points || 0}</span> <span className="text-[9px] text-[#9B9B9B] font-medium">pts</span>
                     </td>
-
-                    {/* Tag Tier Status Dinamis */}
                     <td className="py-2.5 px-6 text-center">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[7px] font-black tracking-wider uppercase select-none ${
-                        isVip ? 'bg-[#313131] text-white shadow-sm animate-pulse' : 
-                        isLoyal ? 'bg-[#FEF3C7] text-[#D97706]' : 
+                        isVip ? 'bg-[#313131] text-white shadow-sm animate-pulse' :
+                        isLoyal ? 'bg-[#FEF3C7] text-[#D97706]' :
                         'bg-gray-100 text-gray-500'
                       }`}>
                         {isVip ? <Award size={8} strokeWidth={3} /> : <Star size={8} strokeWidth={3} />}
-                        {cust.status || 'MEMBER'}
+                        {tier}
                       </span>
                     </td>
-
-                    {/* Tombol Hapus Data Corrupt */}
                     <td className="py-2.5 px-6 text-right">
                       {deleteCustomer && (
-                        <button
-                          onClick={() => {
-                            playSoundEffect("clickDelete"); // ➕ Efek suara saat klik hapus
-                            deleteCustomer(cust.id);
-                          }}
-                          className="p-1 text-[#9B9B9B] hover:text-red-500 hover:bg-red-50 rounded transition-all"
-                        >
+                        <button onClick={() => { playSoundEffect("clickDelete"); deleteCustomer(cust.id); }}
+                          className="p-1 text-[#9B9B9B] hover:text-red-500 hover:bg-red-50 rounded transition-all">
                           <Trash2 size={12} strokeWidth={2.5} />
                         </button>
                       )}
                     </td>
-
                   </motion.tr>
                 );
               })

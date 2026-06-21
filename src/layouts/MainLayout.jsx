@@ -18,15 +18,14 @@ const MainLayout = () => {
 
   // ✅ UPDATE: Menambahkan menu CRM Members ke dalam array navigasi figma kedai
   const menuItems = [
-  { name: 'Dashboard', path: '/dashboard', icon: Coffee },
-  { name: 'Daftar Pesanan', path: '/orders', icon: Receipt },
-  { name: 'Customers', path: '/customers', icon: Users },
-  { name: 'CRM Members', path: '/members', icon: UserCheck },
-  { name: 'Ulasan Pelanggan', path: '/reviews', icon: MessageSquareText }, // 👈 baris baru
-];
+    { name: 'Dashboard', path: '/dashboard', icon: Coffee },
+    { name: 'Daftar Pesanan', path: '/orders', icon: Receipt },
+    { name: 'Customers', path: '/customers', icon: Users },
+    { name: 'Ulasan Pelanggan', path: '/reviews', icon: MessageSquareText },
+  ];
 
   // =========================================================================
-  // 🔴 HANDLE LOGOUT FIX (ANTI-STUCK TOTAL & RADIKAL)
+  // 🔴 HANDLE LOGOUT FIX (ANTI-STUCK & TIDAK MENGHAPUS DATABASE LOCALSTORAGE)
   // =========================================================================
   const handleLogout = () => {
     if (confirm("Keluar dari aplikasi POS Bogeng Coffee?")) {
@@ -42,8 +41,9 @@ const MainLayout = () => {
         document.documentElement.style.pointerEvents = "auto";
         document.documentElement.style.overflow = "unset";
 
-        // 2. Hancurkan semua token session biar ga ada data nyangkut
-        localStorage.clear();
+        // 2. 🟢 PERBAIKAN FATAL: Hanya hapus token sesi saja, database aman tidak terhapus!
+        localStorage.removeItem('bogeng_user');
+        localStorage.removeItem('bogeng_member_session');
         sessionStorage.clear();
 
         // 3. Update state global user di context menjadi null
@@ -51,7 +51,7 @@ const MainLayout = () => {
       } catch (error) {
         console.error("Gagal membersihkan sesi login:", error);
       } finally {
-        // 4. Hard-bounce redirect langsung ke login (Virtual DOM dibersihkan total)
+        // 4. Hard-bounce redirect langsung ke login
         setTimeout(() => {
           window.location.replace("/login");
         }, 50);
@@ -149,7 +149,7 @@ const MainLayout = () => {
               {/* Tombol Logout Sesuai Request Projek Kasir */}
               <motion.button 
                 whileHover={{ x: 2 }}
-                onClick={handleLogout} // ✅ UPDATE: Memanggil fungsi pembersihan radikal di atas
+                onClick={handleLogout}
                 className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-bold text-[11px] text-red-500 hover:bg-red-50/50 transition-all mt-2 text-left w-full cursor-pointer"
               >
                 <LogOut size={14} className="shrink-0" strokeWidth={2} />

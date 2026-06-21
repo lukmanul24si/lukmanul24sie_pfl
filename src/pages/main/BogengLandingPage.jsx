@@ -14,7 +14,7 @@
 //   9. Kontak & form keluhan/saran yang langsung kebuka ke WhatsApp
 //
 // Tema: terang/cream (sesuai request), bukan dark mode.
-
+import logoImg from '../../assets/logo.png';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   motion,
@@ -942,17 +942,19 @@ function Navbar() {
       <nav className="fixed top-0 left-0 right-0 z-[100] px-6 sm:px-10 py-4 bg-white/85 backdrop-blur-md border-b border-gray-100">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button
-            onClick={(e) => handleNavClick(e, 'beranda')}
-            className="flex items-center gap-2 select-none"
-            data-cursor-hover
-          >
-            <div className="w-8 h-8 bg-[#C67C4E] rounded-lg flex items-center justify-center text-white font-black text-sm">
-              B
-            </div>
-            <span className="text-base font-black tracking-tight font-serif italic text-[#2F2D2C]">
-              Bogeng<span className="text-[#C67C4E]">.</span>
-            </span>
-          </button>
+  onClick={(e) => handleNavClick(e, 'beranda')}
+  className="flex items-center gap-2 select-none"
+  data-cursor-hover
+>
+  <img
+    src={logoImg}
+    alt="Logo Bogeng"
+    className="w-8 h-8 rounded-lg object-cover"
+  />
+  <span className="text-base font-black tracking-tight font-serif italic text-[#2F2D2C]">
+    Bogeng<span className="text-[#C67C4E]">.</span>
+  </span>
+</button>
 
           <div className="hidden md:flex items-center gap-7 text-[11px] font-bold tracking-wide uppercase text-gray-500">
             {navLinks.map((link) => (
@@ -1097,8 +1099,8 @@ export default function BogengLandingPage() {
               bukan cuma diminum.
             </h1>
             <p className="max-w-md text-sm text-gray-500 mb-8 leading-relaxed">
-              Setiap cangkir di Bogeng diseduh dari biji pilihan dan disajikan barista yang paham
-              racikanmu. Makin sering mampir, makin banyak untungnya lewat sistem member otomatis kami.
+              Bogeng menghadirkan pengalaman menikmati kopi dari biji pilihan terbaik dengan penyajian yang terjaga kualitasnya. 
+              Loyalitas Anda kami hargai melalui sistem keanggotaan yang berjalan secara otomatis.
             </p>
             <div className="flex flex-wrap gap-3">
               <a

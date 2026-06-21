@@ -2,22 +2,22 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 import espressoImg from '../assets/espresso.png';
 import caramelImg from '../assets/caramel_macchiato.png';
-import palmSugarImg from '../assets/palm_sugar_coffee.png';
-import matchaImg from '../assets/matcha_latte.png';
+import palmSugarImg       from '../assets/palm_sugar_coffee.png';
+import matchaImg          from '../assets/matcha_latte.png';
 import chococreamylavaImg from '../assets/chococreamy_lava.png';
-import redvelvetImg from '../assets/redvelvet.png';
-import nasigorengImg from '../assets/nasigoreng.jpg';
-import sandwichImg from '../assets/sandwich.jpg';
-import spagetiImg from '../assets/spageti.jpg';
-import dimsumImg from '../assets/dimsum.jpg';
-import cirengImg from '../assets/cire1.png';
-import frenchImg from '../assets/french.jpg';
+import redvelvetImg       from '../assets/redvelvet.png';
+import nasigorengImg      from '../assets/nasigoreng.jpg';
+import sandwichImg        from '../assets/sandwich.jpg';
+import spagetiImg         from '../assets/spageti.jpg';
+import dimsumImg          from '../assets/dimsum.jpg';
+import cirengImg          from '../assets/cire1.png';
+import frenchImg          from '../assets/french.jpg';
 
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
 
-  // ================= AUTH STATE TEROPTIMALISASI =================
+  // ================= AUTH STATE =================
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('bogeng_user');
     if (saved === 'null' || saved === 'undefined' || !saved) return null;
@@ -29,12 +29,13 @@ export const AppProvider = ({ children }) => {
     setUser(userData);
   };
 
+  // 🟢 PERBAIKAN: Pastikan logout admin HANYA menghapus key usernya saja, TIDAK MENGHAPUS database orders/customers!
   const logout = () => {
     localStorage.removeItem('bogeng_user');
     setUser(null);
   };
 
-  // ================= MENU LIST DATA =================
+  // ================= MENU LIST =================
   const [menuList] = useState([
     { id: 101, name: 'Espresso Bold',        price: 25000, category: 'Coffee',     img: espressoImg,        isBestSeller: true  },
     { id: 102, name: 'Caramel Macchiato',    price: 35000, category: 'Coffee',     img: caramelImg,         isBestSeller: true  },
@@ -56,29 +57,41 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // 🟢 UPDATE: customer sekarang bisa punya field `phone` (no HP) — dipakai
-  // sebagai kredensial login Member Portal. Customer yang dibuat otomatis dari
-  // kasir (Dashboard) belum punya `phone` sampai pelanggannya "klaim" lewat
-  // halaman /member-register.
   const [customers, setCustomers] = useState(() => {
     const saved = localStorage.getItem('bogeng_customers');
-    return saved ? JSON.parse(saved) : [
-      { id: 1, name: 'CHARLEY SMITH', email: 'charley@mail.com', phone: null, visits: 4, totalSpend: 400000,  status: 'MEMBER', points: 40  },
-      { id: 2, name: 'JANE DOE',      email: 'jane@mail.com',    phone: null, visits: 2, totalSpend: 150000,  status: 'MEMBER', points: 15  },
-      { id: 3, name: 'JOHN SMITH',    email: 'john@mail.com',    phone: null, visits: 6, totalSpend: 900000,  status: 'VIP',    points: 90  },
-      { id: 4, name: 'LUKMAN HAKIM',  email: 'lukman@mail.com',  phone: null, visits: 8, totalSpend: 1200000, status: 'VIP',    points: 120 },
+    if (saved) return JSON.parse(saved);
+    
+    // Default awal jika local storage benar-benar kosong pertama kali aplikasi dijalankan
+    return [
+      { id: 1, name: 'CHARLEY SMITH', email: 'charley@mail.com', phone: '08123456789', visits: 4, totalSpend: 400000,  status: 'MEMBER', points: 40  },
+      { id: 2, name: 'JANE DOE',      email: 'jane@mail.com',    phone: '08234567890', visits: 2, totalSpend: 150000,  status: 'MEMBER', points: 15  },
+      { id: 3, name: 'JOHN SMITH',    email: 'john@mail.com',    phone: '08345678901', visits: 6, totalSpend: 900000,  status: 'VIP',    points: 90  },
+      { id: 4, name: 'LUKMAN HAKIM',  email: 'lukman@mail.com',  phone: '08456789012', visits: 8, totalSpend: 1200000, status: 'VIP',    points: 120 },
     ];
   });
 
-  useEffect(() => {
-    localStorage.setItem('bogeng_orders',    JSON.stringify(orders));
-    localStorage.setItem('bogeng_customers', JSON.stringify(customers));
-  }, [orders, customers]);
+  const [reviews, setReviews] = useState(() => {
+    const saved = localStorage.getItem('bogeng_reviews');
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  // ================= LOGIKA TIER MEMBER ==============================
+  // 🟢 SINKRONISASI DATA MANDIRI (Saling mengawasi tanpa merusak satu sama lain)
+  useEffect(() => {
+    localStorage.setItem('bogeng_orders', JSON.stringify(orders));
+  }, [orders]);
+
+  useEffect(() => {
+    localStorage.setItem('bogeng_customers', JSON.stringify(customers));
+  }, [customers]);
+
+  useEffect(() => {
+    localStorage.setItem('bogeng_reviews', JSON.stringify(reviews));
+  }, [reviews]);
+
+  // ================= LOGIKA TIER MEMBER =================
   const getMemberTier = (visits, totalSpend) => {
     if (visits >= 25 || totalSpend >= 500000) return 'VIP';
-    if (visits >= 10) return 'LOYAL';
+    if (visits >= 10 || totalSpend >= 250000) return 'LOYAL';
     return 'MEMBER';
   };
 
@@ -94,20 +107,37 @@ export const AppProvider = ({ children }) => {
       appliedDiscount = true;
     }
 
+    // 🟢 PERBAIKAN SENSITIF: Memastikan items yang disave SELALU berwujud array of objects
+    // Jika order.items dikirim dari portal berupa array, gunakan langsung. 
+    // Jika berupa string/lainnya, bungkus dengan aman agar riwayat pesanan member ke-1 tidak error saat member ke-2 login.
+    let finalizedItems = [];
+    if (Array.isArray(order.items)) {
+      finalizedItems = order.items;
+    } else {
+      finalizedItems = [{ id: Date.now(), name: String(order.items || 'Menu Pesanan'), qty: 1, price: finalSubtotal }];
+    }
+
     const processedOrder = {
       ...order,
+      id: order.id || Date.now(),
+      items: finalizedItems,
       discount:    discountAmount,
       total:       finalSubtotal,
       hasDiscount: appliedDiscount,
+      createdAt:   order.createdAt || new Date().toISOString()
     };
 
-    setOrders(prev => [processedOrder, ...prev]);
+    setOrders(prevOrders => {
+      const isExist = prevOrders.some(o => o.id === processedOrder.id);
+      if (isExist) return prevOrders;
+      return [processedOrder, ...prevOrders];
+    });
 
     const earnedPoints = Math.floor(finalSubtotal / 10000);
 
     setCustomers(prevCust => {
       const exists = prevCust.find(c =>
-        c.name.toLowerCase() === order.customer.toLowerCase()
+        c.name.toLowerCase() === order.customer.toLowerCase() || (order.phone && c.phone === order.phone)
       );
 
       if (exists) {
@@ -116,7 +146,7 @@ export const AppProvider = ({ children }) => {
         const newStatus     = getMemberTier(newVisits, newTotalSpend);
 
         return prevCust.map(c =>
-          c.name.toLowerCase() === order.customer.toLowerCase()
+          c.id === exists.id
             ? {
                 ...c,
                 visits:     newVisits,
@@ -129,10 +159,10 @@ export const AppProvider = ({ children }) => {
       } else {
         const newTotalSpend = finalSubtotal;
         return [...prevCust, {
-          id:         Date.now(),
+          id:         Date.now() + Math.floor(Math.random() * 1000),
           name:       order.customer.toUpperCase(),
           email:      `${order.customer.toLowerCase().replace(/\s/g, '')}@mail.com`,
-          phone:      null,
+          phone:      order.phone || null,
           visits:     1,
           totalSpend: newTotalSpend,
           points:     earnedPoints,
@@ -158,17 +188,40 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // ================= 🟢 BARU: REGISTRASI MEMBER (Self Sign-up) ================
-  // Dipanggil dari halaman /member-register. Logikanya:
-  //   1. Cari dulu apakah nama ini SUDAH ada di data customer (mungkin pernah
-  //      dicatat kasir lewat Dashboard tapi belum punya nomor HP/akun member).
-  //   2a. Kalau ada & belum punya phone -> "klaim" record itu, tempelkan
-  //       nomor HP-nya. Histori transaksi & tier lama otomatis kebawa, gak
-  //       reset ke nol. Ini behavior yang paling adil buat pelanggan lama.
-  //   2b. Kalau ada & phone-nya BEDA -> nama ini udah dipakai orang lain,
-  //       tolak (suruh pakai nama lain atau ke /member-login).
-  //   3. Kalau belum ada sama sekali -> bikin customer baru dari nol.
-  // Return: { customer, error } — error null kalau sukses.
+  // ================= REVIEWS FUNCTIONS =================
+  const addReview = (reviewData) => {
+    // 🟢 PERBAIKAN SENSITIF: Petakan nama pengirim (`name` atau `customerName`) & ulasan (`text` atau `comment`)
+    // agar ulasan dari MemberPortal tidak lagi terbaca "ANONIM" di admin moderasi.
+    const senderName = reviewData.customerName || reviewData.name || 'PELANGGAN SETIA';
+    const reviewText = reviewData.comment || reviewData.text || '';
+
+    const newReview = {
+      id: Date.now(),
+      customerName: senderName,
+      name: senderName, // Simpan kedua key untuk kompatibilitas dashboard
+      phone: reviewData.phone || '',
+      rating: Number(reviewData.rating || 5),
+      comment: reviewText,
+      text: reviewText, // Simpan kedua key untuk kompatibilitas rendering
+      status: 'PENDING',
+      tier: reviewData.tier || 'MEMBER',
+      createdAt: new Date().toISOString()
+    };
+    setReviews(prev => [newReview, ...prev]);
+  };
+
+  const updateReviewStatus = (id, status) => {
+    // Memastikan status diubah secara konsisten kapital (APPROVED / REJECTED / PENDING)
+    setReviews(prev => prev.map(r => r.id === id ? { ...r, status: status.toUpperCase() } : r));
+  };
+
+  const deleteReview = (id) => {
+    if (window.confirm('Hapus ulasan ini secara permanen?')) {
+      setReviews(prev => prev.filter(r => r.id !== id));
+    }
+  };
+
+  // ================= REGISTRASI MEMBER =================
   const registerMember = ({ name, phone }) => {
     const cleanName  = name.trim();
     const cleanPhone = phone.trim();
@@ -182,32 +235,17 @@ export const AppProvider = ({ children }) => {
 
     if (existing) {
       if (existing.phone && existing.phone !== cleanPhone) {
-        return {
-          customer: null,
-          error: 'Nama ini sudah terdaftar dengan nomor HP lain. Coba /member-login atau hubungi kasir.',
-        };
+        return { customer: null, error: 'Nama ini sudah terdaftar dengan nomor HP lain. Coba login atau hubungi kasir.' };
       }
-      // Klaim record lama (atau phone-nya sama persis, re-register aman)
-      let claimed = existing;
       setCustomers((prev) =>
-        prev.map((c) => {
-          if (c.id === existing.id) {
-            claimed = { ...c, phone: cleanPhone };
-            return claimed;
-          }
-          return c;
-        })
+        prev.map((c) => c.id === existing.id ? { ...c, phone: cleanPhone } : c)
       );
       return { customer: { ...existing, phone: cleanPhone }, error: null };
     }
 
-    // Cek juga: nomor HP yang sama gak boleh dipakai 2 nama berbeda
     const phoneTaken = customers.find((c) => c.phone === cleanPhone);
     if (phoneTaken) {
-      return {
-        customer: null,
-        error: 'Nomor HP ini sudah terdaftar atas nama lain. Coba /member-login.',
-      };
+      return { customer: null, error: 'Nomor HP ini sudah terdaftar atas nama lain.' };
     }
 
     const newCustomer = {
@@ -224,7 +262,7 @@ export const AppProvider = ({ children }) => {
     return { customer: newCustomer, error: null };
   };
 
-  // ================= 🟢 BARU: LOGIN MEMBER (validasi nama + no HP) =========
+  // ================= LOGIN MEMBER =================
   const loginMember = ({ name, phone }) => {
     const cleanName  = name.trim().toLowerCase();
     const cleanPhone = phone.trim();
@@ -232,7 +270,7 @@ export const AppProvider = ({ children }) => {
       (c) => c.name.toLowerCase() === cleanName && c.phone === cleanPhone
     );
     if (!found) {
-      return { customer: null, error: 'Nama atau nomor HP gak ketemu di sistem kami. Belum daftar? Klik Daftar Member Baru.' };
+      return { customer: null, error: 'Nama atau nomor HP tidak terdaftar.' };
     }
     return { customer: found, error: null };
   };
@@ -241,10 +279,12 @@ export const AppProvider = ({ children }) => {
     <AppContext.Provider value={{
       user, login, logout,
       menuList, orders, customers,
+      reviews,
       addOrder, updateOrderStatus,
       deleteOrder, deleteCustomer,
       getMemberTier,
-      registerMember, loginMember, // 🟢 BARU
+      registerMember, loginMember,
+      addReview, updateReviewStatus, deleteReview
     }}>
       {children}
     </AppContext.Provider>
@@ -254,7 +294,7 @@ export const AppProvider = ({ children }) => {
 export function useApp() {
   const context = useContext(AppContext);
   if (!context) {
-    throw new Error('useApp harus digunakan di dalam komponen AppProvider, Bro!');
+    throw new Error('useApp harus digunakan di dalam komponen AppProvider!');
   }
   return context;
 }
