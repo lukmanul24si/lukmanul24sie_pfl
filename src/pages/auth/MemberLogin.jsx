@@ -1,10 +1,9 @@
 // src/pages/auth/MemberLogin.jsx
-// Login khusus pelanggan member — terpisah dari login admin/kasir
 import logoImg from '../../assets/logo.png';
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Coffee, User, Phone, UserPlus } from "lucide-react";
+import { ArrowRight, Coffee, User, Phone, UserPlus, Sparkles } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
 const BG_URL =
@@ -18,12 +17,8 @@ export default function MemberLogin() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Kalau sudah login, langsung ke portal
     const saved = localStorage.getItem("bogeng_member_session");
-    if (saved) {
-      navigate("/member");
-      return;
-    }
+    if (saved) { navigate("/member"); return; }
     const t = setTimeout(() => setMounted(true), 40);
     return () => clearTimeout(t);
   }, [navigate]);
@@ -46,7 +41,6 @@ export default function MemberLogin() {
       setError("Username dan nomor HP wajib diisi.");
       return;
     }
-
     setLoading(true);
     try {
       const { data, error: dbErr } = await supabase
@@ -57,25 +51,22 @@ export default function MemberLogin() {
         .single();
 
       if (dbErr || !data) {
-        setError(
-          "Username atau nomor HP tidak ditemukan. Pastikan sudah daftar member.",
-        );
+        setError("Username atau nomor HP tidak ditemukan. Pastikan sudah daftar member.");
         return;
       }
 
-      localStorage.setItem(
-        "bogeng_member_session",
-        JSON.stringify({
-          username: data.username_akun,
-          id: data.id,
-        }),
-      );
+      localStorage.setItem("bogeng_member_session", JSON.stringify({ username: data.username_akun, id: data.id }));
       navigate("/member");
     } catch (err) {
       setError("Terjadi kesalahan. Coba lagi.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const fillDemo = () => {
+    setForm({ username: "hakimskennedy", phone: "0812" });
+    setError("");
   };
 
   return (
@@ -85,40 +76,30 @@ export default function MemberLogin() {
     >
       {/* ── KIRI: Form ── */}
       <div className="relative flex flex-col justify-center items-center w-full lg:w-[48%] bg-[#FAF7F2] px-8 sm:px-14 py-12 z-10">
-        {/* Logo kiri atas */}
+        {/* Logo */}
         <motion.div
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
           className="absolute top-7 left-8 sm:left-14 flex items-center gap-2"
         >
-          <img
-            src={logoImg}
-            alt="Logo Bogeng"
-            className="w-7 h-7 rounded-lg object-cover shadow-md shadow-[#C67C4E]/20"
-          />
+          <img src={logoImg} alt="Logo Bogeng" className="w-7 h-7 rounded-lg object-cover shadow-md shadow-[#C67C4E]/20" />
           <span className="text-sm font-black tracking-tight font-serif italic text-[#2F2D2C]">
             Bogeng<span className="text-[#C67C4E]">.</span>
           </span>
         </motion.div>
 
-        {/* Link ke beranda */}
+        {/* Nav kanan atas */}
         <motion.div
           initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.55, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="absolute top-7 right-8 sm:right-14 flex items-center gap-3"
         >
-          <Link
-            to="/login"
-            className="text-[11px] font-bold text-gray-400 hover:text-[#C67C4E] uppercase tracking-wider transition-colors"
-          >
+          <Link to="/login" className="text-[11px] font-bold text-gray-400 hover:text-[#C67C4E] uppercase tracking-wider transition-colors">
             Login Admin
           </Link>
-          <Link
-            to="/"
-            className="text-[11px] font-bold text-gray-400 hover:text-[#C67C4E] uppercase tracking-wider transition-colors"
-          >
+          <Link to="/" className="text-[11px] font-bold text-gray-400 hover:text-[#C67C4E] uppercase tracking-wider transition-colors">
             ← Beranda
           </Link>
         </motion.div>
@@ -137,9 +118,7 @@ export default function MemberLogin() {
             <h1 className="text-3xl sm:text-4xl font-black leading-[1.05] text-[#2F2D2C] mb-2">
               Masuk ke
               <br />
-              <span className="font-serif italic text-[#C67C4E]">
-                akun member.
-              </span>
+              <span className="font-serif italic text-[#C67C4E]">akun member.</span>
             </h1>
             <p className="text-sm text-gray-400 leading-relaxed">
               Gunakan username dan nomor HP yang kamu daftarkan ke kasir Bogeng.
@@ -164,22 +143,14 @@ export default function MemberLogin() {
           <form onSubmit={handleLogin} className="space-y-4">
             {/* Username */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider block ml-1">
-                Username
-              </label>
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider block ml-1">Username</label>
               <div className="relative">
-                <User
-                  size={14}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"
-                />
+                <User size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
                 <input
                   type="text"
-                  placeholder="contoh: hakimganteng"
+                  placeholder="contoh: hakimskennedy"
                   value={form.username}
-                  onChange={(e) => {
-                    setForm((p) => ({ ...p, username: e.target.value }));
-                    setError("");
-                  }}
+                  onChange={(e) => { setForm((p) => ({ ...p, username: e.target.value })); setError(""); }}
                   className="w-full pl-10 pr-5 py-3.5 bg-white border-2 border-[#EFE6DC] hover:border-[#C67C4E]/40 focus:border-[#C67C4E] rounded-2xl outline-none font-bold text-sm text-[#2F2D2C] placeholder-gray-300 transition-all shadow-sm"
                 />
               </div>
@@ -187,22 +158,14 @@ export default function MemberLogin() {
 
             {/* Nomor HP */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider block ml-1">
-                Nomor HP
-              </label>
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider block ml-1">Nomor HP</label>
               <div className="relative">
-                <Phone
-                  size={14}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"
-                />
+                <Phone size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
                 <input
                   type="tel"
                   placeholder="0812xxxxxxxx"
                   value={form.phone}
-                  onChange={(e) => {
-                    setForm((p) => ({ ...p, phone: e.target.value }));
-                    setError("");
-                  }}
+                  onChange={(e) => { setForm((p) => ({ ...p, phone: e.target.value })); setError(""); }}
                   className="w-full pl-10 pr-5 py-3.5 bg-white border-2 border-[#EFE6DC] hover:border-[#C67C4E]/40 focus:border-[#C67C4E] rounded-2xl outline-none font-bold text-sm text-[#2F2D2C] placeholder-gray-300 transition-all shadow-sm"
                 />
               </div>
@@ -217,27 +180,54 @@ export default function MemberLogin() {
               className="w-full mt-2 py-4 bg-[#2F2D2C] hover:bg-[#C67C4E] text-white rounded-2xl font-black text-xs tracking-widest uppercase transition-colors duration-300 flex items-center justify-center gap-2 shadow-lg shadow-black/10 disabled:opacity-60 cursor-pointer"
             >
               {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Memverifikasi…
-                </>
+                <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Memverifikasi…</>
               ) : (
-                <>
-                  Masuk ke Portal <ArrowRight size={14} />
-                </>
+                <>Masuk ke Portal <ArrowRight size={14} /></>
               )}
             </motion.button>
           </form>
 
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-[#EFE6DC]" />
+            <span className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">atau</span>
+            <div className="flex-1 h-px bg-[#EFE6DC]" />
+          </div>
+
+          {/* Demo Box */}
+          <motion.button
+            type="button"
+            onClick={fillDemo}
+            whileHover={{ scale: 1.01, y: -1 }}
+            whileTap={{ scale: 0.99 }}
+            className="w-full bg-white border-2 border-[#EFE6DC] hover:border-[#C67C4E]/30 rounded-2xl p-4 text-left transition-all duration-200 shadow-sm group mb-5"
+          >
+            <div className="flex items-center gap-2 mb-2.5">
+              <Sparkles size={13} className="text-[#C67C4E]" />
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#2F2D2C]">Akun Demo Member</span>
+              <span className="ml-auto text-[9px] font-bold text-[#C67C4E] group-hover:underline uppercase tracking-wide">
+                Klik untuk isi otomatis →
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-[#FAF7F2] px-3 py-1.5 rounded-xl border border-[#EFE6DC]">
+                <p className="text-[9px] font-bold text-gray-400 uppercase mb-0.5">Username</p>
+                <code className="text-[11px] font-black text-[#2F2D2C]">hakimskennedy</code>
+              </div>
+              <div className="bg-[#FAF7F2] px-3 py-1.5 rounded-xl border border-[#EFE6DC]">
+                <p className="text-[9px] font-bold text-gray-400 uppercase mb-0.5">No. HP</p>
+                <code className="text-[11px] font-black text-[#2F2D2C]">0812</code>
+              </div>
+            </div>
+          </motion.button>
+
           {/* Info daftar member */}
-          <div className="mt-6 bg-[#FAF7F2] border-2 border-[#EFE6DC] rounded-2xl p-4">
+          <div className="bg-[#FAF7F2] border-2 border-[#EFE6DC] rounded-2xl p-4">
             <p className="text-[10px] font-black text-[#2F2D2C] mb-2 flex items-center gap-1.5">
-              <Coffee size={12} className="text-[#C67C4E]" /> Belum terdaftar
-              sebagai member?
+              <Coffee size={12} className="text-[#C67C4E]" /> Belum terdaftar sebagai member?
             </p>
             <p className="text-[11px] text-gray-400 font-bold leading-relaxed mb-3">
-              Daftarkan dirimu sekarang, gratis! Nikmati keuntungan member
-              eksklusif Bogeng.
+              Daftarkan dirimu sekarang, gratis! Nikmati keuntungan member eksklusif Bogeng.
             </p>
             <Link
               to="/member-register"
@@ -249,12 +239,7 @@ export default function MemberLogin() {
 
           <p className="text-center text-xs text-gray-400 font-bold mt-5">
             Kamu admin/kasir?{" "}
-            <Link
-              to="/login"
-              className="text-[#C67C4E] font-black hover:underline"
-            >
-              Login Admin
-            </Link>
+            <Link to="/login" className="text-[#C67C4E] font-black hover:underline">Login Admin</Link>
           </p>
         </motion.div>
       </div>
@@ -266,10 +251,7 @@ export default function MemberLogin() {
         transition={{ duration: 0.8, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
         className="hidden lg:block flex-1 relative overflow-hidden"
       >
-        <div
-          className="absolute inset-0 bg-center bg-cover"
-          style={{ backgroundImage: `url(${BG_URL})` }}
-        />
+        <div className="absolute inset-0 bg-center bg-cover" style={{ backgroundImage: `url(${BG_URL})` }} />
         <div className="absolute inset-0 bg-gradient-to-r from-[#FAF7F2] via-[#FAF7F2]/10 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         <motion.div
@@ -279,13 +261,9 @@ export default function MemberLogin() {
           className="absolute bottom-12 left-10 right-10"
         >
           <p className="text-white/90 text-2xl font-black font-serif italic leading-snug mb-2">
-            "Makin sering mampir,
-            <br />
-            makin banyak untungnya."
+            "Makin sering mampir,<br />makin banyak untungnya."
           </p>
-          <p className="text-white/50 text-xs font-bold uppercase tracking-widest">
-            Bogeng Coffee — Pekanbaru
-          </p>
+          <p className="text-white/50 text-xs font-bold uppercase tracking-widest">Bogeng Coffee — Pekanbaru</p>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
@@ -295,9 +273,7 @@ export default function MemberLogin() {
         >
           <div className="flex items-center gap-2">
             <Coffee size={14} className="text-[#C67C4E]" />
-            <span className="text-xs font-black uppercase tracking-wider">
-              Member Exclusive
-            </span>
+            <span className="text-xs font-black uppercase tracking-wider">Member Exclusive</span>
           </div>
         </motion.div>
       </motion.div>

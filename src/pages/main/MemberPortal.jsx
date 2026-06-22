@@ -33,6 +33,8 @@ import {
   MessageSquareText,
   ThumbsUp,
   Calendar,
+  XCircle,
+  Clock,
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import {
@@ -757,12 +759,12 @@ export default function MemberPortal() {
             </Link>
             <div>
               <h2 className="text-[13px] font-black tracking-tight text-[#313131] flex items-center gap-1.5">
-                <span className="text-lg animate-bounce inline-block">☕</span>
+                <Coffee size={14} className="text-[#C67C4E]" strokeWidth={2.5} />
                 Halo,{" "}
                 <span className="text-[#C67C4E] underline decoration-wavy decoration-[#EDD6C8] underline-offset-4">
                   {(session.name || "Member").split(" ")[0]}
                 </span>
-                ! 🙌
+                !
               </h2>
               <p className="text-[9px] text-[#9B9B9B] font-bold mt-0.5">
                 Portal member eksklusif Bogeng Coffee
@@ -1351,10 +1353,11 @@ export default function MemberPortal() {
               className="max-w-2xl mx-auto w-full pb-10"
             >
               <div className="mb-5 select-none">
-                <h2 className="text-xl font-black text-[#313131] flex items-center gap-2">
-                  <span>✨</span> Bagikan Pengalamanmu
+                <h2 className="text-lg font-bold text-[#313131] flex items-center gap-2">
+                  <Sparkles size={16} className="text-[#C67C4E]" /> Bagikan
+                  Pengalamanmu
                 </h2>
-                <p className="text-xs text-[#9B9B9B] font-bold mt-0.5">
+                <p className="text-xs text-[#9B9B9B] font-medium mt-0.5">
                   Pendapatmu sangat berharga bagi kualitas racikan kopi kami.
                 </p>
               </div>
@@ -1419,17 +1422,17 @@ export default function MemberPortal() {
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
-                      className="text-[11px] font-black text-[#C67C4E] mt-2.5 uppercase tracking-wide"
+                      className="text-[11px] font-bold text-[#C67C4E] mt-2.5 uppercase tracking-wide"
                     >
                       {(rvHover || rvRating) === 5
-                        ? "☕ Sempurna Banget!"
+                        ? "Sempurna Banget"
                         : (rvHover || rvRating) === 4
-                          ? "🥰 Enak & Nyaman!"
+                          ? "Enak & Nyaman"
                           : (rvHover || rvRating) === 3
-                            ? "👍 Cukup Oke"
+                            ? "Cukup Oke"
                             : (rvHover || rvRating) === 2
-                              ? "😐 Butuh Peningkatan"
-                              : "👎 Kurang Puas"}
+                              ? "Butuh Peningkatan"
+                              : "Kurang Puas"}
                     </motion.p>
                   </AnimatePresence>
                 </div>
@@ -1466,22 +1469,22 @@ export default function MemberPortal() {
                         size={13}
                         className="text-emerald-600 animate-spin"
                       />
-                      <p className="text-[11px] font-black text-emerald-700">
-                        Ulasan terkirim! Muncul otomatis di riwayat bawah ✨
+                      <p className="text-[11px] font-bold text-emerald-700">
+                        Ulasan terkirim! Muncul otomatis di riwayat bawah.
                       </p>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </form>
 
-              {/* Riwayat Ulasan Saya (DIPASTIKAN SELALU ADA SECARA INSTAN) */}
+              {/* Riwayat Ulasan Saya — tampilan tabel, ringan & simpel */}
               <div className="mt-8">
-                <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#F0E6DD]">
-                  <h3 className="text-[11px] font-black uppercase tracking-widest text-[#9B9B9B] flex items-center gap-1.5">
+                <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#F0E6DD]">
+                  <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#9B9B9B] flex items-center gap-1.5">
                     <ReceiptText size={12} /> Riwayat Ulasan Saya (
                     {myReviews.length})
                   </h3>
-                  <span className="text-[9px] font-bold text-gray-400 bg-white border border-gray-200 px-2 py-0.5 rounded-full">
+                  <span className="text-[9px] font-medium text-gray-400 bg-white border border-gray-200 px-2 py-0.5 rounded-full">
                     Sesi Aktif
                   </span>
                 </div>
@@ -1497,7 +1500,7 @@ export default function MemberPortal() {
                       strokeWidth={1}
                       className="text-gray-300 mb-2"
                     />
-                    <p className="text-xs font-black text-gray-400 uppercase tracking-wide">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">
                       Belum Ada Ulasan
                     </p>
                     <p className="text-[10px] text-gray-400 max-w-xs mt-1 leading-relaxed">
@@ -1506,75 +1509,97 @@ export default function MemberPortal() {
                     </p>
                   </motion.div>
                 ) : (
-                  <div className="space-y-3">
-                    <AnimatePresence initial={false}>
-                      {myReviews.map((rev) => (
-                        <motion.div
-                          key={rev.id || `${rev.text}-${rev.rating}`}
-                          initial={{ opacity: 0, y: 12, scale: 0.98 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                          className="bg-white rounded-2xl border border-[#EFE6DC] p-4 shadow-sm relative overflow-hidden group hover:border-[#C67C4E]/40 transition-colors"
-                        >
-                          <div className="flex items-center justify-between mb-2.5">
-                            <div className="flex gap-0.5 bg-amber-50/60 border border-amber-100 px-1.5 py-0.5 rounded-lg">
-                              {[1, 2, 3, 4, 5].map((n) => (
-                                <Star
-                                  key={n}
-                                  size={11}
-                                  className={
-                                    n <= rev.rating
-                                      ? "text-amber-400"
-                                      : "text-gray-200"
+                  <div className="bg-white rounded-xl border border-[#EFE6DC] overflow-hidden">
+                    <table className="w-full border-collapse text-left">
+                      <thead>
+                        <tr className="bg-[#FAF7F2] text-[9px] font-semibold text-gray-400 uppercase tracking-wider">
+                          <th className="px-3 py-2 w-20">Rating</th>
+                          <th className="px-3 py-2">Ulasan</th>
+                          <th className="px-3 py-2 w-28">Status</th>
+                          <th className="px-3 py-2 w-20">Tanggal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <AnimatePresence initial={false}>
+                          {myReviews.map((rev) => {
+                            const status = rev.status || "pending";
+                            const statusMeta =
+                              status === "approved"
+                                ? {
+                                    label: "Tayang",
+                                    icon: CheckCircle2,
+                                    cls: "text-emerald-600",
                                   }
-                                  fill={
-                                    n <= rev.rating ? "currentColor" : "none"
-                                  }
-                                  strokeWidth={2}
-                                />
-                              ))}
-                            </div>
-
-                            {/* Badge status */}
-                            <span
-                              className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border ${
-                                rev.status === "approved" ||
-                                rev.status === "approved"
-                                  ? "bg-emerald-50 text-emerald-600 border-emerald-100"
-                                  : rev.status === "rejected"
-                                    ? "bg-red-50 text-red-500 border-red-100"
-                                    : "bg-amber-50 text-amber-600 border-amber-100"
-                              }`}
-                            >
-                              {rev.status === "approved"
-                                ? "✓ Tayang"
-                                : rev.status === "rejected"
-                                  ? "✕ Ditolak"
-                                  : "⏳ Menunggu Moderasi"}
-                            </span>
-                          </div>
-
-                          <p className="text-xs text-[#313131] font-medium leading-relaxed bg-[#FAF9F6] p-2.5 rounded-xl border border-[#F2ECE4] italic">
-                            "{rev.text}"
-                          </p>
-
-                          <div className="mt-2.5 flex items-center justify-between text-[9px] font-bold text-gray-400 px-0.5">
-                            <span className="flex items-center gap-1">
-                              <Calendar size={10} />
-                              {rev.date ||
-                                (rev.createdAt
-                                  ? new Date(rev.createdAt).toLocaleDateString(
-                                      "id-ID",
-                                    )
-                                  : new Date().toLocaleDateString("id-ID"))}
-                            </span>
-                            <span className="text-[#C67C4E] uppercase tracking-wider font-black">
-                              Level: {rev.tier || tier.label}
-                            </span>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
+                                : status === "rejected"
+                                  ? {
+                                      label: "Ditolak",
+                                      icon: XCircle,
+                                      cls: "text-red-500",
+                                    }
+                                  : {
+                                      label: "Menunggu",
+                                      icon: Clock,
+                                      cls: "text-amber-600",
+                                    };
+                            const StatusIcon = statusMeta.icon;
+                            return (
+                              <motion.tr
+                                key={rev.id || `${rev.text}-${rev.rating}`}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="border-t border-[#F2ECE4] align-top"
+                              >
+                                <td className="px-3 py-2.5">
+                                  <div className="flex gap-0.5">
+                                    {[1, 2, 3, 4, 5].map((n) => (
+                                      <Star
+                                        key={n}
+                                        size={10}
+                                        className={
+                                          n <= rev.rating
+                                            ? "text-amber-400"
+                                            : "text-gray-200"
+                                        }
+                                        fill={
+                                          n <= rev.rating
+                                            ? "currentColor"
+                                            : "none"
+                                        }
+                                      />
+                                    ))}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-2.5 text-[11px] text-[#313131] font-normal leading-relaxed">
+                                  {rev.text}
+                                  <div className="text-[9px] text-gray-400 font-medium mt-1">
+                                    Level {rev.tier || tier.label}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-2.5">
+                                  <span
+                                    className={`inline-flex items-center gap-1 text-[10px] font-medium ${statusMeta.cls}`}
+                                  >
+                                    <StatusIcon size={11} />
+                                    {statusMeta.label}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2.5 text-[10px] text-gray-400 whitespace-nowrap">
+                                  {rev.date ||
+                                    (rev.createdAt
+                                      ? new Date(
+                                          rev.createdAt,
+                                        ).toLocaleDateString("id-ID")
+                                      : new Date().toLocaleDateString(
+                                          "id-ID",
+                                        ))}
+                                </td>
+                              </motion.tr>
+                            );
+                          })}
+                        </AnimatePresence>
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
