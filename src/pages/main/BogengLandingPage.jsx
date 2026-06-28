@@ -1,18 +1,14 @@
 // src/pages/main/BogengLandingPage.jsx
 // =====================================================================
-// CHANGELOG v2:
-//   1. OrbitMenu (mutar) → FloatingMenu (terapung naik-turun, santai)
-//   2. ReviewSlider (panah manual) → InfiniteMarquee (jalan sendiri, seamless)
-//   3. FullMenuGrid popup → INSTANT, tanpa delay sama sekali
+// CHANGELOG v3:
+//   - Hero lama (FloatingMenu + HeroBgAnimation) diganti <ScrollMorphHero/>
+//   - FollowCursor lama dihapus (sudah ada di dalam ScrollMorphHero)
+//   - FLOAT_CONFIGS, FloatingMenuItem, FloatingMenu, HeroBgAnimation,
+//     FEATURED_ITEMS dihapus karena tak lagi dipakai
 // =====================================================================
 import logoImg from "../../assets/logo.png";
-import React, { useEffect, useState, useRef } from "react";
-import {
-  motion,
-  AnimatePresence,
-  useSpring,
-  useMotionValue,
-} from "framer-motion";
+import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Coffee,
   Heart,
@@ -24,7 +20,6 @@ import {
   Clock,
   Phone,
   ChevronDown,
-  ArrowRight,
   ArrowUp,
   Menu as MenuIcon,
   X,
@@ -36,6 +31,9 @@ import {
   getApprovedReviews,
   subscribeReviews,
 } from "../../utils/reviewsStore";
+
+// ── HERO BARU ────────────────────────────────────────────────────────
+import ScrollMorphHero from "../../components/ui/ScrollMorphHero";
 
 import espressoImg from "../../assets/espresso.png";
 import caramelImg from "../../assets/caramel_macchiato.png";
@@ -157,8 +155,6 @@ const MENU_ITEMS = [
   },
 ];
 
-const FEATURED_ITEMS = MENU_ITEMS.filter((item) => item.featured);
-
 const MEMBER_TIERS = [
   {
     name: "Reguler",
@@ -204,48 +200,6 @@ const FAQ_ITEMS = [
 
 function formatIDR(num) {
   return `Rp ${num.toLocaleString("id-ID")}`;
-}
-
-// =====================================================================
-// CURSOR CUSTOM
-// =====================================================================
-function FollowCursor() {
-  const [isHover, setIsHover] = useState(false);
-  const mouseX = useMotionValue(-100);
-  const mouseY = useMotionValue(-100);
-  const ringX = useSpring(mouseX, { damping: 25, stiffness: 280, mass: 0.5 });
-  const ringY = useSpring(mouseY, { damping: 25, stiffness: 280, mass: 0.5 });
-
-  useEffect(() => {
-    const handleMove = (e) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
-      setIsHover(!!e.target.closest("a, button, [data-cursor-hover]"));
-    };
-    window.addEventListener("mousemove", handleMove);
-    return () => window.removeEventListener("mousemove", handleMove);
-  }, [mouseX, mouseY]);
-
-  return (
-    <>
-      <motion.div
-        className="fixed top-0 left-0 w-1.5 h-1.5 bg-[#C67C4E] rounded-full pointer-events-none z-[9999] hidden md:block"
-        style={{ x: mouseX, y: mouseY, translateX: "-50%", translateY: "-50%" }}
-      />
-      <motion.div
-        className="fixed top-0 left-0 rounded-full border border-[#C67C4E]/50 pointer-events-none z-[9998] hidden md:block"
-        style={{ x: ringX, y: ringY, translateX: "-50%", translateY: "-50%" }}
-        animate={{
-          width: isHover ? 54 : 30,
-          height: isHover ? 54 : 30,
-          backgroundColor: isHover
-            ? "rgba(198,124,78,0.08)"
-            : "rgba(198,124,78,0)",
-        }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-      />
-    </>
-  );
 }
 
 // =====================================================================
@@ -298,116 +252,20 @@ function CoffeeBeanShape({ className, style }) {
 
 function AmbientLeaves() {
   const leaves = [
-    {
-      top: "2%",
-      left: "-5%",
-      size: 200,
-      rotate: -18,
-      color: "#8B5E34",
-      dur: 22,
-      delay: 0,
-    },
-    {
-      top: "18%",
-      left: "91%",
-      size: 140,
-      rotate: 22,
-      color: "#6F8F5C",
-      dur: 18,
-      delay: -5,
-    },
-    {
-      top: "44%",
-      left: "-4%",
-      size: 170,
-      rotate: 6,
-      color: "#6F8F5C",
-      dur: 26,
-      delay: -8,
-    },
-    {
-      top: "65%",
-      left: "93%",
-      size: 210,
-      rotate: -10,
-      color: "#8B5E34",
-      dur: 20,
-      delay: -12,
-    },
-    {
-      top: "85%",
-      left: "5%",
-      size: 140,
-      rotate: 28,
-      color: "#6F8F5C",
-      dur: 24,
-      delay: -3,
-    },
+    { top: "2%", left: "-5%", size: 200, rotate: -18, color: "#8B5E34", dur: 22, delay: 0 },
+    { top: "18%", left: "91%", size: 140, rotate: 22, color: "#6F8F5C", dur: 18, delay: -5 },
+    { top: "44%", left: "-4%", size: 170, rotate: 6, color: "#6F8F5C", dur: 26, delay: -8 },
+    { top: "65%", left: "93%", size: 210, rotate: -10, color: "#8B5E34", dur: 20, delay: -12 },
+    { top: "85%", left: "5%", size: 140, rotate: 28, color: "#6F8F5C", dur: 24, delay: -3 },
   ];
   const beans = [
-    {
-      top: "10%",
-      left: "8%",
-      size: 36,
-      rotate: 25,
-      color: "#8B5E34",
-      dur: 16,
-      delay: -6,
-    },
-    {
-      top: "30%",
-      left: "87%",
-      size: 28,
-      rotate: -15,
-      color: "#6F4E37",
-      dur: 20,
-      delay: -2,
-    },
-    {
-      top: "52%",
-      left: "12%",
-      size: 32,
-      rotate: 40,
-      color: "#8B5E34",
-      dur: 18,
-      delay: -9,
-    },
-    {
-      top: "72%",
-      left: "80%",
-      size: 30,
-      rotate: -35,
-      color: "#6F4E37",
-      dur: 22,
-      delay: -4,
-    },
-    {
-      top: "88%",
-      left: "45%",
-      size: 26,
-      rotate: 15,
-      color: "#8B5E34",
-      dur: 14,
-      delay: -7,
-    },
-    {
-      top: "5%",
-      left: "55%",
-      size: 22,
-      rotate: -20,
-      color: "#6F4E37",
-      dur: 19,
-      delay: -1,
-    },
-    {
-      top: "40%",
-      left: "50%",
-      size: 34,
-      rotate: 50,
-      color: "#8B5E34",
-      dur: 17,
-      delay: -11,
-    },
+    { top: "10%", left: "8%", size: 36, rotate: 25, color: "#8B5E34", dur: 16, delay: -6 },
+    { top: "30%", left: "87%", size: 28, rotate: -15, color: "#6F4E37", dur: 20, delay: -2 },
+    { top: "52%", left: "12%", size: 32, rotate: 40, color: "#8B5E34", dur: 18, delay: -9 },
+    { top: "72%", left: "80%", size: 30, rotate: -35, color: "#6F4E37", dur: 22, delay: -4 },
+    { top: "88%", left: "45%", size: 26, rotate: 15, color: "#8B5E34", dur: 14, delay: -7 },
+    { top: "5%", left: "55%", size: 22, rotate: -20, color: "#6F4E37", dur: 19, delay: -1 },
+    { top: "40%", left: "50%", size: 34, rotate: 50, color: "#8B5E34", dur: 17, delay: -11 },
   ];
   return (
     <div
@@ -457,89 +315,6 @@ function AmbientLeaves() {
             className="fill-current"
           />
         </div>
-      ))}
-    </div>
-  );
-}
-
-// =====================================================================
-// [BARU] FLOATING MENU — terapung santai, tidak berputar
-// =====================================================================
-const FLOAT_CONFIGS = [
-  { x: 10, y: 14, tilt: -12, size: 88, dur: 4.8, delay: 0 },
-  { x: 62, y: 6, tilt: 10, size: 78, dur: 5.4, delay: -1.2 },
-  { x: 80, y: 44, tilt: -7, size: 90, dur: 4.2, delay: -2.4 },
-  { x: 56, y: 70, tilt: 14, size: 80, dur: 5.8, delay: -0.8 },
-  { x: 8, y: 62, tilt: -16, size: 84, dur: 4.6, delay: -3.1 },
-  { x: 34, y: 36, tilt: 8, size: 76, dur: 5.2, delay: -1.7 },
-];
-
-function FloatingMenuItem({ item, cfg, selected, onSelect }) {
-  return (
-    <motion.div
-      className="absolute cursor-pointer z-10"
-      style={{ left: `${cfg.x}%`, top: `${cfg.y}%` }}
-      animate={{ y: [0, -14, 0] }}
-      transition={{
-        duration: cfg.dur,
-        delay: cfg.delay,
-        repeat: Infinity,
-        ease: "easeInOut",
-      }}
-      whileHover={{ scale: 1.18, zIndex: 20 }}
-      whileTap={{ scale: 0.92 }}
-      data-cursor-hover
-      onClick={() => onSelect(item)}
-    >
-      <motion.div style={{ rotate: cfg.tilt }} className="relative">
-        <div
-          className={`overflow-hidden rounded-[18px] shadow-[0_10px_28px_rgba(0,0,0,0.11)] border-[3px] transition-colors duration-200 ${
-            selected
-              ? "border-[#C67C4E] ring-4 ring-[#C67C4E]/20"
-              : "border-white/90 hover:border-[#C67C4E]/50"
-          }`}
-          style={{ width: cfg.size, height: cfg.size }}
-        >
-          <img
-            src={item.img}
-            alt={item.name}
-            className="w-full h-full object-cover pointer-events-none"
-          />
-        </div>
-        {selected && (
-          <motion.span
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-black text-[#C67C4E] bg-white/90 px-2 py-0.5 rounded-full shadow"
-          >
-            {item.name}
-          </motion.span>
-        )}
-      </motion.div>
-    </motion.div>
-  );
-}
-
-function FloatingMenu({ items, selectedId, onSelect }) {
-  return (
-    <div className="relative h-[380px] sm:h-[430px] w-full max-w-[440px] mx-auto select-none">
-      {/* Label tengah */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
-        <span className="block text-5xl sm:text-6xl font-black text-[#EFE6DC] font-serif italic tracking-tighter leading-none drop-shadow-sm">
-          Bogeng
-        </span>
-        <span className="block text-[10px] uppercase tracking-[0.35em] text-[#C9B8A8] font-bold mt-2">
-          Roasted Daily
-        </span>
-      </div>
-      {items.map((item, i) => (
-        <FloatingMenuItem
-          key={item.id}
-          item={item}
-          cfg={FLOAT_CONFIGS[i] ?? FLOAT_CONFIGS[0]}
-          selected={selectedId === item.id}
-          onSelect={onSelect}
-        />
       ))}
     </div>
   );
@@ -598,54 +373,12 @@ function MenuDetailPanel({ item, onClose }) {
 // =====================================================================
 function MenuSectionLeaves() {
   const leaves = [
-    {
-      top: "8%",
-      left: "-2%",
-      size: 100,
-      rotate: -20,
-      color: "text-[#6F8F5C]",
-      dur: 14,
-    },
-    {
-      top: "25%",
-      left: "98%",
-      size: 80,
-      rotate: 30,
-      color: "text-[#8B5E34]",
-      dur: 18,
-    },
-    {
-      top: "55%",
-      left: "-1%",
-      size: 90,
-      rotate: 10,
-      color: "text-[#6F8F5C]",
-      dur: 16,
-    },
-    {
-      top: "70%",
-      left: "96%",
-      size: 110,
-      rotate: -15,
-      color: "text-[#8B5E34]",
-      dur: 20,
-    },
-    {
-      top: "90%",
-      left: "10%",
-      size: 70,
-      rotate: 25,
-      color: "text-[#6F8F5C]",
-      dur: 12,
-    },
-    {
-      top: "3%",
-      left: "60%",
-      size: 60,
-      rotate: -30,
-      color: "text-[#8B5E34]",
-      dur: 22,
-    },
+    { top: "8%", left: "-2%", size: 100, rotate: -20, color: "text-[#6F8F5C]", dur: 14 },
+    { top: "25%", left: "98%", size: 80, rotate: 30, color: "text-[#8B5E34]", dur: 18 },
+    { top: "55%", left: "-1%", size: 90, rotate: 10, color: "text-[#6F8F5C]", dur: 16 },
+    { top: "70%", left: "96%", size: 110, rotate: -15, color: "text-[#8B5E34]", dur: 20 },
+    { top: "90%", left: "10%", size: 70, rotate: 25, color: "text-[#6F8F5C]", dur: 12 },
+    { top: "3%", left: "60%", size: 60, rotate: -30, color: "text-[#8B5E34]", dur: 22 },
   ];
   return (
     <div
@@ -657,20 +390,11 @@ function MenuSectionLeaves() {
           key={i}
           style={{ position: "absolute", top: leaf.top, left: leaf.left }}
           animate={{
-            rotate: [
-              leaf.rotate,
-              leaf.rotate + 8,
-              leaf.rotate - 5,
-              leaf.rotate,
-            ],
+            rotate: [leaf.rotate, leaf.rotate + 8, leaf.rotate - 5, leaf.rotate],
             x: [0, 6, -4, 0],
             y: [0, -5, 3, 0],
           }}
-          transition={{
-            repeat: Infinity,
-            duration: leaf.dur,
-            ease: "easeInOut",
-          }}
+          transition={{ repeat: Infinity, duration: leaf.dur, ease: "easeInOut" }}
         >
           <LeafShape
             className={`${leaf.color} opacity-[0.10]`}
@@ -683,7 +407,7 @@ function MenuSectionLeaves() {
 }
 
 // =====================================================================
-// [BARU v2] FULL MENU GRID — popup INSTANT (duration 0)
+// FULL MENU GRID — popup INSTANT (duration 0)
 // =====================================================================
 function FullMenuGrid({ items, selectedId, onSelect }) {
   const [activeCat, setActiveCat] = useState("Semua");
@@ -722,7 +446,6 @@ function FullMenuGrid({ items, selectedId, onSelect }) {
             <motion.button
               key={item.id}
               onClick={() => onSelect(item)}
-              /* ── INSTANT: duration 0 di semua transition ── */
               animate={isSelected ? { scale: 1.05, y: -6 } : { scale: 1, y: 0 }}
               transition={{ duration: 0 }}
               whileHover={
@@ -965,126 +688,7 @@ function RevealSection({ children, className = "", id }) {
 }
 
 // =====================================================================
-// HERO BG ANIMATION
-// =====================================================================
-function HeroBgAnimation() {
-  return (
-    <>
-      <div className="absolute inset-0 pointer-events-none z-[4] overflow-hidden">
-        <style>{`
-          @keyframes floatUp{0%{transform:translateY(0) rotate(0deg) scale(1);opacity:0;}10%{opacity:0.6;}90%{opacity:0.3;}100%{transform:translateY(-110vh) rotate(360deg) scale(0.6);opacity:0;}}
-          @keyframes glowPulse{0%,100%{opacity:0.12;transform:scale(1);}50%{opacity:0.22;transform:scale(1.08);}}
-          .hero-particle{animation:floatUp linear infinite;will-change:transform;}
-          .hero-glow{animation:glowPulse ease-in-out infinite;will-change:transform;}
-        `}</style>
-        {[
-          { l: "8%", s: 22, d: 18, dl: 0, op: 0.55 },
-          { l: "22%", s: 14, d: 24, dl: -6, op: 0.4 },
-          { l: "38%", s: 18, d: 20, dl: -10, op: 0.5 },
-          { l: "55%", s: 12, d: 28, dl: -4, op: 0.35 },
-          { l: "70%", s: 20, d: 16, dl: -14, op: 0.45 },
-          { l: "83%", s: 15, d: 22, dl: -8, op: 0.42 },
-          { l: "93%", s: 24, d: 19, dl: -2, op: 0.38 },
-        ].map((p, i) => (
-          <div
-            key={i}
-            className="hero-particle absolute bottom-0"
-            style={{
-              left: p.l,
-              animationDuration: `${p.d}s`,
-              animationDelay: `${p.dl}s`,
-              opacity: p.op,
-            }}
-          >
-            <svg
-              width={p.s}
-              height={p.s * 0.67}
-              viewBox="0 0 60 40"
-              fill="#8B5E34"
-            >
-              <ellipse cx="30" cy="20" rx="28" ry="18" />
-              <path
-                d="M30 4Q38 12 38 20Q38 28 30 36"
-                stroke="rgba(255,255,255,0.25)"
-                strokeWidth="2.5"
-                fill="none"
-              />
-              <path
-                d="M30 4Q22 12 22 20Q22 28 30 36"
-                stroke="rgba(255,255,255,0.25)"
-                strokeWidth="2.5"
-                fill="none"
-              />
-            </svg>
-          </div>
-        ))}
-        {[
-          { l: "15%", s: 28, d: 26, dl: -7, op: 0.45 },
-          { l: "45%", s: 20, d: 22, dl: -15, op: 0.4 },
-          { l: "72%", s: 32, d: 30, dl: -3, op: 0.38 },
-        ].map((p, i) => (
-          <div
-            key={i}
-            className="hero-particle absolute bottom-0"
-            style={{
-              left: p.l,
-              animationDuration: `${p.d}s`,
-              animationDelay: `${p.dl}s`,
-              opacity: p.op,
-            }}
-          >
-            <svg
-              width={p.s}
-              height={p.s * 1.35}
-              viewBox="0 0 100 140"
-              fill="#6F8F5C"
-            >
-              <path d="M50 4C78 28 92 64 50 136C8 64 22 28 50 4Z" />
-              <path
-                d="M50 14V126"
-                stroke="rgba(255,255,255,0.2)"
-                strokeWidth="2"
-                fill="none"
-              />
-            </svg>
-          </div>
-        ))}
-        {[
-          { t: "20%", l: "10%", w: 320, d: 8, dl: 0 },
-          { t: "55%", l: "65%", w: 280, d: 11, dl: -3 },
-          { t: "75%", l: "30%", w: 200, d: 9, dl: -5 },
-        ].map((o, i) => (
-          <div
-            key={i}
-            className="hero-glow absolute rounded-full pointer-events-none"
-            style={{
-              top: o.t,
-              left: o.l,
-              width: o.w,
-              height: o.w,
-              animationDuration: `${o.d}s`,
-              animationDelay: `${o.dl}s`,
-              background:
-                "radial-gradient(circle, rgba(198,124,78,0.18) 0%, transparent 70%)",
-            }}
-          />
-        ))}
-      </div>
-      <div
-        className="absolute inset-0 pointer-events-none z-[5]"
-        style={{
-          background: [
-            "radial-gradient(ellipse 70% 60% at 30% 50%, rgba(255,252,248,0.65) 0%, transparent 100%)",
-            "linear-gradient(to bottom, rgba(255,252,248,0.4) 0%, transparent 40%, rgba(255,252,248,0.3) 100%)",
-          ].join(", "),
-        }}
-      />
-    </>
-  );
-}
-
-// =====================================================================
-// [BARU] INFINITE MARQUEE — review jalan otomatis, seamless, hover pause
+// INFINITE MARQUEE — review jalan otomatis, seamless, hover pause
 // =====================================================================
 function InfiniteMarquee({ reviews }) {
   const doubled = [...reviews, ...reviews];
@@ -1356,76 +960,19 @@ export default function BogengLandingPage() {
 
   return (
     <div className="relative min-h-screen bg-white text-[#2F2D2C] overflow-x-hidden selection:bg-[#C67C4E] selection:text-white font-sans">
-      <FollowCursor />
       <AmbientLeaves />
       <BackToTop />
       <Navbar />
 
-      {/* ============================== HERO ============================== */}
-      <section
-        id="beranda"
-        className="relative pt-32 pb-16 sm:pt-40 sm:pb-24 overflow-hidden"
-      >
-        <HeroBgAnimation />
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 grid grid-cols-1 lg:grid-cols-2 gap-14 items-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <span className="inline-block text-[10px] font-black text-[#C67C4E] uppercase tracking-[0.3em] mb-4 bg-[#C67C4E]/10 px-3 py-1.5 rounded-full">
-              Sejak Pagi, Tanpa Basa-basi
-            </span>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black leading-[1.05] mb-6 text-[#2F2D2C]">
-              Kopi yang{" "}
-              <span className="font-serif italic text-[#C67C4E]">diingat</span>,
-              <br />
-              bukan cuma diminum.
-            </h1>
-            <p className="max-w-md text-sm text-gray-500 mb-8 leading-relaxed">
-              Setiap cangkir di Bogeng diseduh dari biji pilihan dan disajikan
-              barista yang paham racikanmu. Makin sering mampir, makin banyak
-              untungnya lewat sistem member otomatis kami.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <a
-                href="#menu"
-                onClick={(e) => {
-                  e.preventDefault();
-                  smoothScrollTo("menu");
-                }}
-                data-cursor-hover
-                className="inline-flex items-center gap-2 bg-[#C67C4E] hover:bg-[#A05C32] text-white px-6 py-3.5 rounded-full font-bold text-xs uppercase tracking-wider transition-colors"
-              >
-                Lihat Menu <ArrowRight size={14} />
-              </a>
-              <button
-                onClick={() => navigate("/member-login")}
-                data-cursor-hover
-                className="inline-flex items-center gap-2 bg-white border border-gray-200 hover:border-[#C67C4E] px-6 py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-gray-600 transition-colors"
-              >
-                Portal Member
-              </button>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          >
-            {/* ── FLOATING MENU (menggantikan OrbitMenu) ── */}
-            <FloatingMenu
-              items={FEATURED_ITEMS}
-              selectedId={selectedMenu?.id}
-              onSelect={setSelectedMenu}
-            />
-            <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2">
-              Klik salah satu menu yang melayang
-            </p>
-          </motion.div>
-        </div>
-      </section>
+      {/* ============================== HERO (ScrollMorph) ============================== */}
+      <div id="beranda">
+        <ScrollMorphHero
+          onNavigate={(target) => {
+            if (target.startsWith("/")) navigate(target);
+            else smoothScrollTo(target);
+          }}
+        />
+      </div>
 
       {/* ============================== MENU ============================== */}
       <RevealSection
@@ -1457,8 +1004,7 @@ export default function BogengLandingPage() {
                   exit={{ opacity: 0 }}
                   className="text-center py-10 border-2 border-dashed border-gray-200 rounded-[28px] text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  Klik salah satu menu di atas atau di bawah untuk lihat
-                  detailnya
+                  Klik salah satu menu di bawah untuk lihat detailnya
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1584,65 +1130,16 @@ export default function BogengLandingPage() {
 
         {(() => {
           const DUMMY = [
-            {
-              id: "d1",
-              name: "Aldi R.",
-              tier: "Loyal Member",
-              rating: 5,
-              text: "Espresso Bold-nya mantap banget, pas banget buat nemenin kerja pagi!",
-            },
-            {
-              id: "d2",
-              name: "Sari W.",
-              tier: "Reguler",
-              rating: 5,
-              text: "Caramel Macchiato di sini juara, creamy dan nggak terlalu manis.",
-            },
-            {
-              id: "d3",
-              name: "Dimas F.",
-              tier: "VIP Member",
-              rating: 4,
-              text: "Tempatnya cozy banget, cocok buat ngerjain tugas sambil ngopi.",
-            },
-            {
-              id: "d4",
-              name: "Reza M.",
-              tier: "Loyal Member",
-              rating: 5,
-              text: "Palm Sugar Coffee-nya khas banget, rasa gula aren-nya kerasa asli.",
-            },
-            {
-              id: "d5",
-              name: "Nadia K.",
-              tier: "Reguler",
-              rating: 5,
-              text: "Matcha Latte Premium disini beda dari yang lain, worth it banget!",
-            },
-            {
-              id: "d6",
-              name: "Bagas P.",
-              tier: "VIP Member",
-              rating: 5,
-              text: "Sistem member-nya keren, nggak perlu download app apapun.",
-            },
-            {
-              id: "d7",
-              name: "Fitri A.",
-              tier: "Loyal Member",
-              rating: 4,
-              text: "Red Velvet Cream-nya enak banget, jadi favorit baru aku.",
-            },
-            {
-              id: "d8",
-              name: "Hendra S.",
-              tier: "Reguler",
-              rating: 5,
-              text: "Nasi Goreng Spesialnya porsi besar, rasanya nggak kaleng-kaleng!",
-            },
+            { id: "d1", name: "Aldi R.", tier: "Loyal Member", rating: 5, text: "Espresso Bold-nya mantap banget, pas banget buat nemenin kerja pagi!" },
+            { id: "d2", name: "Sari W.", tier: "Reguler", rating: 5, text: "Caramel Macchiato di sini juara, creamy dan nggak terlalu manis." },
+            { id: "d3", name: "Dimas F.", tier: "VIP Member", rating: 4, text: "Tempatnya cozy banget, cocok buat ngerjain tugas sambil ngopi." },
+            { id: "d4", name: "Reza M.", tier: "Loyal Member", rating: 5, text: "Palm Sugar Coffee-nya khas banget, rasa gula aren-nya kerasa asli." },
+            { id: "d5", name: "Nadia K.", tier: "Reguler", rating: 5, text: "Matcha Latte Premium disini beda dari yang lain, worth it banget!" },
+            { id: "d6", name: "Bagas P.", tier: "VIP Member", rating: 5, text: "Sistem member-nya keren, nggak perlu download app apapun." },
+            { id: "d7", name: "Fitri A.", tier: "Loyal Member", rating: 4, text: "Red Velvet Cream-nya enak banget, jadi favorit baru aku." },
+            { id: "d8", name: "Hendra S.", tier: "Reguler", rating: 5, text: "Nasi Goreng Spesialnya porsi besar, rasanya nggak kaleng-kaleng!" },
           ];
           const all = [...approvedReviews, ...DUMMY];
-          // ── INFINITE MARQUEE (menggantikan ReviewSlider) ──
           return <InfiniteMarquee reviews={all} />;
         })()}
 
@@ -1685,10 +1182,7 @@ export default function BogengLandingPage() {
                     animate={{ rotate: activeFaq === idx ? 180 : 0 }}
                     transition={{ duration: 0.25 }}
                   >
-                    <ChevronDown
-                      size={16}
-                      className="text-[#C67C4E] shrink-0"
-                    />
+                    <ChevronDown size={16} className="text-[#C67C4E] shrink-0" />
                   </motion.span>
                 </button>
                 <AnimatePresence>
