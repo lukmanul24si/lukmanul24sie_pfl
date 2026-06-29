@@ -1,9 +1,10 @@
 // src/components/ui/ScrollMorphHero.jsx
-// v3: Original scroll morph dipertahankan (Circle→Arc saat scroll)
-// Setelah arc selesai → transisi ke layout final:
-//   - Kiri: teks hero + mini stats
-//   - Kanan: half-circle berputar terus (kartu menu)
-//   - Tengah: 3 highlight card (tidak kosong)
+// v4 FIXES:
+//   - Lingkaran digeser ke kanan (offset +15% dari tengah)
+//   - Arc description tidak terpotong (posisi & opacity disesuaikan)
+//   - Performa lebih ringan (spring lebih ringan, RAF dioptimasi)
+//   - Hapus best seller cards di fase final
+//   - Scroll indicator lebih jelas + progress bar
 
 "use client";
 
@@ -15,7 +16,7 @@ import React, {
   useCallback,
 } from "react";
 import { motion, AnimatePresence, useSpring, useMotionValue } from "framer-motion";
-import { ArrowRight, Heart, Coffee, Star, Users } from "lucide-react";
+import { ArrowRight, Heart, Coffee, Star, Users, ChevronDown } from "lucide-react";
 
 // ─── ASET LOKAL ──────────────────────────────────────────────────────
 import espressoImg        from "../../assets/espresso.png";
@@ -58,17 +59,6 @@ const MORPH_ITEMS = [
   MENU_ITEMS[6], MENU_ITEMS[7],
 ];
 const TOTAL_CARDS = MORPH_ITEMS.length; // 20
-
-const FLOAT_CFG = [
-  { x:10, y:14, tilt:-12, size:88, dur:4.8, delay:0 },
-  { x:62, y:6,  tilt:10,  size:78, dur:5.4, delay:-1.2 },
-  { x:80, y:44, tilt:-7,  size:90, dur:4.2, delay:-2.4 },
-  { x:56, y:70, tilt:14,  size:80, dur:5.8, delay:-0.8 },
-  { x:8,  y:62, tilt:-16, size:84, dur:4.6, delay:-3.1 },
-  { x:34, y:36, tilt:8,   size:76, dur:5.2, delay:-1.7 },
-];
-
-const FEATURED = MENU_ITEMS.slice(0, 6);
 
 // ─── HELPER ───────────────────────────────────────────────────────────
 const lerp  = (a, b, t) => a * (1 - t) + b * t;
@@ -146,15 +136,16 @@ function AmbientBg() {
   );
 }
 
-// ─── PARTIKEL HERO ────────────────────────────────────────────────────
+// ─── PARTIKEL HERO (dikurangi untuk performa) ─────────────────────────
 const PARTICLES = [
-  { l:"8%",  s:22, d:18, dl:0  }, { l:"22%", s:14, d:24, dl:-6  },
-  { l:"38%", s:18, d:20, dl:-10}, { l:"55%", s:12, d:28, dl:-4  },
-  { l:"70%", s:20, d:16, dl:-14}, { l:"83%", s:15, d:22, dl:-8  },
-  { l:"93%", s:24, d:19, dl:-2 },
+  { l:"8%",  s:22, d:18, dl:0   },
+  { l:"38%", s:18, d:20, dl:-10 },
+  { l:"70%", s:20, d:16, dl:-14 },
+  { l:"93%", s:24, d:19, dl:-2  },
 ];
 const LEAF_PARTS = [
-  { l:"15%", s:28, d:26, dl:-7 }, { l:"45%", s:20, d:22, dl:-15 }, { l:"72%", s:32, d:30, dl:-3 },
+  { l:"15%", s:28, d:26, dl:-7 },
+  { l:"72%", s:32, d:30, dl:-3 },
 ];
 
 function HeroParticles() {
@@ -183,61 +174,7 @@ function HeroParticles() {
   );
 }
 
-// ─── FLOATING MENU (fase awal sebelum scroll) ─────────────────────────
-function FloatingMenuItem({ item, cfg, selected, onSelect }) {
-  return (
-    <motion.div
-      className="absolute cursor-pointer z-10"
-      style={{ left:`${cfg.x}%`, top:`${cfg.y}%` }}
-      animate={{ y:[0,-14,0] }}
-      transition={{ duration:cfg.dur, delay:cfg.delay, repeat:Infinity, ease:"easeInOut" }}
-      whileHover={{ scale:1.18, zIndex:20 }}
-      whileTap={{ scale:.92 }}
-      data-cursor-hover
-      onClick={() => onSelect(item)}
-    >
-      <motion.div style={{ rotate:cfg.tilt }} className="relative">
-        <div
-          className={`overflow-hidden rounded-[18px] shadow-[0_10px_28px_rgba(0,0,0,0.11)] border-[3px] transition-colors duration-200 ${
-            selected ? "border-[#C67C4E] ring-4 ring-[#C67C4E]/20" : "border-white/90 hover:border-[#C67C4E]/50"
-          }`}
-          style={{ width:cfg.size, height:cfg.size }}
-        >
-          <img src={item.img} alt={item.name} className="w-full h-full object-cover pointer-events-none" />
-        </div>
-        {selected && (
-          <motion.span
-            initial={{ opacity:0, y:4 }} animate={{ opacity:1, y:0 }}
-            className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-black text-[#C67C4E] bg-white/90 px-2 py-0.5 rounded-full shadow"
-          >
-            {item.name}
-          </motion.span>
-        )}
-      </motion.div>
-    </motion.div>
-  );
-}
-
-function FloatingMenu({ selectedId, onSelect }) {
-  return (
-    <div className="relative h-[380px] sm:h-[430px] w-full max-w-[440px] mx-auto select-none">
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
-        <span className="block text-5xl sm:text-6xl font-black text-[#EFE6DC] font-serif italic tracking-tighter leading-none drop-shadow-sm">
-          Bogeng
-        </span>
-        <span className="block text-[10px] uppercase tracking-[.35em] text-[#C9B8A8] font-bold mt-2">
-          Roasted Daily
-        </span>
-      </div>
-      {FEATURED.map((item, i) => (
-        <FloatingMenuItem key={item.id} item={item} cfg={FLOAT_CFG[i]}
-          selected={selectedId === item.id} onSelect={onSelect} />
-      ))}
-    </div>
-  );
-}
-
-// ─── MORPH CARD ───────────────────────────────────────────────────────
+// ─── MORPH CARD (spring diringankan untuk performa) ───────────────────
 function MorphCard({ item, target, isVisible }) {
   return (
     <motion.div
@@ -246,19 +183,20 @@ function MorphCard({ item, target, isVisible }) {
         rotate: target.rotation, scale: target.scale,
         opacity: isVisible ? target.opacity : 0,
       }}
-      transition={{ type:"spring", stiffness:38, damping:14 }}
+      // FIX PERFORMA: stiffness & damping lebih ringan, mass sedikit lebih besar
+      transition={{ type:"spring", stiffness:28, damping:12, mass:0.8 }}
       style={{ position:"absolute", width:60, height:85, transformStyle:"preserve-3d", perspective:"1000px" }}
       className="cursor-pointer group"
     >
       <motion.div
         className="relative h-full w-full"
         style={{ transformStyle:"preserve-3d" }}
-        transition={{ duration:.6, type:"spring", stiffness:260, damping:20 }}
+        transition={{ duration:.5, type:"spring", stiffness:220, damping:22 }}
         whileHover={{ rotateY:180 }}
       >
         <div className="absolute inset-0 overflow-hidden rounded-xl shadow-lg bg-[#EFE6DC]"
           style={{ backfaceVisibility:"hidden" }}>
-          <img src={item.img} alt={item.name} className="h-full w-full object-cover" />
+          <img src={item.img} alt={item.name} className="h-full w-full object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-black/10 transition-colors group-hover:bg-transparent" />
         </div>
         <div
@@ -287,7 +225,7 @@ function FollowCursor() {
       mX.set(e.clientX); mY.set(e.clientY);
       setIsHover(!!e.target.closest("a,button,[data-cursor-hover]"));
     };
-    window.addEventListener("mousemove", move);
+    window.addEventListener("mousemove", move, { passive: true });
     return () => window.removeEventListener("mousemove", move);
   }, [mX, mY]);
 
@@ -320,49 +258,69 @@ function StatCard({ icon: Icon, value, label }) {
   );
 }
 
-// ─── FEATURED MINI CARD (tengah, tampil di fase final) ─────────────────
-function FeaturedMiniCard({ item, delay = 0 }) {
-  const [flipped, setFlipped] = useState(false);
+// ─── SCROLL PROGRESS BAR ──────────────────────────────────────────────
+function ScrollProgressBar({ progress }) {
   return (
-    <motion.div
-      initial={{ opacity:0, y:20, scale:.92 }}
-      animate={{ opacity:1, y:0,  scale:1 }}
-      transition={{ duration:.5, delay, ease:[.16,1,.3,1] }}
-      onClick={() => setFlipped(f => !f)}
-      data-cursor-hover
-      className="cursor-pointer"
-      style={{ perspective:800 }}
-    >
+    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-100 z-30 pointer-events-none">
       <motion.div
-        animate={{ rotateY: flipped ? 180 : 0 }}
-        transition={{ duration:.5, type:"spring", stiffness:200, damping:22 }}
-        style={{ transformStyle:"preserve-3d", position:"relative" }}
-        className="w-full"
-      >
-        {/* Front */}
-        <div className="rounded-2xl overflow-hidden shadow-md border border-white"
-          style={{ backfaceVisibility:"hidden" }}>
-          <div className="w-full aspect-[4/3] overflow-hidden">
-            <img src={item.img} alt={item.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-          </div>
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[9px] font-black text-[#C67C4E] uppercase tracking-widest mb-0.5">{item.cat}</p>
-            <p className="text-xs font-black text-[#2F2D2C] leading-snug">{item.name}</p>
-            <p className="text-[11px] font-bold text-gray-400 mt-0.5">{item.price}</p>
-          </div>
-        </div>
-        {/* Back */}
-        <div
-          className="absolute inset-0 rounded-2xl bg-[#2F2D2C] flex flex-col items-center justify-center p-4 border border-[#C67C4E]/30"
-          style={{ backfaceVisibility:"hidden", transform:"rotateY(180deg)" }}
+        className="h-full bg-gradient-to-r from-[#C67C4E] to-[#A05C32] origin-left"
+        style={{ scaleX: progress }}
+      />
+    </div>
+  );
+}
+
+// ─── SCROLL DOWN HINT (fase circle awal) ──────────────────────────────
+function ScrollHint({ visible }) {
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          key="scroll-hint"
+          initial={{ opacity:0, y:10 }}
+          animate={{ opacity:1, y:0 }}
+          exit={{ opacity:0, y:10 }}
+          transition={{ duration:.8, delay:.5 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 pointer-events-none select-none"
         >
-          <p className="text-[9px] font-black text-[#C67C4E] uppercase tracking-widest mb-2">{item.cat}</p>
-          <p className="text-sm font-black text-white text-center leading-snug mb-2">{item.name}</p>
-          <p className="text-lg font-black text-[#C67C4E]">{item.price}</p>
-          <p className="text-[9px] text-gray-500 mt-3 text-center">Tap lagi untuk balik</p>
-        </div>
-      </motion.div>
-    </motion.div>
+          <motion.p
+            animate={{ opacity:[.5, 1, .5] }}
+            transition={{ repeat:Infinity, duration:2, ease:"easeInOut" }}
+            className="text-[10px] font-black tracking-[.3em] text-gray-400 uppercase"
+          >
+          </motion.p>
+          {/* Animated chevron stack */}
+          <div className="flex flex-col items-center gap-0.5">
+            {[0, 1, 2].map((i) => (
+              <motion.div
+                key={i}
+                animate={{ opacity:[0, 1, 0], y:[0, 6, 0] }}
+                transition={{
+                  repeat:Infinity,
+                  duration:1.4,
+                  delay: i * 0.2,
+                  ease:"easeInOut",
+                }}
+              >
+                <ChevronDown size={14} className="text-[#C67C4E]" />
+              </motion.div>
+            ))}
+          </div>
+          {/* Mouse scroll icon */}
+          <motion.div
+            className="w-5 h-8 border-2 border-[#C67C4E]/50 rounded-full flex items-start justify-center p-1 mt-1"
+            animate={{ opacity:[.6,1,.6] }}
+            transition={{ repeat:Infinity, duration:2 }}
+          >
+            <motion.div
+              className="w-1 h-1.5 bg-[#C67C4E] rounded-full"
+              animate={{ y:[0, 12, 0] }}
+              transition={{ repeat:Infinity, duration:1.4, ease:"easeInOut" }}
+            />
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -374,10 +332,11 @@ export default function ScrollMorphHero({ onNavigate }) {
   const scrollRef      = useRef(0);
   const rafRef         = useRef(null);
   const autoRotRef     = useRef(0);
+  // Batasi frekuensi setState untuk performa
+  const lastRenderRef  = useRef(0);
 
   const [containerSize, setContainerSize] = useState({ width:0, height:0 });
 
-  // scroll morph state (sama persis dengan original)
   const morphProgress  = useRef(0);
   const rotateProgress = useRef(0);
   const [morphValue,  setMorphValue]  = useState(0);
@@ -387,18 +346,18 @@ export default function ScrollMorphHero({ onNavigate }) {
   const [introPhase, setIntroPhase] = useState("scatter");
   const [morphActive, setMorphActive] = useState(false);
 
-  // FASE FINAL: setelah arc morph selesai
+  // FASE FINAL
   const [finalPhase, setFinalPhase]   = useState(false);
-  const [finalTrans, setFinalTrans]   = useState(0); // 0→1 transisi ke layout final
-  const [autoRotate, setAutoRotate]   = useState(0); // derajat rotasi half-circle
-
-  // selected item
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [finalTrans, setFinalTrans]   = useState(0);
+  const [autoRotate, setAutoRotate]   = useState(0);
 
   // parallax
   const mouseX  = useMotionValue(0);
-  const sMouseX = useSpring(mouseX, { stiffness:30, damping:20 });
+  const sMouseX = useSpring(mouseX, { stiffness:20, damping:18 });
   const [parallax, setParallax] = useState(0);
+
+  // scroll progress 0→1 untuk progress bar
+  const scrollProgress = scrollRef.current / MAX_SCROLL;
 
   // ── container size ──
   useEffect(() => {
@@ -411,18 +370,23 @@ export default function ScrollMorphHero({ onNavigate }) {
     return () => obs.disconnect();
   }, []);
 
-  // ── apply scroll logic (SAMA dengan original, + deteksi final) ──
+  // ── apply scroll (throttled untuk performa) ──
   const applyScroll = useCallback((next) => {
     scrollRef.current = next;
     morphProgress.current  = norm(next, 0, MORPH_END);
     rotateProgress.current = norm(next, MORPH_END, ROTATE_END);
+
+    // Throttle setState: max 60fps
+    const now = performance.now();
+    if (now - lastRenderRef.current < 14) return;
+    lastRenderRef.current = now;
+
     setMorphValue(morphProgress.current);
     setRotateValue(rotateProgress.current);
 
     if (next > 20 && !morphActive) setMorphActive(true);
     if (next <= 5) setMorphActive(false);
 
-    // Ketika scroll mencapai MAX (arc habis) → masuk fase final
     if (next >= MAX_SCROLL && !finalPhase) {
       setFinalPhase(true);
     }
@@ -435,7 +399,6 @@ export default function ScrollMorphHero({ onNavigate }) {
 
     const onWheel = (e) => {
       const cur = scrollRef.current;
-      // Jika sudah final: lepaskan scroll ke halaman
       if (finalPhase) return;
 
       const atBottom = cur >= MAX_SCROLL && e.deltaY > 0;
@@ -494,9 +457,8 @@ export default function ScrollMorphHero({ onNavigate }) {
   // ── Auto-rotate half-circle saat finalPhase ──
   useEffect(() => {
     if (!finalPhase) return;
-    // Transisi smooth ke layout final
     let startTime = null;
-    const transDur = 800; // ms
+    const transDur = 800;
 
     const step = (ts) => {
       if (!startTime) startTime = ts;
@@ -504,8 +466,7 @@ export default function ScrollMorphHero({ onNavigate }) {
       const t = Math.min(elapsed / transDur, 1);
       setFinalTrans(t);
 
-      // Mulai rotasi setelah transisi selesai
-      autoRotRef.current += 0.12;
+      autoRotRef.current += 0.10; // sedikit lebih lambat = lebih smooth
       setAutoRotate(autoRotRef.current);
 
       rafRef.current = requestAnimationFrame(step);
@@ -520,9 +481,9 @@ export default function ScrollMorphHero({ onNavigate }) {
     if (!el) return;
     const onMove = (e) => {
       const r = el.getBoundingClientRect();
-      mouseX.set(((e.clientX - r.left) / r.width * 2 - 1) * 80);
+      mouseX.set(((e.clientX - r.left) / r.width * 2 - 1) * 60);
     };
-    el.addEventListener("mousemove", onMove);
+    el.addEventListener("mousemove", onMove, { passive: true });
     return () => el.removeEventListener("mousemove", onMove);
   }, [mouseX]);
 
@@ -546,7 +507,7 @@ export default function ScrollMorphHero({ onNavigate }) {
       rotation: (Math.random() - .5) * 180, scale:.6, opacity:0,
     })), []);
 
-  // ── Original arc targets (sama persis) ──
+  // ── FIX #1: Circle & arc targets — lingkaran digeser ke KANAN ──
   const arcTargets = useMemo(() => {
     const { width:W, height:H } = containerSize;
     if (!W || !H) return MORPH_ITEMS.map(() => ({ x:0, y:0, rotation:0, scale:1, opacity:1 }));
@@ -554,6 +515,10 @@ export default function ScrollMorphHero({ onNavigate }) {
     const isMobile  = W < 768;
     const minDim    = Math.min(W, H);
     const circleR   = Math.min(minDim * .35, 350);
+
+    // FIX: geser pusat lingkaran ke kanan (15% dari tengah untuk desktop)
+    const circleOffsetX = isMobile ? 0 : W * 0.15;
+
     const baseR     = Math.min(W, H * 1.5);
     const arcR      = baseR * (isMobile ? 1.4 : 1.1);
     const apexY     = H * (isMobile ? .35 : .25);
@@ -567,7 +532,8 @@ export default function ScrollMorphHero({ onNavigate }) {
     return MORPH_ITEMS.map((_, i) => {
       const cAngle = (i / TOTAL_CARDS) * 360;
       const cRad   = cAngle * Math.PI / 180;
-      const cx     = Math.cos(cRad) * circleR;
+      // FIX: tambahkan circleOffsetX agar lingkaran lebih ke kanan
+      const cx     = Math.cos(cRad) * circleR + circleOffsetX;
       const cy     = Math.sin(cRad) * circleR;
 
       const aAngle = startA + i * stepA + boundedRot;
@@ -593,14 +559,11 @@ export default function ScrollMorphHero({ onNavigate }) {
 
     const isMobile = W < 768;
     const R        = Math.min(Math.min(W, H) * 0.40, 320);
-    // Center di kanan layar (75% dari kiri)
     const cx       = isMobile ? 0 : W * 0.26;
     const cy       = 0;
     const cardScale = isMobile ? 1.2 : 1.5;
 
     return MORPH_ITEMS.map((_, i) => {
-      // Half-circle: 180° di sisi kanan (dari -90° ke +90°, menghadap kiri)
-      // artinya: cos(θ) positif → posisi x menjorok ke KANAN dari center
       const angle    = (i / (TOTAL_CARDS - 1)) * 180 - 90 + autoRotate;
       const rad      = angle * Math.PI / 180;
       const x        = Math.cos(rad) * R + cx;
@@ -622,7 +585,6 @@ export default function ScrollMorphHero({ onNavigate }) {
       const a = arcTargets[i];
       const h = halfCircleTargets[i];
       const t = finalTrans;
-      // Easing
       const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
       return {
         x:        lerp(a.x, h.x, e),
@@ -648,22 +610,39 @@ export default function ScrollMorphHero({ onNavigate }) {
     const R = Math.min(Math.min(W,H) * .35, 350);
     const a = (i / TOTAL_CARDS) * 360;
     const r = a * Math.PI / 180;
-    return { x: Math.cos(r)*R, y: Math.sin(r)*R, rotation: a+90, scale:1, opacity:1 };
+    // FIX: apply same rightward offset untuk circle stage
+    const circleOffsetX = W < 768 ? 0 : W * 0.15;
+    return {
+      x: Math.cos(r)*R + circleOffsetX,
+      y: Math.sin(r)*R,
+      rotation: a+90, scale:1, opacity:1,
+    };
   }
 
   // ── Visibility & opacity ──
   const heroLeftOpacity = morphActive && !finalPhase ? Math.max(0, 1 - morphValue * 2.5) : 1;
   const heroLeftY       = morphActive && !finalPhase ? morphValue * -20 : 0;
 
-  // arc content (muncul saat arc penuh, SEBELUM final)
-  const arcContentOpacity = morphActive && !finalPhase ? Math.max(0, (morphValue - .8) / .2) : 0;
-  const arcContentY       = morphActive && !finalPhase ? lerp(20, 0, norm(morphValue, .8, 1)) : 20;
+  // FIX #2: arc content — opacity mulai lebih awal & posisi tidak terpotong
+  // Sebelumnya: top-[8%] dan opacity mulai dari morphValue .8
+  // Fix: muncul lebih smooth, dan posisi center secara vertikal agar tidak terpotong navbar
+  const arcContentOpacity = morphActive && !finalPhase
+    ? Math.max(0, (morphValue - 0.75) / 0.25)
+    : 0;
+  // Tidak pakai y offset besar supaya teks tidak terpotong
+  const arcContentY = morphActive && !finalPhase
+    ? lerp(16, 0, norm(morphValue, 0.75, 1))
+    : 16;
 
-  // final layout opacity (muncul setelah finalTrans)
+  // final layout opacity
   const finalContentOp = finalPhase ? Math.min(1, finalTrans * 2) : 0;
 
-  // 3 kartu tengah untuk ditampilkan di fase final
-  const featuredMid = [MENU_ITEMS[1], MENU_ITEMS[2], MENU_ITEMS[3]];
+  // scroll progress untuk progress bar (reaktif)
+  const [scrollPct, setScrollPct] = useState(0);
+  useEffect(() => {
+    // update progress bar setiap kali morphValue berubah
+    setScrollPct(scrollRef.current / MAX_SCROLL);
+  }, [morphValue]);
 
   return (
     <div ref={containerRef}
@@ -674,10 +653,13 @@ export default function ScrollMorphHero({ onNavigate }) {
       <AmbientBg />
       <HeroParticles />
 
+      {/* ─── SCROLL PROGRESS BAR ─── */}
+      <ScrollProgressBar progress={scrollPct} />
+
       {/* ─── HERO KIRI: teks + CTA ─── */}
       <motion.div
         className="absolute z-10 flex flex-col justify-center h-full pl-10 sm:pl-16"
-        style={{ opacity: heroLeftOpacity, y: heroLeftY, maxWidth: 480 }}
+        style={{ opacity: heroLeftOpacity, y: heroLeftY, maxWidth: 460 }}
       >
         <motion.div
           initial={{ opacity:0, y:24, filter:"blur(10px)" }}
@@ -735,6 +717,7 @@ export default function ScrollMorphHero({ onNavigate }) {
       </motion.div>
 
       {/* ─── KARTU (circle → arc → half-circle) ─── */}
+      {/* FIX: justify-center tetap, lingkaran offset-nya sudah ada di getCardTarget */}
       <div className="absolute inset-0 flex items-center justify-center z-[5] pointer-events-none">
         {MORPH_ITEMS.map((item, i) => (
           <MorphCard
@@ -746,59 +729,14 @@ export default function ScrollMorphHero({ onNavigate }) {
         ))}
       </div>
 
-      {/* ─── Konten tengah: FASE FINAL ─── */}
-      <AnimatePresence>
-        {finalPhase && (
-          <motion.div
-            key="final-center"
-            initial={{ opacity:0 }}
-            animate={{ opacity: finalContentOp }}
-            exit={{ opacity:0 }}
-            transition={{ duration:.6 }}
-            className="absolute z-[15] pointer-events-auto"
-            style={{
-              // Posisi: tengah antara teks kiri (s/d ~480px) dan half-circle (kanan)
-              left: "clamp(300px, 33%, 420px)",
-              right: "clamp(220px, 30%, 340px)",
-              top: "50%",
-              transform: "translateY(-50%)",
-            }}
-          >
-            <p className="text-[9px] font-black text-gray-400 uppercase tracking-[.3em] mb-3 text-center">
-              Menu Pilihan
-            </p>
-            <div className="grid grid-cols-3 gap-3">
-              {featuredMid.map((item, idx) => (
-                <FeaturedMiniCard key={item.id} item={item} delay={idx * 0.08} />
-              ))}
-            </div>
-            <motion.p
-              initial={{ opacity:0 }}
-              animate={{ opacity:1 }}
-              transition={{ delay:.6 }}
-              className="text-center text-[9px] text-gray-400 mt-3"
-            >
-              Tap kartu untuk lihat harga
-            </motion.p>
-            {/* Scroll down hint */}
-            <motion.div
-              className="flex flex-col items-center gap-1.5 mt-5"
-              animate={{ opacity:[.4,1,.4] }}
-              transition={{ repeat:Infinity, duration:1.8 }}
-            >
-              <p className="text-[9px] font-black tracking-[.25em] text-gray-400 uppercase">Scroll untuk menu lengkap</p>
-              <div className="w-4 h-4 border-r-2 border-b-2 border-[#C67C4E] rotate-45" />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ─── Arc content (muncul sebelum fase final, saat arc selesai) ─── */}
+      {/* ─── FIX #2: Arc content — posisi tidak terpotong ─── */}
+      {/* Sebelumnya: top-[8%] → sekarang top-[15%] agar tidak terpotong navbar */}
+      {/* Dan min-height agar konten tidak kepotong */}
       <motion.div
-        className="absolute top-[8%] left-0 right-0 z-[15] flex flex-col items-center text-center px-4 pointer-events-none"
+        className="absolute top-[15%] left-0 right-0 z-[15] flex flex-col items-center text-center px-6 pointer-events-none"
         style={{ opacity: arcContentOpacity, y: arcContentY }}
       >
-        <h2 className="text-3xl sm:text-5xl font-black text-[#2F2D2C] font-serif italic tracking-tight mb-3">
+        <h2 className="text-3xl sm:text-5xl font-black text-[#2F2D2C] font-serif italic tracking-tight mb-4">
           Jelajahi Menu Kami
         </h2>
         <p className="text-sm text-gray-500 max-w-md leading-relaxed">
@@ -806,30 +744,86 @@ export default function ScrollMorphHero({ onNavigate }) {
           <br className="hidden md:block" />
           Hover kartu untuk melihat nama dan harga.
         </p>
+        {/* Subtle scroll reminder saat arc muncul */}
+        <motion.div
+          className="flex flex-col items-center gap-1.5 mt-6"
+          animate={{ opacity:[.4,1,.4] }}
+          transition={{ repeat:Infinity, duration:2, ease:"easeInOut" }}
+        >
+          <p className="text-[9px] font-black tracking-[.25em] text-gray-400 uppercase">Terus scroll</p>
+          <ChevronDown size={16} className="text-[#C67C4E]" />
+        </motion.div>
       </motion.div>
 
-      {/* ─── Scroll hint (fase circle, belum morph) ─── */}
+      {/* ─── FIX #3: Konten fase final — HAPUS best seller cards ─── */}
+      {/* Diganti dengan: stats sudah ada di kiri, kanan ada scroll hint yang jelas */}
       <AnimatePresence>
-        {introPhase === "circle" && !morphActive && (
+        {finalPhase && (
           <motion.div
-            key="intro-text"
-            initial={{ opacity:0, y:20, filter:"blur(10px)" }}
-            animate={{ opacity:1, y:0,  filter:"blur(0px)" }}
-            exit={{ opacity:0, filter:"blur(10px)" }}
-            transition={{ duration:1 }}
-            className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 pointer-events-none"
+            key="final-center"
+            initial={{ opacity:0, y:12 }}
+            animate={{ opacity: finalContentOp, y:0 }}
+            exit={{ opacity:0 }}
+            transition={{ duration:.6 }}
+            className="absolute z-[15] pointer-events-auto flex flex-col items-center justify-center text-center"
+            style={{
+              left: "clamp(280px, 30%, 400px)",
+              right: "clamp(200px, 28%, 320px)",
+              top: "50%",
+              transform: "translateY(-50%)",
+            }}
           >
-            <p className="text-[10px] font-black tracking-[.3em] text-gray-400 uppercase">
-              Scroll untuk morph
-            </p>
+            {/* Label */}
+            <motion.p
+              initial={{ opacity:0, y:8 }}
+              animate={{ opacity:1, y:0 }}
+              transition={{ delay:.3 }}
+              className="text-[9px] font-black text-gray-400 uppercase tracking-[.3em] mb-4"
+            >
+              Semua sudah siap
+            </motion.p>
+            {/* Tagline */}
+            <motion.p
+              initial={{ opacity:0, scale:.95 }}
+              animate={{ opacity:1, scale:1 }}
+              transition={{ delay:.4 }}
+              className="text-lg font-black text-[#2F2D2C] leading-tight mb-2"
+            >
+              12+ menu siap<br/>
+              <span className="font-serif italic text-[#C67C4E]">menggugah selera</span>
+            </motion.p>
+            {/* CTA scroll ke bawah */}
             <motion.div
-              animate={{ y:[0,6,0] }}
-              transition={{ repeat:Infinity, duration:.9, ease:"easeInOut" }}
-              className="w-5 h-5 border-r-2 border-b-2 border-[#C67C4E] rotate-45"
-            />
+              className="flex flex-col items-center gap-2 mt-5"
+              initial={{ opacity:0 }}
+              animate={{ opacity:1 }}
+              transition={{ delay:.6 }}
+            >
+              <motion.div
+                animate={{ opacity:[.4,1,.4], y:[0,5,0] }}
+                transition={{ repeat:Infinity, duration:1.6, ease:"easeInOut" }}
+                className="flex flex-col items-center gap-0.5"
+              >
+                <p className="text-[9px] font-black tracking-[.25em] text-[#C67C4E] uppercase mb-1">
+                  Scroll untuk lihat halaman
+                </p>
+                {[0,1].map((i) => (
+                  <motion.div
+                    key={i}
+                    animate={{ opacity:[0,1,0], y:[0,6,0] }}
+                    transition={{ repeat:Infinity, duration:1.4, delay:i*0.18 }}
+                  >
+                    <ChevronDown size={14} className="text-[#C67C4E]" />
+                  </motion.div>
+                ))}
+              </motion.div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ─── FIX: Scroll hint yang lebih baik di fase circle awal ─── */}
+      <ScrollHint visible={introPhase === "circle" && !morphActive} />
 
       {/* ─── Radial glow ─── */}
       {morphActive && (
