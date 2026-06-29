@@ -742,7 +742,6 @@ export default function ScrollMorphHero({ onNavigate }) {
         <p className="text-sm text-gray-500 max-w-md leading-relaxed">
           Scroll terus untuk menelusuri koleksi kopi dan makanan Bogeng.
           <br className="hidden md:block" />
-          Hover kartu untuk melihat nama dan harga.
         </p>
         {/* Subtle scroll reminder saat arc muncul */}
         <motion.div

@@ -1,19 +1,32 @@
 // src/pages/main/BogengLandingPage.jsx
 // =====================================================================
-// CHANGELOG v4:
-//   - FIX: menuOpen → mobileOpen (ReferenceError line 786)
-//   - FIX: Tombol "Portal Member" sekarang pakai overlay transition (sama
-//          seperti tombol Masuk), bukan langsung navigate → tidak blank
-//   - FIX: Balik dari member portal → landing page tidak blank
-//          (key prop dihapus dari ScrollMorphHero agar tidak re-mount)
-//   - FIX: Overlay transition terpusat di satu fungsi handleNavigateTo()
-//   - PERF: AmbientLeaves dikurangi jadi CSS-only, tidak pakai framer di
-//          MenuSectionLeaves (kurangi jumlah motion.div aktif)
-//   - PERF: RevealSection margin lebih agresif supaya tidak block render
+// CHANGELOG v5:
+//   - ADD: Section baru "Tentang Kami" (AboutSection) — diletakkan
+//          setelah Hero, sebelum Menu. Isinya cerita singkat brand,
+//          3 nilai/value (Biji Pilihan, Diseduh dengan Hati, Suasana
+//          Hangat), dan 3 kartu statistik yang angkanya "ngitung naik"
+//          otomatis (count-up) begitu section kelihatan di layar.
+//   - ADD: Komponen <Counter/> — helper buat animasi count-up, pakai
+//          framer-motion `animate()` + `useInView`.
+//   - ADD: "Tentang" dimasukkan ke navLinks (Navbar & scrollspy ikut
+//          otomatis kebaca karena keduanya baca dari array yang sama).
+//   - DOCS: Tambah komentar penjelasan di beberapa bagian yang sering
+//          bikin bingung kalau dibaca ulang: konvensi `data-cursor-hover`,
+//          alur ComplaintForm/ReviewForm, trik seamless loop di
+//          InfiniteMarquee, dan pembagian dua kolom di section Kontak.
+//   (CHANGELOG v4 sebelumnya: fix mobileOpen, overlay transition
+//   terpusat via usePageTransition, ScrollMorphHero tanpa key prop,
+//   AmbientLeaves CSS-only.)
 // =====================================================================
 import logoImg from "../../assets/logo.png";
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useInView,
+  useMotionValue,
+  animate,
+} from "framer-motion";
 import {
   Coffee,
   Heart,
@@ -28,6 +41,7 @@ import {
   ArrowUp,
   Menu as MenuIcon,
   X,
+  Sparkles,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -51,6 +65,16 @@ import spagetiImg from "../../assets/spageti.jpg";
 import dimsumImg from "../../assets/dimsum.jpg";
 import cirengImg from "../../assets/cire1.png";
 import frenchImg from "../../assets/french.jpg";
+
+// =====================================================================
+// CATATAN PENTING: atribut `data-cursor-hover` yang nempel di banyak
+// tombol/link/kartu di bawah ini BUKAN prop React biasa — itu cuma
+// marker HTML biasa. Markernya dibaca oleh custom cursor (lingkaran
+// kecil yang ngikutin mouse) yang hidup di dalam <ScrollMorphHero/>.
+// Begitu mouse nyentuh elemen berlabel ini, custom cursor otomatis
+// membesar/berubah. Jadi walau di file ini kelihatan "tidak dipakai",
+// jangan dihapus — itu kontrak antara halaman ini dan ScrollMorphHero.
+// =====================================================================
 
 const WHATSAPP_NUMBER = "6281234567890";
 
@@ -108,7 +132,11 @@ function CoffeeBeanShape({ className, style }) {
   );
 }
 
-// PERF: CSS-only animation, tidak pakai framer motion
+// PERF: CSS-only animation, tidak pakai framer motion.
+// Catatan: keyframes `.leaf-anim` / `.bean-anim` didefinisikan SEKALI di
+// <style> komponen ini, lalu dipakai ulang oleh MenuSectionLeaves &
+// AboutSection (cukup pasang className "leaf-anim" + custom property
+// "--base-t/--dur/--delay" di style inline, tidak perlu definisi ulang).
 function AmbientLeaves() {
   const leaves = [
     { top: "2%",  left: "-5%", size: 200, rotate: -18, color: "#8B5E34", dur: 22, delay: 0   },
@@ -225,6 +253,156 @@ function MenuSectionLeaves() {
 }
 
 // =====================================================================
+// COUNTER — angka statistik yang "ngitung naik" begitu kelihatan di
+// layar. Cara kerja: `useInView` mendeteksi kapan elemen <span> masuk
+// viewport (once: true → cuma sekali, hemat perf), lalu `animate()` dari
+// framer-motion menggerakkan sebuah motion value dari 0 -> target.
+// Tiap motion value berubah, nilainya dibulatkan & disimpan ke state
+// biasa (`display`) supaya React nge-render angka utuh, bukan desimal.
+// =====================================================================
+function Counter({ to, suffix = "" }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-40px" });
+  const motionVal = useMotionValue(0);
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (!isInView) return;
+    const controls = animate(motionVal, to, {
+      duration: 1.6,
+      ease: [0.16, 1, 0.3, 1],
+    });
+    return controls.stop;
+  }, [isInView, to, motionVal]);
+
+  useEffect(() => {
+    const unsubscribe = motionVal.on("change", (v) => setDisplay(Math.round(v)));
+    return unsubscribe;
+  }, [motionVal]);
+
+  return (
+    <span ref={ref}>
+      {display}
+      {suffix}
+    </span>
+  );
+}
+
+// =====================================================================
+// TENTANG KAMI — section baru, diletakkan setelah Hero & sebelum Menu
+// (lihat urutan di komponen utama paling bawah). Dua kolom:
+//   - kiri  : cerita singkat brand + 3 nilai/value, reveal stagger
+//             satu-satu pas di-scroll (initial x:-16 -> 0).
+//   - kanan : 3 kartu statistik dengan angka count-up (<Counter/>) +
+//             hover-lift kecil biar kerasa interaktif.
+// =====================================================================
+const ABOUT_VALUES = [
+  {
+    icon: Coffee,
+    title: "Biji Pilihan",
+    desc: "Disangrai dalam batch kecil tiap minggu, jadi rasanya konsisten dari cangkir ke cangkir.",
+  },
+  {
+    icon: Heart,
+    title: "Diseduh dengan Hati",
+    desc: "Barista kami hafal racikan favorit pelanggan setia, bukan cuma ngikutin SOP.",
+  },
+  {
+    icon: Sparkles,
+    title: "Suasana Hangat",
+    desc: "Tempat nongkrong santai — cocok buat kerja, ngerjain tugas, atau sekadar ngobrol.",
+  },
+];
+
+const ABOUT_STATS = [
+  { to: 2, suffix: "+", label: "Tahun Melayani Pekanbaru" },
+  { to: 100, suffix: "+", label: "Senyum Setiap Harinya" },
+  { to: 98, suffix: "%", label: "Pelanggan yang Balik Lagi" },
+];
+
+function AboutSection() {
+  return (
+    <RevealSection
+      id="tentang"
+      className="relative py-20 sm:py-24 bg-white border-y border-gray-100 z-10 overflow-hidden"
+    >
+      {/* Daun dekoratif — pakai ulang keyframes .leaf-anim dari AmbientLeaves,
+          jadi tidak perlu definisi <style> baru di sini. */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div className="leaf-anim absolute opacity-[0.08]"
+          style={{ top: "6%", left: "-3%", "--base-t": "rotate(-14deg)", "--dur": "20s", "--delay": "0s", color: "#6F8F5C" }}>
+          <LeafShape style={{ width: 130, height: 169 }} className="fill-current" />
+        </div>
+        <div className="leaf-anim absolute opacity-[0.08]"
+          style={{ top: "62%", left: "97%", "--base-t": "rotate(18deg)", "--dur": "24s", "--delay": "-6s", color: "#8B5E34" }}>
+          <LeafShape style={{ width: 110, height: 143 }} className="fill-current" />
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-6 sm:px-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
+        {/* Kolom kiri: narasi + nilai brand */}
+        <div>
+          <span className="text-[10px] font-black text-[#C67C4E] uppercase tracking-[0.3em] block mb-2">
+            Tentang Kami
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-black font-serif italic text-[#2F2D2C] mb-4">
+            Dari Dapur Kecil, Jadi Tempat Singgah Favorit
+          </h2>
+          <p className="text-sm text-gray-500 leading-relaxed mb-7 max-w-md">
+            Bogeng Coffee mulai dari pertanyaan sederhana: kenapa kopi enak harus
+            mahal dan ribet dicari? Dari dapur kecil, kami racik sendiri menu demi
+            menu, sampai pelan-pelan jadi tempat nongkrong yang sekarang kamu kenal.
+          </p>
+          <div className="space-y-4">
+            {ABOUT_VALUES.map((v, idx) => {
+              const Icon = v.icon;
+              return (
+                <motion.div
+                  key={v.title}
+                  initial={{ opacity: 0, x: -16 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.45, delay: idx * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex items-start gap-3"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-[#C67C4E]/10 text-[#C67C4E] flex items-center justify-center shrink-0">
+                    <Icon size={16} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-[#2F2D2C] mb-0.5">{v.title}</p>
+                    <p className="text-xs text-gray-500 leading-relaxed">{v.desc}</p>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Kolom kanan: kartu statistik count-up, hover sedikit "naik" */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {ABOUT_STATS.map((s, idx) => (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 24, scale: 0.95 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: idx * 0.12, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ y: -4, scale: 1.02 }}
+              className="bg-[#FAF7F2] border border-[#EFE6DC] rounded-2xl p-6 text-center"
+            >
+              <p className="text-3xl sm:text-4xl font-black text-[#C67C4E] font-serif italic">
+                <Counter to={s.to} suffix={s.suffix} />
+              </p>
+              <p className="text-[11px] text-gray-500 font-bold mt-2 leading-snug">{s.label}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </RevealSection>
+  );
+}
+
+// =====================================================================
 // FULL MENU GRID
 // =====================================================================
 function FullMenuGrid({ items, selectedId, onSelect }) {
@@ -294,7 +472,11 @@ function Stars({ count }) {
 }
 
 // =====================================================================
-// REVIEW FORM
+// REVIEW FORM — ulasan yang dikirim (addReview) berstatus "pending" dulu
+// di reviewsStore (Supabase), BUKAN langsung tayang. Admin yang approve
+// dulu lewat dashboard admin, baru ulasan itu muncul di InfiniteMarquee
+// (lihat subscribeReviews() di komponen utama). Makanya ada pesan
+// "masuk antrean moderasi" begitu form berhasil dikirim.
 // =====================================================================
 function ReviewForm() {
   const [name, setName] = useState("");
@@ -351,7 +533,12 @@ function ReviewForm() {
 }
 
 // =====================================================================
-// COMPLAINT FORM
+// COMPLAINT FORM — form keluhan/saran yang TIDAK disimpan ke database
+// sama sekali. Begitu submit, kita cuma susun teks pesan dari isian
+// `name` + `message`, lalu buka tab baru ke deep link `wa.me/<nomor>`
+// dengan query `?text=` — jadi begitu WhatsApp kebuka, isi chat-nya
+// SUDAH otomatis terisi pesan yang tadi diketik, tinggal pelanggan
+// pencet kirim di WhatsApp mereka sendiri.
 // =====================================================================
 function ComplaintForm() {
   const [name, setName] = useState("");
@@ -396,7 +583,9 @@ function smoothScrollTo(id) {
 }
 
 // =====================================================================
-// REVEAL SECTION
+// REVEAL SECTION — wrapper generik: section fade+slide-up begitu masuk
+// viewport (once: true, jadi animasinya cuma main sekali per section,
+// tidak berulang tiap di-scroll bolak-balik).
 // =====================================================================
 function RevealSection({ children, className = "", id }) {
   return (
@@ -411,7 +600,12 @@ function RevealSection({ children, className = "", id }) {
 }
 
 // =====================================================================
-// INFINITE MARQUEE
+// INFINITE MARQUEE — trik loop "seamless": array `reviews` dirender 2x
+// jadi `doubled` (total 2x lipat item), track dibuat selebar isinya
+// (width:max-content), lalu di-geser pakai CSS animation sampai -50%
+// (pas itu, posisi duplikat KEDUA pas nongol persis menggantikan posisi
+// awal duplikat PERTAMA) → mata orang lihatnya kayak jalan terus tanpa
+// "patah" pas balik ke awal. Hover nge-pause animasinya.
 // =====================================================================
 function InfiniteMarquee({ reviews }) {
   const doubled = [...reviews, ...reviews];
@@ -478,9 +672,14 @@ function BackToTop() {
 }
 
 // =====================================================================
-// PAGE TRANSITION OVERLAY — terpusat, digunakan navbar & hero
+// PAGE TRANSITION OVERLAY — terpusat, digunakan navbar & hero.
+// FIX (v4): sebelumnya tiap tombol "Masuk"/"Portal Member" panggil
+// navigate() langsung → kadang halaman tujuan belum sempat render pas
+// browser udah pindah, jadinya kelihatan blank sekejap. Solusinya: semua
+// navigasi keluar lewat satu hook ini → overlay gelap nutup dulu (lihat
+// <div aria-hidden> di komponen utama), BARU navigate() jalan 250ms
+// kemudian, jadi transisinya mulus dan tidak pernah nge-flash blank.
 // =====================================================================
-// FIX: Semua navigasi keluar halaman melalui fungsi ini agar konsisten
 function usePageTransition() {
   const navigate  = useNavigate();
   const [leaving, setLeaving] = useState(false);
@@ -507,8 +706,12 @@ function Navbar({ onGoTo }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("beranda");
 
+  // "Tentang" sengaja diletakkan persis setelah "Beranda" — urutan array
+  // ini dipakai DUA kali: buat link navbar (desktop & mobile) DAN buat
+  // scrollspy di bawah, jadi cukup edit di satu tempat ini saja.
   const navLinks = [
     { label: "Beranda", id: "beranda" },
+    { label: "Tentang", id: "tentang" },
     { label: "Menu",    id: "menu"    },
     { label: "Member",  id: "member"  },
     { label: "Ulasan",  id: "ulasan"  },
@@ -550,6 +753,7 @@ function Navbar({ onGoTo }) {
   return (
     <nav className="fixed top-0 left-0 right-0 z-[100] px-6 sm:px-10 py-4 bg-white/85 backdrop-blur-md border-b border-gray-100">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
+        {/* data-cursor-hover di bawah ini: lihat catatan di atas import */}
         <button onClick={(e) => handleNavClick(e, "beranda")}
           className="flex items-center gap-2 select-none" data-cursor-hover>
           <img src={logoImg} alt="Logo Bogeng" className="w-8 h-8 rounded-lg object-cover" />
@@ -651,7 +855,10 @@ export default function BogengLandingPage() {
   return (
     <div className="relative min-h-screen bg-white text-[#2F2D2C] overflow-x-hidden selection:bg-[#C67C4E] selection:text-white font-sans">
 
-      {/* ── FIX: Overlay transition terpusat ── */}
+      {/* ── FIX: Overlay transition terpusat ──
+          Div hitam fullscreen yang opacity-nya di-toggle dari `leaving`.
+          Dibikin tampak SEBELUM navigate() jalan (lihat usePageTransition
+          di atas) supaya pindah halaman tidak pernah kelihatan blank. */}
       <div
         aria-hidden="true"
         style={{
@@ -671,7 +878,10 @@ export default function BogengLandingPage() {
 
       {/* ── HERO ── */}
       <div id="beranda">
-        {/* FIX: ScrollMorphHero TIDAK diberi key prop supaya tidak re-mount saat kembali */}
+        {/* FIX: ScrollMorphHero TIDAK diberi key prop supaya tidak re-mount
+            saat user kembali dari halaman lain (itu sumber bug blank-page
+            sebelumnya — re-mount bikin custom cursor & state internal
+            ke-reset paksa). */}
         <ScrollMorphHero
           onNavigate={(target) => {
             if (target.startsWith("/")) goTo(target);
@@ -679,6 +889,9 @@ export default function BogengLandingPage() {
           }}
         />
       </div>
+
+      {/* ── TENTANG KAMI (section baru) ── */}
+      <AboutSection />
 
       {/* ── MENU ── */}
       <RevealSection id="menu"
@@ -825,7 +1038,13 @@ export default function BogengLandingPage() {
         </div>
       </RevealSection>
 
-      {/* ── KONTAK ── */}
+      {/* ── KONTAK ──
+          Dua kolom: kiri info statis (alamat, jam operasional, link
+          WhatsApp langsung — tanpa form, langsung wa.me), kanan
+          <ComplaintForm/> yang juga ujung-ujungnya redirect ke WhatsApp
+          tapi dengan pesan yang sudah tersusun rapi (lihat komentar di
+          definisi ComplaintForm di atas). Sengaja dua-duanya "berakhir"
+          di WhatsApp karena toko ini belum punya sistem tiket terpisah. */}
       <RevealSection id="kontak" className="relative py-20 sm:py-24 bg-white z-10">
         <div className="max-w-5xl mx-auto px-6 sm:px-10 grid grid-cols-1 md:grid-cols-2 gap-8">
           <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }}
@@ -835,6 +1054,8 @@ export default function BogengLandingPage() {
             <div className="space-y-3 text-sm text-gray-500">
               <div className="flex items-center gap-3"><MapPin size={16} className="text-[#C67C4E] shrink-0" /> Jl. Kopi Santai No.12, Pekanbaru</div>
               <div className="flex items-center gap-3"><Clock size={16} className="text-[#C67C4E] shrink-0" /> Setiap hari, 08.00 – 22.00 WIB</div>
+              {/* Link langsung ke WhatsApp tanpa pesan pre-filled — beda
+                  dari ComplaintForm yang pesannya sudah disusun otomatis */}
               <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noreferrer" data-cursor-hover
                 className="flex items-center gap-3 hover:text-[#C67C4E] transition-colors">
                 <Phone size={16} className="text-[#C67C4E] shrink-0" /> Chat WhatsApp Langsung
