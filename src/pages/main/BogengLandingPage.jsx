@@ -988,10 +988,6 @@ export default function BogengLandingPage() {
         </div>
         {(() => {
           const DUMMY = [
-            { id: "d1", name: "Aldi R.",    tier: "Loyal Member", rating: 5, text: "Espresso Bold-nya mantap banget, pas banget buat nemenin kerja pagi!" },
-            { id: "d2", name: "Sari W.",    tier: "Reguler",      rating: 5, text: "Caramel Macchiato di sini juara, creamy dan nggak terlalu manis." },
-            { id: "d3", name: "Dimas F.",   tier: "VIP Member",   rating: 4, text: "Tempatnya cozy banget, cocok buat ngerjain tugas sambil ngopi." },
-            { id: "d4", name: "Reza M.",    tier: "Loyal Member", rating: 5, text: "Palm Sugar Coffee-nya khas banget, rasa gula aren-nya kerasa asli." },
             { id: "d5", name: "Nadia K.",   tier: "Reguler",      rating: 5, text: "Matcha Latte Premium disini beda dari yang lain, worth it banget!" },
             { id: "d6", name: "Bagas P.",   tier: "VIP Member",   rating: 5, text: "Sistem member-nya keren, nggak perlu download app apapun." },
             { id: "d7", name: "Fitri A.",   tier: "Loyal Member", rating: 4, text: "Red Velvet Cream-nya enak banget, jadi favorit baru aku." },
