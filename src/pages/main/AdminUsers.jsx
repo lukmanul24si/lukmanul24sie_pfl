@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 
+// 🟢 KOMPONEN REUSABLE DARI FOLDER components/ (sebelumnya ditulis manual)
+import PageHeader from '../../components/pageHeader';
+import Button from '../../components/Button';
+
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [fullName, setFullName] = useState('');
@@ -59,10 +63,14 @@ const AdminUsers = () => {
 
   return (
     <div className="p-6 max-w-4xl mx-auto font-sans">
-      <div className="mb-6">
-        <h1 className="text-xl font-black text-[#313131] uppercase">Manajemen Staf / User POS</h1>
-        <p className="text-xs text-gray-400">CRUD Data Pengguna Aplikasi Kasir Langsung ke Database Supabase</p>
-      </div>
+      {/* 🟢 pakai komponen PageHeader (di-styling ulang biar persis sama tampilan lama) */}
+      <PageHeader
+        title="Manajemen Staf / User POS"
+        desc="CRUD Data Pengguna Aplikasi Kasir Langsung ke Database Supabase"
+        className="mb-6"
+        titleClassName="text-xl font-black text-[#313131] uppercase"
+        descClassName="text-xs text-gray-400"
+      />
 
       {/* FORM UPDATE DATA USER */}
       {editingId && (
@@ -89,9 +97,14 @@ const AdminUsers = () => {
               </select>
             </div>
           </div>
+          {/* 🟢 pakai komponen Button (variant outline & accent) */}
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setEditingId(null)} className="px-3 py-1.5 text-xs font-bold border rounded-xl">Batal</button>
-            <button type="submit" className="px-4 py-1.5 text-xs font-black bg-[#C67C4E] text-white rounded-xl uppercase">Simpan</button>
+            <Button type="button" variant="outline" onClick={() => setEditingId(null)} className="w-auto px-3 py-1.5 text-xs">
+              Batal
+            </Button>
+            <Button type="submit" variant="accent" className="w-auto px-4 py-1.5 text-xs">
+              Simpan
+            </Button>
           </div>
         </form>
       )}

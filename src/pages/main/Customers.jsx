@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Search, Star, Award, Users, TrendingUp, ShoppingBag, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import StatCard from '../../components/StatCard';
+import Input from '../../components/Input';
+import IconButton from '../../components/IconButton';
+import Badge from '../../components/Badge';
 
 // ================= AUDIO ENGINE =================
 let globalAudioCtx = null;
@@ -88,44 +92,33 @@ const Customers = () => {
 
       {/* CARD ANALITIK */}
       <div className="grid grid-cols-3 gap-3 mb-4 shrink-0 px-1">
-        <motion.div initial={{ opacity: 0, scale: 0.95, y: 5 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.05 }}
-          whileHover={{ y: -2, boxShadow: "0 6px 12px rgba(0,0,0,0.02)" }}
-          className="bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] p-3 rounded-xl flex items-center gap-3 select-none">
-          <div className="w-8 h-8 bg-[#C67C4E]/10 text-[#C67C4E] rounded-lg flex items-center justify-center shrink-0">
-            <ShoppingBag size={15} strokeWidth={2.5} />
-          </div>
-          <div className="leading-tight truncate">
-            <p className="text-[8px] font-black text-[#9B9B9B] uppercase tracking-wider">Total Pendapatan (Gross)</p>
-            <h4 className="text-xs font-black text-[#313131] mt-0.5">Rp {totalGrossRevenue.toLocaleString('id-ID')}</h4>
-          </div>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, scale: 0.95, y: 5 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.1 }}
-          whileHover={{ y: -2, boxShadow: "0 6px 12px rgba(0,0,0,0.02)" }}
-          className="bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] p-3 rounded-xl flex items-center gap-3 select-none">
-          <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center shrink-0">
-            <TrendingUp size={15} strokeWidth={2.5} />
-          </div>
-          <div className="leading-tight truncate">
-            <p className="text-[8px] font-black text-[#9B9B9B] uppercase tracking-wider">Estimasi Profit Kedai (60%)</p>
-            <h4 className="text-xs font-black text-emerald-600 mt-0.5">Rp {estimatedNetProfit.toLocaleString('id-ID')}</h4>
-          </div>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, scale: 0.95, y: 5 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.15 }}
-          whileHover={{ y: -2, boxShadow: "0 6px 12px rgba(0,0,0,0.02)" }}
-          className="bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] p-3 rounded-xl flex items-center gap-3 select-none">
-          <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center shrink-0">
-            <Users size={15} strokeWidth={2.5} />
-          </div>
-          <div className="leading-tight truncate">
-            <p className="text-[8px] font-black text-[#9B9B9B] uppercase tracking-wider">Rata-rata Keranjang Belanja</p>
-            <h4 className="text-xs font-black text-blue-600 mt-0.5">Rp {Math.round(averageBasket).toLocaleString('id-ID')}</h4>
-          </div>
-        </motion.div>
+        <StatCard
+          title="Total Pendapatan (Gross)"
+          value={`Rp ${totalGrossRevenue.toLocaleString('id-ID')}`}
+          icon={<ShoppingBag size={15} strokeWidth={2.5} />}
+          iconBg="bg-[#C67C4E]/10"
+          iconColor="text-[#C67C4E]"
+          valueColor="text-[#313131]"
+          delay={0.05}
+        />
+        <StatCard
+          title="Estimasi Profit Kedai (60%)"
+          value={`Rp ${estimatedNetProfit.toLocaleString('id-ID')}`}
+          icon={<TrendingUp size={15} strokeWidth={2.5} />}
+          iconBg="bg-emerald-50"
+          iconColor="text-emerald-600"
+          valueColor="text-emerald-600"
+          delay={0.1}
+        />
+        <StatCard
+          title="Rata-rata Keranjang Belanja"
+          value={`Rp ${Math.round(averageBasket).toLocaleString('id-ID')}`}
+          icon={<Users size={15} strokeWidth={2.5} />}
+          iconBg="bg-blue-50"
+          iconColor="text-blue-600"
+          valueColor="text-blue-600"
+          delay={0.15}
+        />
       </div>
 
       {/* Header & Search */}
@@ -138,12 +131,12 @@ const Customers = () => {
             Sistem Tingkatan: 10x Transaksi / Rp250rb = LOYAL · 25x Transaksi / Rp500rb = VIP
           </p>
         </div>
-        <div className="w-64 relative flex items-center">
-          <Search size={13} className="absolute left-3 text-[#9B9B9B]" strokeWidth={2} />
-          <input type="text" placeholder="Cari nama pelanggan..."
-            onChange={(e) => { playSoundEffect("creamyKey"); setSearchQuery(e.target.value); }}
-            className="w-full bg-[#FBF8F6] border-[0.5px] border-[#E3E3E3] rounded-lg pl-8 pr-3 py-1.5 text-[10px] font-medium focus:outline-none focus:border-[#C67C4E] focus:bg-white transition-all text-[#313131] placeholder:text-[#B0B0B0]" />
-        </div>
+        <Input
+          className="w-64"
+          placeholder="Cari nama pelanggan..."
+          icon={<Search size={13} strokeWidth={2} />}
+          onChange={(e) => { playSoundEffect("creamyKey"); setSearchQuery(e.target.value); }}
+        />
       </div>
 
       {/* Tabel CRM */}
@@ -170,7 +163,6 @@ const Customers = () => {
               filteredCustomers.map((cust) => {
                 const tier = tierOf(cust);
                 const isVip = tier === 'VIP';
-                const isLoyal = tier === 'LOYAL';
                 return (
                   <motion.tr key={cust.id} variants={itemVariants}
                     whileHover={{ backgroundColor: "#FDFBF9", x: 2, transition: { duration: 0.1 } }}
@@ -191,21 +183,20 @@ const Customers = () => {
                       ✨ <span className="font-black text-[12px]">{cust.points || 0}</span> <span className="text-[9px] text-[#9B9B9B] font-medium">pts</span>
                     </td>
                     <td className="py-2.5 px-6 text-center">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[7px] font-black tracking-wider uppercase select-none ${
-                        isVip ? 'bg-[#313131] text-white shadow-sm animate-pulse' :
-                        isLoyal ? 'bg-[#FEF3C7] text-[#D97706]' :
-                        'bg-gray-100 text-gray-500'
-                      }`}>
-                        {isVip ? <Award size={8} strokeWidth={3} /> : <Star size={8} strokeWidth={3} />}
-                        {tier}
-                      </span>
+                      <Badge
+                        status={tier}
+                        size="compact"
+                        icon={isVip ? <Award size={8} strokeWidth={3} /> : <Star size={8} strokeWidth={3} />}
+                      />
                     </td>
                     <td className="py-2.5 px-6 text-right">
                       {deleteCustomer && (
-                        <button onClick={() => { playSoundEffect("clickDelete"); deleteCustomer(cust.id); }}
-                          className="p-1 text-[#9B9B9B] hover:text-red-500 hover:bg-red-50 rounded transition-all">
-                          <Trash2 size={12} strokeWidth={2.5} />
-                        </button>
+                        <IconButton
+                          size="compact"
+                          variant="ghostDanger"
+                          icon={<Trash2 size={12} strokeWidth={2.5} />}
+                          onClick={() => { playSoundEffect("clickDelete"); deleteCustomer(cust.id); }}
+                        />
                       )}
                     </td>
                   </motion.tr>

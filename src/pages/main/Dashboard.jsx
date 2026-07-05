@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useApp } from "../../context/AppContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ShoppingBag, Plus } from "lucide-react";
+import { Search, ShoppingBag } from "lucide-react";
 
 // 🟢 IMPORT 3 KOMPONEN SHADCN UI (SELAIN BUTTON, INPUT, CARD, BADGE)
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,7 +14,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// 🟢 KOMPONEN REUSABLE DARI FOLDER components/ (sebelumnya ditulis manual di file ini)
 import SwitchToggle from "../../components/SwitchToggle";
+import MenuCard from "../../components/MenuCard";
+import CartItem from "../../components/CartItem";
+import SummaryRow from "../../components/SummaryRow";
 
 let globalAudioCtx = null;
 
@@ -35,7 +39,7 @@ const playSoundEffect = (type) => {
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
-    
+
     if (type === "creamyKey") {
       const osc1 = ctx.createOscillator();
       const gain1 = ctx.createGain();
@@ -43,7 +47,7 @@ const playSoundEffect = (type) => {
       const randomPitch = 140 + Math.random() * 40;
       osc1.frequency.setValueAtTime(randomPitch, ctx.currentTime);
       osc1.frequency.exponentialRampToValueAtTime(randomPitch * 0.4, ctx.currentTime + 0.04);
-      
+
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
       osc2.type = "triangle";
@@ -62,7 +66,7 @@ const playSoundEffect = (type) => {
 
       gain1.gain.setValueAtTime(0.4, ctx.currentTime);
       gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
-      
+
       gain2.gain.setValueAtTime(0.25, ctx.currentTime);
       gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
 
@@ -75,7 +79,7 @@ const playSoundEffect = (type) => {
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
-      
+
       if (type === "clickMenu") {
         osc.type = "sine";
         osc.frequency.setValueAtTime(580, ctx.currentTime);
@@ -97,7 +101,7 @@ const playSoundEffect = (type) => {
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + 0.12);
-        
+
         setTimeout(() => {
           try {
             const ctx2 = getAudioContext();
@@ -129,7 +133,7 @@ const Dashboard = () => {
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [showBestSellerOnly, setShowBestSellerOnly] = useState(false);
   const [lastOrderData, setLastOrderData] = useState(null);
-  
+
   // State Baru untuk Menyimpan Tipe Orderan dari Select Component
   const [orderType, setOrderType] = useState("dine-in");
 
@@ -137,7 +141,7 @@ const Dashboard = () => {
     const matchesCategory = activeCategory === "All" || item.category === activeCategory;
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesBestSeller = !showBestSellerOnly || item.isBestSeller === true;
-    
+
     return matchesCategory && matchesSearch && matchesBestSeller;
   });
 
@@ -219,10 +223,10 @@ const Dashboard = () => {
 
   return (
     <div className="w-full h-full grid grid-cols-12 gap-4 text-[#313131]">
-      
+
       {/* AREA KIRI */}
       <div className="col-span-9 flex flex-col h-full overflow-hidden">
-        
+
         {/* Search Bar */}
         <div className="w-full relative flex items-center mb-3 shrink-0">
           <Search size={14} className="absolute left-3.5 text-[#9B9B9B]" strokeWidth={2.5} />
@@ -237,7 +241,7 @@ const Dashboard = () => {
 
         {/* Baris Filter */}
         <div className="flex justify-between items-center mb-4 shrink-0 select-none">
-          
+
           {/* 🟢 KOMPONEN 1: SHADCN TABS (Navigasi Kategori Kasir Premium) */}
           <Tabs value={activeCategory} onValueChange={(val) => {
             playSoundEffect("clickQty");
@@ -270,20 +274,20 @@ const Dashboard = () => {
             </Select>
 
             <div className="bg-white border-[0.5px] border-[#E3E3E3] px-3 py-1.5 rounded-xl shadow-sm">
-              <SwitchToggle 
-                checked={showBestSellerOnly} 
+              <SwitchToggle
+                checked={showBestSellerOnly}
                 onChange={(val) => {
                   playSoundEffect("clickQty");
                   setShowBestSellerOnly(val);
-                }} 
-                label="Menu Best Seller 🔥" 
+                }}
+                label="Menu Best Seller 🔥"
               />
             </div>
           </div>
 
         </div>
 
-        {/* Grid Katalog */}
+        {/* Grid Katalog — 🟢 pakai komponen MenuCard */}
         <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
           <AnimatePresence mode="wait">
             <motion.div
@@ -294,55 +298,15 @@ const Dashboard = () => {
               className="grid grid-cols-4 gap-3.5 pb-4"
             >
               {filteredMenu.map((item) => (
-                <motion.div
-                  key={item.id}
-                  variants={itemVariants}
-                  whileHover={{
-                    y: -5,
-                    boxShadow: "0 10px 20px rgba(198, 124, 78, 0.08)",
-                    borderColor: "#C67C4E",
-                  }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => addToCart(item)}
-                  className="bg-white rounded-xl border-[0.5px] border-[#E3E3E3] p-2.5 flex flex-col justify-between cursor-pointer group select-none transition-colors duration-200"
-                >
-                  <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-[#FBF8F6] relative">
-                    <motion.img
-                      src={item.img}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                      whileHover={{ scale: 1.08 }}
-                      transition={{ duration: 0.3, ease: "easeOut" }}
-                    />
-                    {item.isBestSeller && (
-                      <div className="absolute top-1.5 right-1.5 bg-[#C67C4E] text-white text-[7px] font-black uppercase px-1.5 py-0.5 rounded shadow-sm tracking-wider">
-                        Best Seller
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-2.5 flex flex-col gap-0.5 flex-1 justify-end">
-                    <h4 className="text-[11px] font-black text-[#313131] leading-tight group-hover:text-[#C67C4E] transition-colors line-clamp-1">
-                      {item.name}
-                    </h4>
-                    <p className="text-[8px] text-[#9B9B9B] font-bold uppercase tracking-wider">
-                      {item.category}
-                    </p>
-
-                    <div className="flex justify-between items-center mt-2 pt-1.5 border-t border-[#FBF8F6]">
-                      <span className="text-[11px] font-black text-[#313131]">
-                        Rp {item.price.toLocaleString("id-ID")}
-                      </span>
-
-                      <motion.div
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="w-5 h-5 rounded-md bg-[#C67C4E] text-white flex items-center justify-center shadow-sm shadow-[#C67C4E]/10"
-                      >
-                        <Plus size={10} strokeWidth={3} />
-                      </motion.div>
-                    </div>
-                  </div>
+                <motion.div key={item.id} variants={itemVariants}>
+                  <MenuCard
+                    name={item.name}
+                    price={item.price}
+                    img={item.img}
+                    category={item.category}
+                    isBestSeller={item.isBestSeller}
+                    onClick={() => addToCart(item)}
+                  />
                 </motion.div>
               ))}
             </motion.div>
@@ -375,6 +339,7 @@ const Dashboard = () => {
           )}
         </div>
 
+        {/* Daftar Item Keranjang — 🟢 pakai komponen CartItem */}
         <div className="flex-1 overflow-y-auto my-3 space-y-2 pr-1 custom-scrollbar">
           <AnimatePresence mode="wait">
             {cart.length === 0 ? (
@@ -406,34 +371,14 @@ const Dashboard = () => {
                   initial={{ opacity: 0, x: 15 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -15 }}
-                  className="bg-[#FBF8F6] p-2 rounded-xl border-[0.5px] border-[#E3E3E3] flex justify-between items-center gap-2"
                 >
-                  <div className="truncate leading-tight">
-                    <p className="text-[10px] font-black text-[#313131] truncate">
-                      {item.name}
-                    </p>
-                    <p className="text-[9px] font-bold text-[#C67C4E] mt-0.5">
-                      Rp {(item.price * item.qty).toLocaleString("id-ID")}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 shrink-0 bg-white border-[0.5px] border-[#E3E3E3] rounded-lg p-0.5">
-                    <button
-                      onClick={() => updateQty(item.id, item.qty - 1)}
-                      className="w-4 h-4 rounded text-[10px] font-black hover:bg-gray-100 flex items-center justify-center"
-                    >
-                      -
-                    </button>
-                    <span className="text-[9px] font-black w-4 text-center">
-                      {item.qty}
-                    </span>
-                    <button
-                      onClick={() => updateQty(item.id, item.qty + 1)}
-                      className="w-4 h-4 rounded text-[10px] font-black hover:bg-gray-100 flex items-center justify-center"
-                    >
-                      +
-                    </button>
-                  </div>
+                  <CartItem
+                    name={item.name}
+                    price={item.price}
+                    qty={item.qty}
+                    onAdd={() => updateQty(item.id, item.qty + 1)}
+                    onRemove={() => updateQty(item.id, item.qty - 1)}
+                  />
                 </motion.div>
               ))
             )}
@@ -457,19 +402,10 @@ const Dashboard = () => {
             />
           </div>
 
+          {/* Ringkasan Total — 🟢 pakai komponen SummaryRow */}
           <div className="space-y-1 text-[11px] font-medium">
-            <div className="flex justify-between text-[#9B9B9B]">
-              <span>Subtotal</span>
-              <span className="font-bold">Rp {subtotal.toLocaleString("id-ID")}</span>
-            </div>
-            <div className="flex justify-between items-center pt-1 text-[#313131]">
-              <span className="font-black text-[10px] uppercase tracking-wider">
-                Total Bayar
-              </span>
-              <span className="font-black text-sm text-[#C67C4E]">
-                Rp {subtotal.toLocaleString("id-ID")}
-              </span>
-            </div>
+            <SummaryRow label="Subtotal" value={`Rp ${subtotal.toLocaleString("id-ID")}`} />
+            <SummaryRow label="Total Bayar" value={`Rp ${subtotal.toLocaleString("id-ID")}`} isBold />
           </div>
 
           <motion.button
@@ -490,7 +426,7 @@ const Dashboard = () => {
       </div>
 
       {/* ========================================================================================= */}
-      {/* 🟢 KOMPONEN 3: SHADCN DIALOG (Pop-up Struk Nota Otomatis Menggantikan File Lama) */}
+      {/* 🟢 KOMPONEN 3: SHADCN DIALOG (Pop-up Struk Nota Otomatis) */}
       {/* ========================================================================================= */}
       <Dialog open={isReceiptOpen} onOpenChange={(open) => !open && handleCloseReceipt()}>
         <DialogContent className="bg-white border border-[#E3E3E3] rounded-2xl p-6 max-w-sm mx-auto shadow-2xl font-sans text-[#313131]">
@@ -530,12 +466,12 @@ const Dashboard = () => {
               ))}
             </div>
 
-            <div className="border-t border-amber-900/10 pt-2.5 flex justify-between items-center text-[#313131]">
-              <span className="font-black uppercase tracking-wider text-[9px]">Total Akhir:</span>
-              <span className="font-black text-sm text-[#C67C4E]">
-                Rp {lastOrderData?.total.toLocaleString("id-ID")}
-              </span>
-            </div>
+            {/* Grand Total — 🟢 pakai komponen SummaryRow */}
+            <SummaryRow
+              label="Total Akhir:"
+              value={`Rp ${lastOrderData ? Number(lastOrderData.total).toLocaleString("id-ID") : 0}`}
+              isBold
+            />
           </div>
 
           <button

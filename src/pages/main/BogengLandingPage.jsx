@@ -52,6 +52,7 @@ import {
 } from "../../utils/reviewsStore";
 
 import ScrollMorphHero from "../../components/ui/ScrollMorphHero";
+import AmbientDecor, { LeafShape } from "../../components/ui/AmbientDecor";
 
 import espressoImg from "../../assets/espresso.png";
 import caramelImg from "../../assets/caramel_macchiato.png";
@@ -111,80 +112,6 @@ function formatIDR(num) {
 }
 
 // =====================================================================
-// SHAPES (CSS-only, tanpa framer untuk performa)
-// =====================================================================
-function LeafShape({ className, style }) {
-  return (
-    <svg viewBox="0 0 100 140" className={className} style={style} fill="currentColor">
-      <path d="M50 4C78 28 92 64 50 136C8 64 22 28 50 4Z" />
-      <path d="M50 14V126" stroke="white" strokeOpacity="0.25" strokeWidth="2" fill="none" />
-    </svg>
-  );
-}
-
-function CoffeeBeanShape({ className, style }) {
-  return (
-    <svg viewBox="0 0 60 40" className={className} style={style} fill="currentColor">
-      <ellipse cx="30" cy="20" rx="28" ry="18" />
-      <path d="M30 4 Q38 12 38 20 Q38 28 30 36" stroke="rgba(255,255,255,0.3)" strokeWidth="2" fill="none" />
-      <path d="M30 4 Q22 12 22 20 Q22 28 30 36" stroke="rgba(255,255,255,0.3)" strokeWidth="2" fill="none" />
-    </svg>
-  );
-}
-
-// PERF: CSS-only animation, tidak pakai framer motion.
-// Catatan: keyframes `.leaf-anim` / `.bean-anim` didefinisikan SEKALI di
-// <style> komponen ini, lalu dipakai ulang oleh MenuSectionLeaves &
-// AboutSection (cukup pasang className "leaf-anim" + custom property
-// "--base-t/--dur/--delay" di style inline, tidak perlu definisi ulang).
-function AmbientLeaves() {
-  const leaves = [
-    { top: "2%",  left: "-5%", size: 200, rotate: -18, color: "#8B5E34", dur: 22, delay: 0   },
-    { top: "18%", left: "91%", size: 140, rotate: 22,  color: "#6F8F5C", dur: 18, delay: -5  },
-    { top: "44%", left: "-4%", size: 170, rotate: 6,   color: "#6F8F5C", dur: 26, delay: -8  },
-    { top: "65%", left: "93%", size: 210, rotate: -10, color: "#8B5E34", dur: 20, delay: -12 },
-    { top: "85%", left: "5%",  size: 140, rotate: 28,  color: "#6F8F5C", dur: 24, delay: -3  },
-  ];
-  const beans = [
-    { top: "10%", left: "8%",  size: 36, rotate: 25,  color: "#8B5E34", dur: 16, delay: -6  },
-    { top: "30%", left: "87%", size: 28, rotate: -15, color: "#6F4E37", dur: 20, delay: -2  },
-    { top: "52%", left: "12%", size: 32, rotate: 40,  color: "#8B5E34", dur: 18, delay: -9  },
-    { top: "72%", left: "80%", size: 30, rotate: -35, color: "#6F4E37", dur: 22, delay: -4  },
-    { top: "88%", left: "45%", size: 26, rotate: 15,  color: "#8B5E34", dur: 14, delay: -7  },
-    { top: "5%",  left: "55%", size: 22, rotate: -20, color: "#6F4E37", dur: 19, delay: -1  },
-  ];
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
-      <style>{`
-        @keyframes leafFloat {
-          0%,100% { transform: var(--base-t) rotate(0deg) translate(0,0); }
-          33%      { transform: var(--base-t) rotate(5deg) translate(6px,-5px); }
-          66%      { transform: var(--base-t) rotate(-3deg) translate(-4px,3px); }
-        }
-        @keyframes beanFloat {
-          0%,100% { transform: var(--base-t) translateY(0); }
-          50%      { transform: var(--base-t) translateY(-7px); }
-        }
-        .leaf-anim { animation: leafFloat var(--dur) ease-in-out infinite; animation-delay: var(--delay); will-change: transform; }
-        .bean-anim { animation: beanFloat var(--dur) ease-in-out infinite; animation-delay: var(--delay); will-change: transform; }
-      `}</style>
-      {leaves.map((l, i) => (
-        <div key={`leaf-${i}`} className="leaf-anim absolute opacity-[0.055]"
-          style={{ top: l.top, left: l.left, "--base-t": `rotate(${l.rotate}deg)`, "--dur": `${l.dur}s`, "--delay": `${l.delay}s`, color: l.color }}>
-          <LeafShape style={{ width: l.size, height: l.size * 1.3 }} className="fill-current" />
-        </div>
-      ))}
-      {beans.map((b, i) => (
-        <div key={`bean-${i}`} className="bean-anim absolute opacity-[0.08]"
-          style={{ top: b.top, left: b.left, "--base-t": `rotate(${b.rotate}deg)`, "--dur": `${b.dur}s`, "--delay": `${b.delay}s`, color: b.color }}>
-          <CoffeeBeanShape style={{ width: b.size, height: b.size * 0.67 }} className="fill-current" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// =====================================================================
 // MENU DETAIL PANEL
 // =====================================================================
 function MenuDetailPanel({ item, onClose }) {
@@ -233,23 +160,10 @@ function MenuDetailPanel({ item, onClose }) {
 // MENU SECTION LEAVES — CSS only untuk performa
 // =====================================================================
 function MenuSectionLeaves() {
-  const leaves = [
-    { top: "8%",  left: "-2%", size: 100, rotate: -20, color: "#6F8F5C", dur: 14, delay: 0   },
-    { top: "25%", left: "98%", size: 80,  rotate: 30,  color: "#8B5E34", dur: 18, delay: -4  },
-    { top: "55%", left: "-1%", size: 90,  rotate: 10,  color: "#6F8F5C", dur: 16, delay: -8  },
-    { top: "70%", left: "96%", size: 110, rotate: -15, color: "#8B5E34", dur: 20, delay: -6  },
-    { top: "90%", left: "10%", size: 70,  rotate: 25,  color: "#6F8F5C", dur: 12, delay: -2  },
-  ];
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-      {leaves.map((leaf, i) => (
-        <div key={i} className="leaf-anim absolute opacity-[0.10]"
-          style={{ top: leaf.top, left: leaf.left, "--base-t": `rotate(${leaf.rotate}deg)`, "--dur": `${leaf.dur}s`, "--delay": `${leaf.delay}s`, color: leaf.color }}>
-          <LeafShape style={{ width: leaf.size, height: leaf.size * 1.3 }} className="fill-current" />
-        </div>
-      ))}
-    </div>
-  );
+  // Sekarang tinggal pakai <AmbientDecor variant="menu"/> — konfigurasi
+  // posisi daunnya sudah dipindah ke AmbientDecor.jsx supaya tidak ada
+  // dua sumber kebenaran untuk hal yang sama.
+  return <AmbientDecor variant="menu" />;
 }
 
 // =====================================================================
@@ -330,12 +244,12 @@ function AboutSection() {
           jadi tidak perlu definisi <style> baru di sini. */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
         <div className="leaf-anim absolute opacity-[0.08]"
-          style={{ top: "6%", left: "-3%", "--base-t": "rotate(-14deg)", "--dur": "20s", "--delay": "0s", color: "#6F8F5C" }}>
-          <LeafShape style={{ width: 130, height: 169 }} className="fill-current" />
+          style={{ top: "6%", left: "-3%", "--base-t": "rotate(-14deg)", "--dur": "20s", "--delay": "0s" }}>
+          <LeafShape size={130} color="#6F8F5C" />
         </div>
         <div className="leaf-anim absolute opacity-[0.08]"
-          style={{ top: "62%", left: "97%", "--base-t": "rotate(18deg)", "--dur": "24s", "--delay": "-6s", color: "#8B5E34" }}>
-          <LeafShape style={{ width: 110, height: 143 }} className="fill-current" />
+          style={{ top: "62%", left: "97%", "--base-t": "rotate(18deg)", "--dur": "24s", "--delay": "-6s" }}>
+          <LeafShape size={110} color="#8B5E34" />
         </div>
       </div>
 
@@ -870,7 +784,7 @@ export default function BogengLandingPage() {
         }}
       />
 
-      <AmbientLeaves />
+      <AmbientDecor variant="wide" />
       <BackToTop />
 
       {/* FIX: Navbar menerima goTo dari parent — tidak punya navigate sendiri */}

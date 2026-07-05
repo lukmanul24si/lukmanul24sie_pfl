@@ -1,51 +1,46 @@
 import React from 'react';
+import { User } from 'lucide-react';
 
+// =========================================================================
+// 🟢 TOPBAR / HEADER WORKSPACE — dipakai bareng di MainLayout.jsx
+// (sebelumnya markup ini di-copy manual di dalam MainLayout, sekarang
+// disatukan di sini biar satu-satunya sumber kebenaran/reusable)
+// =========================================================================
 const Topbar = () => {
-  // Mengambil nama secara dinamis, kalau kosong defaultnya Lukman
-  const activeUser = localStorage.getItem('logged_in_user') || 'Lukman';
-
   return (
-    <div className="w-full h-12 bg-transparent flex justify-between items-center px-4 shrink-0 select-none">
-      
-      {/* Sapaan Karib, Akrab & Gaul dengan Animasi Ambiance */}
-      <div className="flex items-center gap-2">
-        {/* Kontainer Cangkir Kopi Melayang Elegan */}
-        <div className="relative flex items-center justify-center w-6 h-6 rounded-lg bg-[#EDD6C8]/40 text-[#C67C4E] animate-[float_3s_ease-in-out_infinite]">
-          <span className="text-[12px]">☕</span>
-          {/* Animasi Efek Kilau Bintang */}
-          <span className="absolute -top-1 -right-1 text-[8px] animate-pulse">✨</span>
+    <header className="flex justify-between items-center pb-3 px-1 shrink-0 select-none">
+      <div className="flex items-center gap-2.5">
+        <div className="relative flex items-center justify-center w-7 h-7 rounded-xl bg-[#EDD6C8]/50 text-[#C67C4E] animate-[float_3s_ease-in-out_infinite] border-[0.5px] border-[#EDD6C8] shadow-sm">
+          <span className="text-[14px]">☕</span>
+          <span className="absolute -top-1.5 -right-1.5 text-[8px] animate-pulse">✨</span>
         </div>
-
         <div className="leading-tight">
-          <h2 className="text-[11px] font-black tracking-tight text-[#313131]">
-            Yo, Semangat Brew Hari Ini, <span className="text-[#C67C4E] underline decoration-wavy decoration-[#EDD6C8] underline-offset-2">{activeUser}</span>! 🙌
+          <h2 className="text-[13px] font-black tracking-tight text-[#313131]">
+            Yo, Semangat Brew Hari Ini, <span className="text-[#C67C4E] underline decoration-wavy decoration-[#EDD6C8]/80 underline-offset-4 font-black">Lukman</span>! 🙌
           </h2>
-          <p className="text-[8px] text-[#9B9B9B] font-bold mt-0.5">
-            Kelola pesanan kedai dengan efisiensi tingkat tinggi.
-          </p>
+          <p className="text-[9px] text-[#9B9B9B] font-bold mt-0.5">Kelola pesanan kedai dengan tingkat efisiensi luar nalar.</p>
         </div>
       </div>
 
-      {/* Profil Badge Admin Pojok Kanan */}
-      <div className="flex items-center gap-2 bg-white px-2.5 py-1 rounded-xl border-[0.5px] border-[#E3E3E3] shadow-sm">
-        <div className="w-5 h-5 rounded-lg bg-[#313131] text-white flex items-center justify-center text-[8px] font-black">
-          LH
+      {/* Profil Singkat Admin */}
+      <div className="flex items-center gap-2 bg-white p-1 pr-3 rounded-lg border-[0.5px] border-[#E3E3E3] shadow-sm">
+        <div className="w-7 h-7 bg-[#313131] text-white rounded-md flex items-center justify-center shadow-sm">
+          <User size={12} strokeWidth={2.5} />
         </div>
-        <div className="leading-none pr-1">
-          <h4 className="text-[8px] font-black tracking-tight text-[#313131] uppercase">Lukman Hakim</h4>
-          <p className="text-[6px] font-bold text-[#C67C4E] uppercase tracking-wider mt-0.5">Owner / Admin</p>
+        <div className="flex flex-col">
+          <span className="text-[10px] font-black tracking-tight text-[#313131]">Lukmanul Hakim</span>
+          <span className="text-[8px] font-bold text-[#C67C4E] tracking-wider uppercase">Owner / Admin</span>
         </div>
       </div>
 
-      {/* Inject Keyframe Khusus Animasi Floating */}
+      {/* Keyframe khusus Topbar */}
       <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-3px) rotate(4deg); }
+          50% { transform: translateY(-4px) rotate(6deg); }
         }
       `}</style>
-
-    </div>
+    </header>
   );
 };
 

@@ -1,4 +1,12 @@
 // src/components/ui/ScrollMorphHero.jsx
+// v5 FIXES:
+//   - Muter half-circle di fase final sekarang mulus (frame-rate
+//     independent + posisi langsung tanpa spring saat auto-rotate)
+//   - Kartu di half-circle tidak dempet lagi (radius naik, scale turun)
+//   - Arc (fase scroll pertengahan) disebar lebih lebar, sebelumnya
+//     20 kartu numpuk dalam sudut 130°, sekarang 195° (desktop)
+//   - AmbientBg dipindah jadi komponen bersama <AmbientDecor/> (dipakai
+//     ulang oleh BogengLandingPage.jsx, tidak di-copy-paste lagi)
 // v4 FIXES:
 //   - Lingkaran digeser ke kanan (offset +15% dari tengah)
 //   - Arc description tidak terpotong (posisi & opacity disesuaikan)
@@ -17,6 +25,7 @@ import React, {
 } from "react";
 import { motion, AnimatePresence, useSpring, useMotionValue } from "framer-motion";
 import { ArrowRight, Heart, Coffee, Star, Users, ChevronDown } from "lucide-react";
+import AmbientDecor, { LeafShape, BeanShape } from "./AmbientDecor";
 
 // ─── ASET LOKAL ──────────────────────────────────────────────────────
 import espressoImg        from "../../assets/espresso.png";
@@ -65,77 +74,6 @@ const lerp  = (a, b, t) => a * (1 - t) + b * t;
 const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
 const norm  = (val, min, max) => clamp((val - min) / (max - min), 0, 1);
 
-// ─── SVG SHAPES ───────────────────────────────────────────────────────
-function LeafSVG({ size, color, style }) {
-  return (
-    <svg width={size} height={size * 1.3} viewBox="0 0 100 140"
-      fill={color} style={style} aria-hidden="true">
-      <path d="M50 4C78 28 92 64 50 136C8 64 22 28 50 4Z" />
-      <path d="M50 14V126" stroke="white" strokeOpacity=".25" strokeWidth="2" fill="none" />
-    </svg>
-  );
-}
-
-function BeanSVG({ size, color, style }) {
-  return (
-    <svg width={size} height={size * 0.67} viewBox="0 0 60 40"
-      fill={color} style={style} aria-hidden="true">
-      <ellipse cx="30" cy="20" rx="28" ry="18" />
-      <path d="M30 4Q38 12 38 20Q38 28 30 36" stroke="rgba(255,255,255,.3)" strokeWidth="2" fill="none" />
-      <path d="M30 4Q22 12 22 20Q22 28 30 36" stroke="rgba(255,255,255,.3)" strokeWidth="2" fill="none" />
-    </svg>
-  );
-}
-
-// ─── AMBIENT BG ───────────────────────────────────────────────────────
-const LEAVES_CFG = [
-  { top:"2%",  left:"-5%", size:200, rot:-18, col:"#8B5E34", dur:22, dl:0 },
-  { top:"18%", left:"91%", size:140, rot:22,  col:"#6F8F5C", dur:18, dl:-5 },
-  { top:"44%", left:"-4%", size:170, rot:6,   col:"#6F8F5C", dur:26, dl:-8 },
-  { top:"65%", left:"93%", size:210, rot:-10, col:"#8B5E34", dur:20, dl:-12 },
-  { top:"85%", left:"5%",  size:140, rot:28,  col:"#6F8F5C", dur:24, dl:-3 },
-];
-const BEANS_CFG = [
-  { top:"10%", left:"8%",  size:36, rot:25,  col:"#8B5E34", dur:16, dl:-6 },
-  { top:"30%", left:"87%", size:28, rot:-15, col:"#6F4E37", dur:20, dl:-2 },
-  { top:"52%", left:"12%", size:32, rot:40,  col:"#8B5E34", dur:18, dl:-9 },
-  { top:"72%", left:"80%", size:30, rot:-35, col:"#6F4E37", dur:22, dl:-4 },
-  { top:"88%", left:"45%", size:26, rot:15,  col:"#8B5E34", dur:14, dl:-7 },
-  { top:"5%",  left:"55%", size:22, rot:-20, col:"#6F4E37", dur:19, dl:-1 },
-];
-
-function AmbientBg() {
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
-      <style>{`
-        @keyframes bgLeaf {
-          0%,100% { transform: var(--br) rotate(0deg) translate(0,0); }
-          33%      { transform: var(--br) rotate(5deg) translate(6px,-5px); }
-          66%      { transform: var(--br) rotate(-3deg) translate(-4px,3px); }
-        }
-        @keyframes bgBean {
-          0%,100% { transform: var(--br) translateY(0); }
-          50%      { transform: var(--br) translateY(-7px); }
-        }
-        .bg-leaf { animation: bgLeaf var(--d) ease-in-out infinite; animation-delay: var(--dl); will-change: transform; }
-        .bg-bean { animation: bgBean var(--d) ease-in-out infinite; animation-delay: var(--dl); will-change: transform; }
-      `}</style>
-      {LEAVES_CFG.map((l, i) => (
-        <div key={i} className="bg-leaf absolute opacity-[0.055]"
-          style={{ top:l.top, left:l.left, "--br":`rotate(${l.rot}deg)`, "--d":`${l.dur}s`, "--dl":`${l.dl}s` }}>
-          <LeafSVG size={l.size} color={l.col} />
-        </div>
-      ))}
-      {BEANS_CFG.map((b, i) => (
-        <div key={i} className="bg-bean absolute opacity-[0.08]"
-          style={{ top:b.top, left:b.left, "--br":`rotate(${b.rot}deg)`, "--d":`${b.dur}s`, "--dl":`${b.dl}s` }}>
-          <BeanSVG size={b.size} color={b.col} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ─── PARTIKEL HERO (dikurangi untuk performa) ─────────────────────────
 const PARTICLES = [
   { l:"8%",  s:22, d:18, dl:0   },
@@ -162,20 +100,35 @@ function HeroParticles() {
       `}</style>
       {PARTICLES.map((p, i) => (
         <div key={i} className="hp" style={{ left:p.l, animationDuration:`${p.d}s`, animationDelay:`${p.dl}s`, opacity:.5 }}>
-          <BeanSVG size={p.s} color="#8B5E34" />
+          <BeanShape size={p.s} color="#8B5E34" />
         </div>
       ))}
       {LEAF_PARTS.map((p, i) => (
         <div key={i} className="hp" style={{ left:p.l, animationDuration:`${p.d}s`, animationDelay:`${p.dl}s`, opacity:.4 }}>
-          <LeafSVG size={p.s} color="#6F8F5C" />
+          <LeafShape size={p.s} color="#6F8F5C" />
         </div>
       ))}
     </div>
   );
 }
 
-// ─── MORPH CARD (spring diringankan untuk performa) ───────────────────
-function MorphCard({ item, target, isVisible }) {
+// ─── MORPH CARD ─────────────────────────────────────────────────────
+// FIX SMOOTHNESS: sebelumnya kartu SELALU pakai spring (stiffness:28,
+// damping:12), yang secara matematis "overdamped" (damping-nya di atas
+// nilai kritis) → gerakannya lamban & terasa "ngeden" mengejar target.
+// Ini terasa PALING parah pas fase auto-rotate (half-circle di akhir),
+// karena targetnya bergerak terus tiap frame — spring yang lamban jadi
+// selalu ketinggalan dari posisi seharusnya, hasilnya muter jadi
+// patah-patah/tersendat, bukan mulus muter kayak carousel.
+//
+// FIX: saat prop `spinning` true (fase auto-rotate), kartu diposisikan
+// LANGSUNG tanpa spring (transition duration 0) — karena posisi target-
+// nya sendiri sudah dihitung mulus lewat sin/cos berbasis delta-time
+// (lihat useEffect auto-rotate di bawah), jadi tidak perlu lagi "dikejar"
+// oleh spring. Untuk fase lain (scatter/line/circle/arc/scroll) tetap
+// pakai spring, tapi sedikit lebih responsif (stiffness naik) supaya
+// gerak morph pas scroll juga terasa lebih smooth & tidak "ngeden".
+function MorphCard({ item, target, isVisible, spinning }) {
   return (
     <motion.div
       animate={{
@@ -183,8 +136,11 @@ function MorphCard({ item, target, isVisible }) {
         rotate: target.rotation, scale: target.scale,
         opacity: isVisible ? target.opacity : 0,
       }}
-      // FIX PERFORMA: stiffness & damping lebih ringan, mass sedikit lebih besar
-      transition={{ type:"spring", stiffness:28, damping:12, mass:0.8 }}
+      transition={
+        spinning
+          ? { duration: 0 }
+          : { type:"spring", stiffness:70, damping:18, mass:0.6 }
+      }
       style={{ position:"absolute", width:60, height:85, transformStyle:"preserve-3d", perspective:"1000px" }}
       className="cursor-pointer group"
     >
@@ -455,18 +411,29 @@ export default function ScrollMorphHero({ onNavigate }) {
   }, [finalPhase]);
 
   // ── Auto-rotate half-circle saat finalPhase ──
+  // FIX: kecepatan muter sekarang berbasis DELTA TIME (derajat/detik),
+  // bukan "+0.10 per frame". Sebelumnya kecepatan ikut naik-turun sesuai
+  // refresh rate layar (di layar 144Hz bakal muter ~2.4x lebih cepat
+  // dibanding 60Hz) — itu salah satu penyebab muternya kerasa tidak
+  // konsisten/smooth. Sekarang kecepatannya tetap sama di semua device.
+  const ROTATE_SPEED_DEG_PER_SEC = 9;
+
   useEffect(() => {
     if (!finalPhase) return;
     let startTime = null;
+    let lastTime  = null;
     const transDur = 800;
 
     const step = (ts) => {
-      if (!startTime) startTime = ts;
+      if (startTime === null) { startTime = ts; lastTime = ts; }
       const elapsed = ts - startTime;
+      const dt = Math.min((ts - lastTime) / 1000, 0.05); // clamp biar aman kalau tab sempat idle
+      lastTime = ts;
+
       const t = Math.min(elapsed / transDur, 1);
       setFinalTrans(t);
 
-      autoRotRef.current += 0.10; // sedikit lebih lambat = lebih smooth
+      autoRotRef.current += ROTATE_SPEED_DEG_PER_SEC * dt;
       setAutoRotate(autoRotRef.current);
 
       rafRef.current = requestAnimationFrame(step);
@@ -519,11 +486,14 @@ export default function ScrollMorphHero({ onNavigate }) {
     // FIX: geser pusat lingkaran ke kanan (15% dari tengah untuk desktop)
     const circleOffsetX = isMobile ? 0 : W * 0.15;
 
+    // FIX "KURANG LEBAR": sebelumnya spread cuma 130° (desktop) / 100°
+    // (mobile) untuk 20 kartu, jadi jarak antar kartu sempit dan
+    // kelihatan numpuk/dempet di tengah. Sekarang disebar lebih lebar.
     const baseR     = Math.min(W, H * 1.5);
-    const arcR      = baseR * (isMobile ? 1.4 : 1.1);
+    const arcR      = baseR * (isMobile ? 1.5 : 1.22);
     const apexY     = H * (isMobile ? .35 : .25);
     const arcCY     = apexY + arcR;
-    const spread    = isMobile ? 100 : 130;
+    const spread    = isMobile ? 150 : 195;
     const startA    = -90 - spread / 2;
     const stepA     = spread / (TOTAL_CARDS - 1);
     const maxRot    = spread * .8;
@@ -540,7 +510,7 @@ export default function ScrollMorphHero({ onNavigate }) {
       const aRad   = aAngle * Math.PI / 180;
       const ax     = Math.cos(aRad) * arcR + parallax;
       const ay     = Math.sin(aRad) * arcR + arcCY;
-      const arcScale = isMobile ? 1.4 : 1.8;
+      const arcScale = isMobile ? 1.3 : 1.65;
 
       return {
         x:        lerp(cx, ax, morphValue),
@@ -557,11 +527,15 @@ export default function ScrollMorphHero({ onNavigate }) {
     const { width:W, height:H } = containerSize;
     if (!W || !H) return MORPH_ITEMS.map(() => ({ x:0, y:0, rotation:0, scale:1, opacity:1 }));
 
+    // FIX "DEMPET": sebelumnya R maks 320 & scale 1.5 bikin 20 kartu
+    // saling tumpuk (jarak antar kartu di lingkaran < lebar kartu yang
+    // sudah di-scale). Sekarang radius diperbesar & scale sedikit
+    // dikecilkan supaya tiap kartu punya jarak napas yang cukup.
     const isMobile = W < 768;
-    const R        = Math.min(Math.min(W, H) * 0.40, 320);
+    const R        = Math.min(Math.min(W, H) * 0.48, 420);
     const cx       = isMobile ? 0 : W * 0.26;
     const cy       = 0;
-    const cardScale = isMobile ? 1.2 : 1.5;
+    const cardScale = isMobile ? 1.05 : 1.28;
 
     return MORPH_ITEMS.map((_, i) => {
       const angle    = (i / (TOTAL_CARDS - 1)) * 180 - 90 + autoRotate;
@@ -650,7 +624,7 @@ export default function ScrollMorphHero({ onNavigate }) {
       style={{ height:"100vh", minHeight:600, cursor:"none" }}>
 
       <FollowCursor />
-      <AmbientBg />
+      <AmbientDecor variant="wide" />
       <HeroParticles />
 
       {/* ─── SCROLL PROGRESS BAR ─── */}
@@ -725,6 +699,7 @@ export default function ScrollMorphHero({ onNavigate }) {
             item={item}
             target={getCardTarget(i)}
             isVisible={introPhase !== "scatter"}
+            spinning={finalPhase && finalTrans >= 1}
           />
         ))}
       </div>

@@ -13,6 +13,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Check, X, Trash2, EyeOff, Inbox, BadgeCheck } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import Badge from '../../components/Badge';
 import {
   getAllReviews,
   subscribeReviews,
@@ -28,20 +29,6 @@ const TABS = [
   { key: 'approved', label: 'Tayang di Landing Page' },
   { key: 'rejected', label: 'Ditolak' },
 ];
-
-function TierBadge({ tier }) {
-  if (!tier) return null;
-  const key = String(tier).toUpperCase();
-  let cls = 'bg-gray-100 text-gray-600 border border-gray-200';
-  if (key.includes('VIP')) cls = 'bg-amber-100 text-amber-700 border border-amber-200';
-  else if (key.includes('LOYAL')) cls = 'bg-emerald-100 text-emerald-700 border border-emerald-200';
-  else if (key.includes('MEMBER')) cls = 'bg-blue-100 text-blue-700 border border-blue-200';
-  return (
-    <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${cls}`}>
-      {tier}
-    </span>
-  );
-}
 
 function Stars({ count }) {
   return (
@@ -153,7 +140,7 @@ export default function ReviewModeration() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="text-xs font-black text-[#2F2D2C]">{displayName}</span>
-                    <TierBadge tier={tier} />
+                    <Badge status={tier} size="pill" />
                     <Stars count={r.rating} />
                   </div>
                   <p className="text-xs text-gray-600 leading-relaxed font-medium break-words">{text}</p>

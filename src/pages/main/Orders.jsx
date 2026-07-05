@@ -3,6 +3,16 @@ import { useApp } from '../../context/AppContext';
 import { Search, Eye, Trash2, Calendar, X, ShoppingBag, Tag, FileSpreadsheet } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// 🟢 KOMPONEN REUSABLE DARI FOLDER components/ (sebelumnya <select> ditulis manual)
+import DropdownStatus from '../../components/DropdownStatus';
+
+// Daftar status khusus Orders.jsx (PROCESS, bukan PENDING seperti default DropdownStatus)
+const ORDER_STATUSES = [
+  { id: 'PROCESS', label: '⏳ Process', color: 'bg-amber-500', text: 'text-amber-600', bg: 'bg-amber-50' },
+  { id: 'DONE',    label: '✅ Done',    color: 'bg-emerald-500', text: 'text-emerald-600', bg: 'bg-emerald-50' },
+  { id: 'CANCEL',  label: '❌ Cancel',  color: 'bg-rose-500', text: 'text-rose-600', bg: 'bg-rose-50' },
+];
+
 // =========================================================================
 // 🔴 GLOBAL AUDIO CONTEXT SINGLETON (ANTI BLOKIR, ANTI CRASH, & GURIH TERUS)
 // =========================================================================
@@ -380,22 +390,14 @@ const Orders = () => {
                       Rp {Number(order.total || 0).toLocaleString('id-ID')}
                     </td>
                     <td className="py-2.5 px-6 text-center">
-                      <select
-                        value={orderStatus}
-                        onChange={(e) => {
+                      <DropdownStatus
+                        currentStatus={orderStatus}
+                        statuses={ORDER_STATUSES}
+                        onStatusChange={(newStatus) => {
                           playSoundEffect("clickTab");
-                          updateOrderStatus && updateOrderStatus(order.id, e.target.value);
+                          updateOrderStatus && updateOrderStatus(order.id, newStatus);
                         }}
-                        className={`text-[9px] font-black px-2 py-1 rounded border outline-none cursor-pointer transition-colors ${
-                          orderStatus === 'DONE' ? 'bg-[#E6F4EA] text-[#137333] border-[#CEEAD6]' :
-                          orderStatus === 'CANCEL' ? 'bg-red-50 text-red-600 border-red-200' :
-                          'bg-amber-50 text-amber-600 border-amber-200 animate-pulse'
-                        }`}
-                      >
-                        <option value="PROCESS">⏳ PROCESS</option>
-                        <option value="DONE">✅ DONE</option>
-                        <option value="CANCEL">❌ CANCEL</option>
-                      </select>
+                      />
                     </td>
                     <td className="py-2.5 px-6 text-right">
                       <div className="flex items-center justify-end gap-2">
