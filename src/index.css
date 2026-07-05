@@ -1,7 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* 🟢 ANIMASI SPOTLIGHT LANDING PAGE PREMIUM (TAMBAHAN UPDATE) */
 @keyframes heroReveal { 0%{opacity:0;transform:translateY(28px);filter:blur(12px)} 100%{opacity:1;transform:translateY(0);filter:blur(0)} }

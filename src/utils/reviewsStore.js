@@ -1,139 +1,123 @@
 // src/utils/reviewsStore.js
 //
-// Penyimpanan ulasan pelanggan secara lokal (localStorage) supaya bisa dibaca
-// bersama oleh:
-//   1. Landing Page  -> pelanggan kirim ulasan baru (status: 'pending')
-//   2. Halaman Admin -> approve / tolak ulasan sebelum tayang ke publik
+// Sumber data ulasan TUNGGAL yang dipakai bersama oleh:
+//   - pages/main/BogengLandingPage.jsx (kirim ulasan tamu + tampilkan yang approved)
+//   - pages/main/ReviewModeration.jsx  (admin approve/reject/hapus)
+//   - pages/main/MemberPortal.jsx      (member kirim & lihat ulasan miliknya)
 //
-// Belum butuh backend/API dulu, semua disimpan di browser. Kalau nanti udah
-// ada backend, tinggal ganti isi fungsi-fungsi di bawah ini jadi fetch() ke API,
-// nama fungsi & cara pakainya di komponen lain gak perlu diubah.
+// Sekarang datanya betul-betul tersimpan di tabel "reviews" Supabase
+// (bukan localStorage lagi), dan tetap live-sync antar tab/halaman lewat
+// Supabase Realtime — makanya subscribeReviews(cb) tetap ada supaya
+// komponen yang sudah ada tidak perlu diubah sama sekali.
 
-const STORAGE_KEY = 'bogeng_reviews_v1';
-const EVENT_NAME = 'bogeng-reviews-updated';
+import { supabase } from '../lib/supabase';
 
-// Beberapa ulasan contoh biar landing page gak kosong waktu pertama dibuka
-const SEED_REVIEWS = [
-  {
-    id: 'seed-1',
-    name: 'James L.',
-    rating: 5,
-    text: 'Palm Sugar Coffee-nya juara parah, tempatnya tenang banget buat nugas akhir.',
-    tier: 'VIP',
-    status: 'approved',
-    createdAt: '2026-01-12T10:00:00.000Z',
-  },
-  {
-    id: 'seed-2',
-    name: 'Sarah M.',
-    rating: 4,
-    text: 'Baristanya ramah, pelayanan cepat, diskon member langsung kepotong otomatis pas bayar.',
-    tier: 'Loyal Member',
-    status: 'approved',
-    createdAt: '2026-02-03T10:00:00.000Z',
-  },
-  {
-    id: 'seed-3',
-    name: 'Alex K.',
-    rating: 5,
-    text: 'Gak pernah kecewa sama Bogeng Coffee, espresso-nya tebal dan nendang.',
-    tier: 'VIP',
-    status: 'approved',
-    createdAt: '2026-02-20T10:00:00.000Z',
-  },
-];
+let cache = [];
+let listeners = [];
+let initialized = false;
+let channel = null;
 
-function readAll() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_REVIEWS));
-      return SEED_REVIEWS;
-    }
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (err) {
-    console.error('Gagal membaca data ulasan dari localStorage:', err);
-    return [];
+const notify = () => listeners.forEach((cb) => cb(cache));
+
+const mapRow = (row) => ({
+  id: row.id,
+  customerId: row.customer_id,
+  name: row.name,
+  customerName: row.name,
+  email: row.email,
+  phone: row.phone,
+  rating: row.rating,
+  comment: row.comment,
+  text: row.comment,
+  tier: row.tier,
+  status: row.status, // 'pending' | 'approved' | 'rejected'
+  createdAt: row.created_at,
+});
+
+async function loadFromSupabase() {
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('Gagal mengambil reviews dari Supabase:', error.message);
+    return;
   }
+  cache = (data || []).map(mapRow);
+  notify();
 }
 
-function writeAll(reviews) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(reviews));
-    // beritahu komponen lain (di tab yang sama) kalau data berubah
-    window.dispatchEvent(new Event(EVENT_NAME));
-  } catch (err) {
-    console.error('Gagal menyimpan data ulasan ke localStorage:', err);
-  }
+function ensureInitialized() {
+  if (initialized) return;
+  initialized = true;
+  loadFromSupabase();
+
+  channel = supabase
+    .channel('public:reviews')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'reviews' }, loadFromSupabase)
+    .subscribe();
 }
 
-/** Ambil semua ulasan (pending, approved, rejected), terbaru di atas */
+// ── API PUBLIK (dipakai oleh komponen-komponen di atas) ─────────────────
+
 export function getAllReviews() {
-  return readAll().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  ensureInitialized();
+  return cache;
 }
 
-/** Ulasan yang sudah disetujui admin -> ini yang tampil di landing page */
 export function getApprovedReviews() {
-  return getAllReviews().filter((r) => r.status === 'approved');
+  ensureInitialized();
+  return cache.filter((r) => r.status === 'approved');
 }
 
-/** Ulasan yang masih menunggu ditinjau admin */
-export function getPendingReviews() {
-  return getAllReviews().filter((r) => r.status === 'pending');
-}
-
-/** Dipanggil dari form ulasan di landing page. Selalu masuk sebagai 'pending' dulu */
-export function addReview({ name, rating, text, tier = 'Pelanggan' }) {
-  const reviews = readAll();
-  const newReview = {
-    id: `rv-${Date.now()}`,
-    name: name?.trim() || 'Pelanggan Bogeng',
-    rating: Math.min(5, Math.max(1, Number(rating) || 5)),
-    text: text.trim(),
-    tier,
-    status: 'pending',
-    createdAt: new Date().toISOString(),
-  };
-  writeAll([newReview, ...reviews]);
-  return newReview;
-}
-
-/** Dipanggil dari halaman admin -> ulasan langsung tayang di landing page */
-export function approveReview(id) {
-  const reviews = readAll().map((r) => (r.id === id ? { ...r, status: 'approved' } : r));
-  writeAll(reviews);
-}
-
-/** Dipanggil dari halaman admin -> ulasan ditandai ditolak, gak tayang */
-export function rejectReview(id) {
-  const reviews = readAll().map((r) => (r.id === id ? { ...r, status: 'rejected' } : r));
-  writeAll(reviews);
-}
-
-/** Hapus ulasan permanen dari sistem */
-export function deleteReview(id) {
-  const reviews = readAll().filter((r) => r.id !== id);
-  writeAll(reviews);
-}
-
-/** Turunkan lagi ulasan yang sudah tayang jadi pending (sembunyikan dari publik) */
-export function unpublishReview(id) {
-  const reviews = readAll().map((r) => (r.id === id ? { ...r, status: 'pending' } : r));
-  writeAll(reviews);
-}
-
-/**
- * Subscribe ke perubahan data ulasan. Dipakai di landing page & halaman admin
- * supaya keduanya selalu nampilin data paling baru tanpa perlu refresh manual.
- * Return function untuk unsubscribe (panggil di cleanup useEffect).
- */
 export function subscribeReviews(callback) {
-  const handler = () => callback(getAllReviews());
-  window.addEventListener(EVENT_NAME, handler);
-  window.addEventListener('storage', handler); // sinkron antar-tab browser
+  ensureInitialized();
+  listeners.push(callback);
+  // Kirim data yang sudah ada saat ini juga, biar komponen tidak nunggu kosong
+  callback(cache);
   return () => {
-    window.removeEventListener(EVENT_NAME, handler);
-    window.removeEventListener('storage', handler);
+    listeners = listeners.filter((l) => l !== callback);
   };
+}
+
+export async function addReview(reviewData) {
+  ensureInitialized();
+  const senderName = reviewData.customerName || reviewData.name || 'PELANGGAN SETIA';
+  const reviewText = reviewData.comment || reviewData.text || '';
+
+  const { error } = await supabase.from('reviews').insert([{
+    name: senderName,
+    email: reviewData.email || null,
+    phone: reviewData.phone || null,
+    rating: Number(reviewData.rating || 5),
+    comment: reviewText,
+    tier: reviewData.tier || 'MEMBER',
+    status: 'pending',
+    customer_id: reviewData.customerId || null,
+  }]);
+
+  if (error) console.error('Gagal mengirim ulasan ke Supabase:', error.message);
+  // Realtime channel akan otomatis memanggil loadFromSupabase() & notify()
+}
+
+export async function approveReview(id) {
+  const { error } = await supabase.from('reviews').update({ status: 'approved' }).eq('id', id);
+  if (error) console.error('Gagal approve ulasan:', error.message);
+}
+
+export async function rejectReview(id) {
+  const { error } = await supabase.from('reviews').update({ status: 'rejected' }).eq('id', id);
+  if (error) console.error('Gagal menolak ulasan:', error.message);
+}
+
+export async function unpublishReview(id) {
+  const { error } = await supabase.from('reviews').update({ status: 'pending' }).eq('id', id);
+  if (error) console.error('Gagal menyembunyikan ulasan:', error.message);
+}
+
+export async function deleteReview(id) {
+  const { error } = await supabase.from('reviews').delete().eq('id', id);
+  if (error) console.error('Gagal menghapus ulasan:', error.message);
+  cache = cache.filter((r) => r.id !== id);
+  notify();
 }

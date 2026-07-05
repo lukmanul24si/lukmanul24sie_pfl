@@ -1,6 +1,6 @@
 // src/pages/main/MemberPortal.jsx
 // ✅ SUMBER DATA: AppContext (bukan Supabase langsung)
-// ✅ SESI: { name, phone } dari loginMember() di AppContext
+// ✅ SESI: { name, email } — divalidasi via Supabase Auth (lihat MemberLogin.jsx)
 // ✅ TIER: Loyal = 10 trx / Rp250rb · VIP = 25 trx / Rp500rb
 // ✅ DISKON: Loyal 10% · VIP 20%
 // ✅ Cursor custom, sound, ripple, daun, biji kopi, Best Seller toggle
@@ -37,6 +37,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
+import { supabase } from "../../lib/supabase";
 import {
   addReview,
   getAllReviews,
@@ -582,21 +583,30 @@ export default function MemberPortal() {
   }, []);
 
   // ── Load sesi ──────────────────────────────────────────────────────
+  // ✅ UPDATE: sesi sekarang divalidasi lewat Supabase Auth (email+password),
+  // bukan sekadar flag di localStorage. Kalau sesi Supabase Auth sudah
+  // tidak ada (logout/expired), member otomatis dilempar ke login.
   useEffect(() => {
-    const saved = localStorage.getItem("bogeng_member_session");
-    if (!saved) {
-      navigate("/member-login");
-      return;
-    }
-    try {
-      const s = JSON.parse(saved);
+    let active = true;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!active) return;
+      if (!data?.session) {
+        localStorage.removeItem("bogeng_member_session");
+        navigate("/member-login");
+        return;
+      }
+      const saved = localStorage.getItem("bogeng_member_session");
+      let s = null;
+      try { s = saved ? JSON.parse(saved) : null; } catch { s = null; }
+      if (!s || !s.email) {
+        s = { name: data.session.user.email, email: data.session.user.email };
+      }
       if (!s.name && s.username) s.name = s.username;
       setSession(s);
-    } catch {
-      navigate("/member-login");
-      return;
-    }
-    setLoading(false);
+      setLoading(false);
+    })();
+    return () => { active = false; };
   }, [navigate]);
 
   // ── Hitung data tier ────────────────────────────────────────────────
@@ -681,7 +691,8 @@ export default function MemberPortal() {
     setCart([]);
     setActiveTab("riwayat");
   };
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem("bogeng_member_session");
     navigate("/member-login");
   };
@@ -693,7 +704,7 @@ export default function MemberPortal() {
     return allReviews.filter(
       (r) =>
         (r.name || "").toLowerCase() === nameLower ||
-        (session.phone && r.phone === session.phone),
+        (session.email && r.email === session.email),
     );
   }, [allReviews, session]);
 
@@ -704,7 +715,7 @@ export default function MemberPortal() {
     // Simpan ke reviewsStore -> otomatis masuk ke admin (status: pending)
     addReview({
       name: session.name,
-      phone: session.phone,
+      email: session.email,
       rating: rvRating,
       text: rvText,
       tier: tier.label,

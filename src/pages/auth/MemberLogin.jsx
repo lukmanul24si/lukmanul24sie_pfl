@@ -1,9 +1,15 @@
 // src/pages/auth/MemberLogin.jsx
+//
+// ✅ UPDATE: Login sekarang pakai EMAIL + PASSWORD lewat
+// supabase.auth.signInWithPassword(), bukan username+nomor HP lagi.
+// Kalau email belum diverifikasi, Supabase menolak login dengan pesan
+// "Email not confirmed" — kita tangani dengan tombol "Kirim ulang email".
+// ✅ UPDATE: Tambah tombol Demo Credential Autofill (hakim@gmail.com / hakim123)
 import logoImg from '../../assets/logo.png';
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Coffee, User, Phone, UserPlus, Sparkles } from "lucide-react";
+import { ArrowRight, Coffee, Mail, Lock, Eye, EyeOff, UserPlus, Sparkles, MailCheck } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
 const BG_URL =
@@ -11,14 +17,18 @@ const BG_URL =
 
 export default function MemberLogin() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ username: "", phone: "" });
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [needsConfirm, setNeedsConfirm] = useState(false);
+  const [resendMsg, setResendMsg] = useState("");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("bogeng_member_session");
-    if (saved) { navigate("/member"); return; }
+    supabase.auth.getSession().then(({ data }) => {
+      if (data?.session) navigate("/member");
+    });
     const t = setTimeout(() => setMounted(true), 40);
     return () => clearTimeout(t);
   }, [navigate]);
@@ -37,25 +47,48 @@ export default function MemberLogin() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-    if (!form.username || !form.phone) {
-      setError("Username dan nomor HP wajib diisi.");
+    setNeedsConfirm(false);
+    setResendMsg("");
+    if (!form.email || !form.password) {
+      setError("Email dan password wajib diisi.");
       return;
     }
     setLoading(true);
     try {
-      const { data, error: dbErr } = await supabase
-        .from("customers")
-        .select("*")
-        .eq("username_akun", form.username.toLowerCase().trim())
-        .eq("nomor_hp", form.phone.trim())
-        .single();
+      const { data, error: authErr } = await supabase.auth.signInWithPassword({
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+      });
 
-      if (dbErr || !data) {
-        setError("Username atau nomor HP tidak ditemukan. Pastikan sudah daftar member.");
+      if (authErr) {
+        if (String(authErr.message || "").toLowerCase().includes("email not confirmed")) {
+          setNeedsConfirm(true);
+          setError("Email kamu belum diverifikasi. Cek inbox, atau kirim ulang di bawah.");
+        } else if (String(authErr.message || "").toLowerCase().includes("invalid login")) {
+          setError("Email atau password salah.");
+        } else {
+          setError(authErr.message || "Gagal login. Coba lagi.");
+        }
         return;
       }
 
-      localStorage.setItem("bogeng_member_session", JSON.stringify({ username: data.username_akun, id: data.id }));
+      // Ambil profil member dari tabel customers untuk disimpan sebagai sesi tampilan
+      const { data: profile } = await supabase
+        .from("customers")
+        .select("id, full_name, username, email")
+        .eq("auth_user_id", data.user.id)
+        .maybeSingle();
+
+      localStorage.setItem(
+        "bogeng_member_session",
+        JSON.stringify({
+          id: profile?.id || data.user.id,
+          name: profile?.full_name || profile?.username || data.user.email,
+          username: profile?.username || "",
+          email: data.user.email,
+        })
+      );
+
       navigate("/member");
     } catch (err) {
       setError("Terjadi kesalahan. Coba lagi.");
@@ -64,9 +97,24 @@ export default function MemberLogin() {
     }
   };
 
+  const handleResend = async () => {
+    setResendMsg("");
+    if (!form.email) {
+      setResendMsg("Isi email dulu di atas.");
+      return;
+    }
+    const { error: resendErr } = await supabase.auth.resend({
+      type: "signup",
+      email: form.email.trim().toLowerCase(),
+    });
+    setResendMsg(resendErr ? resendErr.message : "Email verifikasi baru sudah dikirim. Cek inbox kamu.");
+  };
+
   const fillDemo = () => {
-    setForm({ username: "hakimskennedy", phone: "0812" });
+    setForm({ email: "hakim@gmail.com", password: "hakim123" });
     setError("");
+    setNeedsConfirm(false);
+    setResendMsg("");
   };
 
   return (
@@ -121,7 +169,7 @@ export default function MemberLogin() {
               <span className="font-serif italic text-[#C67C4E]">akun member.</span>
             </h1>
             <p className="text-sm text-gray-400 leading-relaxed">
-              Gunakan username dan nomor HP yang kamu daftarkan ke kasir Bogeng.
+              Gunakan email &amp; password yang kamu daftarkan.
             </p>
           </div>
 
@@ -136,38 +184,58 @@ export default function MemberLogin() {
                 className="mb-5 px-4 py-3 bg-red-50 border border-red-100 rounded-2xl text-xs font-bold text-red-500"
               >
                 ⚠ {error}
+                {needsConfirm && (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    className="mt-2 flex items-center gap-1.5 text-[#C67C4E] font-black hover:underline"
+                  >
+                    <MailCheck size={12} /> Kirim ulang email verifikasi
+                  </button>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
 
+          {resendMsg && (
+            <p className="mb-5 text-[11px] font-bold text-emerald-600">{resendMsg}</p>
+          )}
+
           <form onSubmit={handleLogin} className="space-y-4">
-            {/* Username */}
+            {/* Email */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider block ml-1">Username</label>
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider block ml-1">Email</label>
               <div className="relative">
-                <User size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
+                <Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
                 <input
-                  type="text"
-                  placeholder="contoh: hakimskennedy"
-                  value={form.username}
-                  onChange={(e) => { setForm((p) => ({ ...p, username: e.target.value })); setError(""); }}
+                  type="email"
+                  placeholder="kamu@email.com"
+                  value={form.email}
+                  onChange={(e) => { setForm((p) => ({ ...p, email: e.target.value })); setError(""); setNeedsConfirm(false); }}
                   className="w-full pl-10 pr-5 py-3.5 bg-white border-2 border-[#EFE6DC] hover:border-[#C67C4E]/40 focus:border-[#C67C4E] rounded-2xl outline-none font-bold text-sm text-[#2F2D2C] placeholder-gray-300 transition-all shadow-sm"
                 />
               </div>
             </div>
 
-            {/* Nomor HP */}
+            {/* Password */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider block ml-1">Nomor HP</label>
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider block ml-1">Password</label>
               <div className="relative">
-                <Phone size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
+                <Lock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
                 <input
-                  type="tel"
-                  placeholder="0812xxxxxxxx"
-                  value={form.phone}
-                  onChange={(e) => { setForm((p) => ({ ...p, phone: e.target.value })); setError(""); }}
-                  className="w-full pl-10 pr-5 py-3.5 bg-white border-2 border-[#EFE6DC] hover:border-[#C67C4E]/40 focus:border-[#C67C4E] rounded-2xl outline-none font-bold text-sm text-[#2F2D2C] placeholder-gray-300 transition-all shadow-sm"
+                  type={showPass ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={form.password}
+                  onChange={(e) => { setForm((p) => ({ ...p, password: e.target.value })); setError(""); setNeedsConfirm(false); }}
+                  className="w-full pl-10 pr-11 py-3.5 bg-white border-2 border-[#EFE6DC] hover:border-[#C67C4E]/40 focus:border-[#C67C4E] rounded-2xl outline-none font-bold text-sm text-[#2F2D2C] placeholder-gray-300 transition-all shadow-sm"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPass((s) => !s)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-[#C67C4E]"
+                >
+                  {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
               </div>
             </div>
 
@@ -194,29 +262,31 @@ export default function MemberLogin() {
             <div className="flex-1 h-px bg-[#EFE6DC]" />
           </div>
 
-          {/* Demo Box */}
+          {/* Demo Box — klik untuk isi otomatis */}
           <motion.button
             type="button"
             onClick={fillDemo}
             whileHover={{ scale: 1.01, y: -1 }}
             whileTap={{ scale: 0.99 }}
-            className="w-full bg-white border-2 border-[#EFE6DC] hover:border-[#C67C4E]/30 rounded-2xl p-4 text-left transition-all duration-200 shadow-sm group mb-5"
+            className="w-full bg-white border-2 border-[#EFE6DC] hover:border-[#C67C4E]/30 rounded-2xl p-4 text-left transition-all duration-200 shadow-sm group mb-4"
           >
             <div className="flex items-center gap-2 mb-2.5">
               <Sparkles size={13} className="text-[#C67C4E]" />
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#2F2D2C]">Akun Demo Member</span>
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#2F2D2C]">
+                Akun Demo Member
+              </span>
               <span className="ml-auto text-[9px] font-bold text-[#C67C4E] group-hover:underline uppercase tracking-wide">
                 Klik untuk isi otomatis →
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-[#FAF7F2] px-3 py-1.5 rounded-xl border border-[#EFE6DC]">
-                <p className="text-[9px] font-bold text-gray-400 uppercase mb-0.5">Username</p>
-                <code className="text-[11px] font-black text-[#2F2D2C]">hakimskennedy</code>
+                <p className="text-[9px] font-bold text-gray-400 uppercase mb-0.5">Email</p>
+                <code className="text-[11px] font-black text-[#2F2D2C]">hakim@gmail.com</code>
               </div>
               <div className="bg-[#FAF7F2] px-3 py-1.5 rounded-xl border border-[#EFE6DC]">
-                <p className="text-[9px] font-bold text-gray-400 uppercase mb-0.5">No. HP</p>
-                <code className="text-[11px] font-black text-[#2F2D2C]">0812</code>
+                <p className="text-[9px] font-bold text-gray-400 uppercase mb-0.5">Password</p>
+                <code className="text-[11px] font-black text-[#2F2D2C]">hakim123</code>
               </div>
             </div>
           </motion.button>

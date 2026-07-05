@@ -1,6 +1,12 @@
 // src/pages/auth/MemberRegister.jsx
 // Halaman daftar member baru — untuk pelanggan Bogeng Coffee
 // Visual matching dengan MemberLogin & Login (cream + terracotta)
+//
+// ✅ UPDATE: Nomor HP diganti EMAIL + PASSWORD. Pendaftaran sekarang lewat
+// supabase.auth.signUp() sehingga Supabase otomatis mengirim email
+// verifikasi ke alamat yang didaftarkan. Baris profil member di tabel
+// "customers" dibuat otomatis oleh trigger database (lihat SQL schema),
+// jadi di sini kita TIDAK insert manual ke tabel customers lagi.
 import logoImg from '../../assets/logo.png';
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -9,9 +15,13 @@ import {
   ArrowRight,
   Coffee,
   User,
-  Phone,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
   ChevronDown,
   CheckCircle2,
+  MailCheck,
   Sparkles,
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
@@ -43,21 +53,20 @@ export default function MemberRegister() {
   const [form, setForm] = useState({
     fullName: "",
     username: "",
-    phoneNumber: "",
-    membershipLevel: "Member",
+    email: "",
+    password: "",
   });
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Sudah ada session member → langsung ke portal
-    const saved = localStorage.getItem("bogeng_member_session");
-    if (saved) {
-      navigate("/member");
-      return;
-    }
+    // Kalau sudah login (sesi Supabase Auth aktif) → langsung ke portal
+    supabase.auth.getSession().then(({ data }) => {
+      if (data?.session) navigate("/member");
+    });
     const t = setTimeout(() => setMounted(true), 40);
     return () => clearTimeout(t);
   }, [navigate]);
@@ -85,7 +94,8 @@ export default function MemberRegister() {
     if (
       !form.fullName.trim() ||
       !form.username.trim() ||
-      !form.phoneNumber.trim()
+      !form.email.trim() ||
+      !form.password
     ) {
       setError("Semua kolom wajib diisi.");
       return;
@@ -94,8 +104,12 @@ export default function MemberRegister() {
       setError("Username tidak boleh mengandung spasi.");
       return;
     }
-    if (!/^08\d{8,11}$/.test(form.phoneNumber.trim())) {
-      setError("Nomor HP tidak valid. Contoh: 081234567890");
+    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) {
+      setError("Format email tidak valid.");
+      return;
+    }
+    if (form.password.length < 6) {
+      setError("Password minimal 6 karakter.");
       return;
     }
 
@@ -105,7 +119,7 @@ export default function MemberRegister() {
       const { data: existing } = await supabase
         .from("customers")
         .select("id")
-        .eq("username_akun", form.username.toLowerCase().trim())
+        .eq("username", form.username.toLowerCase().trim())
         .maybeSingle();
 
       if (existing) {
@@ -114,35 +128,32 @@ export default function MemberRegister() {
         return;
       }
 
-      const uniqueId = "bgc-" + Math.random().toString(36).substring(2, 8);
-
-      const { error: dbErr } = await supabase.from("customers").insert([
-        {
-          id: uniqueId,
-          nama_lengkap: form.fullName.trim(),
-          username_akun: form.username.toLowerCase().trim(),
-          nomor_hp: form.phoneNumber.trim(),
-          tanggal_daftar: new Date().toISOString().split("T")[0],
-          status_member: "Aktif",
-          level_membership: form.membershipLevel,
+      // Daftar lewat Supabase Auth -> Supabase otomatis kirim email verifikasi.
+      // Trigger database ("on_auth_user_created") yang akan membuat baris
+      // profil member di tabel customers begitu akun ini dibuat.
+      const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+        options: {
+          data: {
+            full_name: form.fullName.trim(),
+            username: form.username.toLowerCase().trim(),
+          },
+          emailRedirectTo: `${window.location.origin}/member-login`,
         },
-      ]);
+      });
 
-      if (dbErr) throw dbErr;
+      if (signUpErr) throw signUpErr;
 
+      // Belum bisa auto-login: email harus dikonfirmasi dulu lewat link di inbox.
       setSuccess(true);
-      // Auto-login: simpan session lalu redirect ke portal setelah 2.5 detik
-      localStorage.setItem(
-        "bogeng_member_session",
-        JSON.stringify({
-          username: form.username.toLowerCase().trim(),
-          id: uniqueId,
-        }),
-      );
-      setTimeout(() => navigate("/member"), 2500);
     } catch (err) {
       console.error(err);
-      setError(err.message || "Gagal mendaftar. Coba lagi.");
+      if (String(err.message || "").toLowerCase().includes("already registered")) {
+        setError("Email ini sudah terdaftar. Coba login, atau reset password.");
+      } else {
+        setError(err.message || "Gagal mendaftar. Coba lagi.");
+      }
     } finally {
       setLoading(false);
     }
@@ -245,7 +256,7 @@ export default function MemberRegister() {
           className="w-full max-w-[420px] pt-14 pb-4"
         >
           <AnimatePresence mode="wait">
-            {/* ── STATE: Sukses ── */}
+            {/* ── STATE: Sukses (menunggu verifikasi email) ── */}
             {success ? (
               <motion.div
                 key="success"
@@ -265,31 +276,26 @@ export default function MemberRegister() {
                   }}
                   className="w-20 h-20 bg-[#C67C4E]/10 rounded-full flex items-center justify-center mx-auto mb-5"
                 >
-                  <CheckCircle2 size={36} className="text-[#C67C4E]" />
+                  <MailCheck size={36} className="text-[#C67C4E]" />
                 </motion.div>
                 <h2 className="text-2xl font-black text-[#2F2D2C] mb-2">
-                  Pendaftaran Berhasil!
+                  Cek Email Kamu!
                 </h2>
                 <p className="text-sm text-gray-400 font-bold mb-1">
-                  Selamat datang,{" "}
-                  <span className="text-[#C67C4E]">{form.fullName}</span>!
+                  Kami sudah kirim link verifikasi ke{" "}
+                  <span className="text-[#C67C4E]">{form.email}</span>
                 </p>
-                <p className="text-xs text-gray-400 mb-6">
-                  Kamu sudah terdaftar sebagai member Bogeng. Kamu akan
-                  diarahkan ke portal member…
+                <p className="text-xs text-gray-400 mb-6 leading-relaxed">
+                  Klik link di email tersebut untuk mengaktifkan akun member
+                  kamu. Setelah terverifikasi, kamu bisa login dengan email
+                  &amp; password yang baru saja kamu buat.
                 </p>
-                {/* Progress bar */}
-                <div className="w-full h-1.5 bg-[#EFE6DC] rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: "0%" }}
-                    animate={{ width: "100%" }}
-                    transition={{ duration: 2.5, ease: "linear" }}
-                    className="h-full bg-[#C67C4E] rounded-full"
-                  />
-                </div>
-                <p className="text-[10px] text-gray-400 font-bold mt-2 uppercase tracking-wider">
-                  Mengarahkan ke Portal Member…
-                </p>
+                <Link
+                  to="/member-login"
+                  className="w-full inline-flex justify-center items-center gap-2 py-4 bg-[#2F2D2C] hover:bg-[#C67C4E] text-white rounded-2xl font-black text-xs tracking-widest uppercase transition-colors duration-300"
+                >
+                  Ke Halaman Login <ArrowRight size={14} />
+                </Link>
               </motion.div>
             ) : (
               /* ── STATE: Form pendaftaran ── */
@@ -368,30 +374,60 @@ export default function MemberRegister() {
                       />
                     </div>
                     <p className="text-[10px] text-gray-300 font-bold ml-1">
-                      Tanpa spasi. Ini yang kamu pakai untuk login ke portal.
+                      Tanpa spasi. Ditampilkan di riwayat &amp; ulasan kamu.
                     </p>
                   </div>
 
-                  {/* Nomor HP */}
+                  {/* Email */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider block ml-1">
-                      Nomor HP{" "}
+                      Email{" "}
                       <span className="text-gray-300 normal-case font-bold">
                         (dipakai untuk login)
                       </span>
                     </label>
                     <div className="relative">
-                      <Phone
+                      <Mail
                         size={14}
                         className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"
                       />
                       <input
-                        type="tel"
-                        placeholder="081234567890"
-                        value={form.phoneNumber}
-                        onChange={set("phoneNumber")}
+                        type="email"
+                        placeholder="kamu@email.com"
+                        value={form.email}
+                        onChange={set("email")}
                         className="w-full pl-10 pr-5 py-3.5 bg-white border-2 border-[#EFE6DC] hover:border-[#C67C4E]/40 focus:border-[#C67C4E] rounded-2xl outline-none font-bold text-sm text-[#2F2D2C] placeholder-gray-300 transition-all duration-200 shadow-sm"
                       />
+                    </div>
+                    <p className="text-[10px] text-gray-300 font-bold ml-1">
+                      Kami akan kirim link verifikasi ke email ini.
+                    </p>
+                  </div>
+
+                  {/* Password */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-wider block ml-1">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <Lock
+                        size={14}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"
+                      />
+                      <input
+                        type={showPass ? "text" : "password"}
+                        placeholder="Minimal 6 karakter"
+                        value={form.password}
+                        onChange={set("password")}
+                        className="w-full pl-10 pr-11 py-3.5 bg-white border-2 border-[#EFE6DC] hover:border-[#C67C4E]/40 focus:border-[#C67C4E] rounded-2xl outline-none font-bold text-sm text-[#2F2D2C] placeholder-gray-300 transition-all duration-200 shadow-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPass((s) => !s)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-[#C67C4E]"
+                      >
+                        {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
                     </div>
                   </div>
 
@@ -411,7 +447,7 @@ export default function MemberRegister() {
                       </>
                     ) : (
                       <>
-                        Daftar & Masuk Portal <ArrowRight size={14} />
+                        Daftar &amp; Kirim Verifikasi <ArrowRight size={14} />
                       </>
                     )}
                   </motion.button>

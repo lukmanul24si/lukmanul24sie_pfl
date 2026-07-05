@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { supabase } from '../lib/supabase';
 
 import espressoImg from '../assets/espresso.png';
 import caramelImg from '../assets/caramel_macchiato.png';
@@ -15,9 +16,44 @@ import frenchImg          from '../assets/french.jpg';
 
 const AppContext = createContext();
 
+// ============================================================
+// MAPPER: baris Supabase (snake_case) -> shape yang dipakai
+// komponen-komponen lama (camelCase), supaya Orders.jsx,
+// Customers.jsx, CustomerDetail.jsx, Dashboard.jsx, dll TIDAK
+// perlu diubah sama sekali.
+// ============================================================
+const mapCustomerRow = (row) => ({
+  id: row.id,
+  authUserId: row.auth_user_id,
+  name: row.full_name,
+  username: row.username,
+  email: row.email,
+  phone: row.phone,
+  visits: row.visits ?? 0,
+  totalSpend: row.total_spend ?? 0,
+  points: row.points ?? 0,
+  status: row.status || 'MEMBER',
+  registeredAt: row.registered_at,
+});
+
+const mapOrderRow = (row) => ({
+  id: row.id,
+  customer: row.customer_name,
+  customerId: row.customer_id,
+  items: Array.isArray(row.items) ? row.items : [],
+  subtotal: row.subtotal ?? 0,
+  discount: row.discount ?? 0,
+  total: row.total ?? 0,
+  hasDiscount: !!row.has_discount,
+  status: row.status,
+  type: row.order_type,
+  date: row.order_date,
+  createdAt: row.created_at,
+});
+
 export const AppProvider = ({ children }) => {
 
-  // ================= AUTH STATE =================
+  // ================= AUTH STATE (admin/kasir — demo, tidak berubah) =================
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('bogeng_user');
     if (saved === 'null' || saved === 'undefined' || !saved) return null;
@@ -29,13 +65,12 @@ export const AppProvider = ({ children }) => {
     setUser(userData);
   };
 
-  // 🟢 PERBAIKAN: Pastikan logout admin HANYA menghapus key usernya saja, TIDAK MENGHAPUS database orders/customers!
   const logout = () => {
     localStorage.removeItem('bogeng_user');
     setUser(null);
   };
 
-  // ================= MENU LIST =================
+  // ================= MENU LIST (katalog statis, tidak diminta pindah DB) =================
   const [menuList] = useState([
     { id: 101, name: 'Espresso Bold',        price: 25000, category: 'Coffee',     img: espressoImg,        isBestSeller: true  },
     { id: 102, name: 'Caramel Macchiato',    price: 35000, category: 'Coffee',     img: caramelImg,         isBestSeller: true  },
@@ -51,52 +86,62 @@ export const AppProvider = ({ children }) => {
     { id: 403, name: 'French Fries Cheese',  price: 22000, category: 'Snack',      img: frenchImg,          isBestSeller: false },
   ]);
 
-  // ================= PERSISTENT STORAGE =================
-  const [orders, setOrders] = useState(() => {
-    const saved = localStorage.getItem('bogeng_orders');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // ================= DATA DARI SUPABASE (orders & customers) =================
+  const [orders, setOrders] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
 
-  const [customers, setCustomers] = useState(() => {
-    const saved = localStorage.getItem('bogeng_customers');
-    if (saved) return JSON.parse(saved);
-    
-    // Default awal jika local storage benar-benar kosong pertama kali aplikasi dijalankan
-    return [
-      { id: 1, name: 'CHARLEY SMITH', email: 'charley@mail.com', phone: '08123456789', visits: 4, totalSpend: 400000,  status: 'MEMBER', points: 40  },
-      { id: 2, name: 'JANE DOE',      email: 'jane@mail.com',    phone: '08234567890', visits: 2, totalSpend: 150000,  status: 'MEMBER', points: 15  },
-      { id: 3, name: 'JOHN SMITH',    email: 'john@mail.com',    phone: '08345678901', visits: 6, totalSpend: 900000,  status: 'VIP',    points: 90  },
-      { id: 4, name: 'LUKMAN HAKIM',  email: 'lukman@mail.com',  phone: '08456789012', visits: 8, totalSpend: 1200000, status: 'VIP',    points: 120 },
-    ];
-  });
+  const fetchOrders = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!error && data) setOrders(data.map(mapOrderRow));
+    if (error) console.error('Gagal mengambil orders dari Supabase:', error.message);
+  }, []);
 
-  const [reviews, setReviews] = useState(() => {
-    const saved = localStorage.getItem('bogeng_reviews');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const fetchCustomers = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!error && data) setCustomers(data.map(mapCustomerRow));
+    if (error) console.error('Gagal mengambil customers dari Supabase:', error.message);
+  }, []);
 
-  // 🟢 SINKRONISASI DATA MANDIRI (Saling mengawasi tanpa merusak satu sama lain)
+  // 🟢 LOAD AWAL + REALTIME SYNC (biar admin & member portal selalu lihat data terbaru)
   useEffect(() => {
-    localStorage.setItem('bogeng_orders', JSON.stringify(orders));
-  }, [orders]);
+    (async () => {
+      setLoadingData(true);
+      await Promise.all([fetchOrders(), fetchCustomers()]);
+      setLoadingData(false);
+    })();
 
-  useEffect(() => {
-    localStorage.setItem('bogeng_customers', JSON.stringify(customers));
-  }, [customers]);
+    const ordersChannel = supabase
+      .channel('public:orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
+      .subscribe();
 
-  useEffect(() => {
-    localStorage.setItem('bogeng_reviews', JSON.stringify(reviews));
-  }, [reviews]);
+    const customersChannel = supabase
+      .channel('public:customers')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, fetchCustomers)
+      .subscribe();
 
-  // ================= LOGIKA TIER MEMBER =================
+    return () => {
+      supabase.removeChannel(ordersChannel);
+      supabase.removeChannel(customersChannel);
+    };
+  }, [fetchOrders, fetchCustomers]);
+
+  // ================= LOGIKA TIER MEMBER (tidak berubah) =================
   const getMemberTier = (visits, totalSpend) => {
     if (visits >= 25 || totalSpend >= 500000) return 'VIP';
     if (visits >= 10 || totalSpend >= 250000) return 'LOYAL';
     return 'MEMBER';
   };
 
-  // ================= ORDER FUNCTIONS =================
-  const addOrder = (order) => {
+  // ================= ORDER FUNCTIONS (sekarang tulis ke Supabase) =================
+  const addOrder = async (order) => {
     let finalSubtotal  = order.total || 0;
     let discountAmount = 0;
     let appliedDiscount = false;
@@ -107,9 +152,6 @@ export const AppProvider = ({ children }) => {
       appliedDiscount = true;
     }
 
-    // 🟢 PERBAIKAN SENSITIF: Memastikan items yang disave SELALU berwujud array of objects
-    // Jika order.items dikirim dari portal berupa array, gunakan langsung. 
-    // Jika berupa string/lainnya, bungkus dengan aman agar riwayat pesanan member ke-1 tidak error saat member ke-2 login.
     let finalizedItems = [];
     if (Array.isArray(order.items)) {
       finalizedItems = order.items;
@@ -117,174 +159,92 @@ export const AppProvider = ({ children }) => {
       finalizedItems = [{ id: Date.now(), name: String(order.items || 'Menu Pesanan'), qty: 1, price: finalSubtotal }];
     }
 
-    const processedOrder = {
-      ...order,
-      id: order.id || Date.now(),
-      items: finalizedItems,
-      discount:    discountAmount,
-      total:       finalSubtotal,
-      hasDiscount: appliedDiscount,
-      createdAt:   order.createdAt || new Date().toISOString()
-    };
-
-    setOrders(prevOrders => {
-      const isExist = prevOrders.some(o => o.id === processedOrder.id);
-      if (isExist) return prevOrders;
-      return [processedOrder, ...prevOrders];
-    });
-
+    // Cari customer yang sudah ada (case-insensitive by nama, sama seperti sebelumnya)
+    const existing = customers.find(c => c.name.toLowerCase() === (order.customer || '').toLowerCase());
     const earnedPoints = Math.floor(finalSubtotal / 10000);
 
-    setCustomers(prevCust => {
-      const exists = prevCust.find(c =>
-        c.name.toLowerCase() === order.customer.toLowerCase() || (order.phone && c.phone === order.phone)
-      );
+    let customerId = existing ? existing.id : null;
 
-      if (exists) {
-        const newVisits     = exists.visits + 1;
-        const newTotalSpend = (exists.totalSpend || 0) + finalSubtotal;
-        const newStatus     = getMemberTier(newVisits, newTotalSpend);
+    if (existing) {
+      const newVisits     = existing.visits + 1;
+      const newTotalSpend = (existing.totalSpend || 0) + finalSubtotal;
+      const newStatus     = getMemberTier(newVisits, newTotalSpend);
 
-        return prevCust.map(c =>
-          c.id === exists.id
-            ? {
-                ...c,
-                visits:     newVisits,
-                totalSpend: newTotalSpend,
-                points:     (c.points || 0) + earnedPoints,
-                status:     newStatus,
-              }
-            : c
-        );
-      } else {
-        const newTotalSpend = finalSubtotal;
-        return [...prevCust, {
-          id:         Date.now() + Math.floor(Math.random() * 1000),
-          name:       order.customer.toUpperCase(),
-          email:      `${order.customer.toLowerCase().replace(/\s/g, '')}@mail.com`,
-          phone:      order.phone || null,
-          visits:     1,
-          totalSpend: newTotalSpend,
-          points:     earnedPoints,
-          status:     getMemberTier(1, newTotalSpend),
-        }];
-      }
-    });
+      const { error: custErr } = await supabase
+        .from('customers')
+        .update({
+          visits: newVisits,
+          total_spend: newTotalSpend,
+          points: (existing.points || 0) + earnedPoints,
+          status: newStatus,
+        })
+        .eq('id', existing.id);
+      if (custErr) console.error('Gagal update customer:', custErr.message);
+    } else {
+      const { data: newCust, error: custErr } = await supabase
+        .from('customers')
+        .insert([{
+          full_name:   (order.customer || 'GUEST').toUpperCase(),
+          visits:      1,
+          total_spend: finalSubtotal,
+          points:      earnedPoints,
+          status:      getMemberTier(1, finalSubtotal),
+        }])
+        .select()
+        .single();
+      if (custErr) console.error('Gagal membuat customer baru:', custErr.message);
+      if (newCust) customerId = newCust.id;
+    }
+
+    const { error: orderErr } = await supabase.from('orders').insert([{
+      id:            order.id || `ORD-${Date.now().toString().slice(-10)}`,
+      customer_name: (order.customer || 'GUEST').toUpperCase(),
+      customer_id:   customerId,
+      items:         finalizedItems,
+      subtotal:      order.total || 0,
+      discount:      discountAmount,
+      total:         finalSubtotal,
+      has_discount:  appliedDiscount,
+      status:        order.status || 'PROCESS',
+      order_type:    order.type || null,
+      order_date:    order.date || new Date().toLocaleDateString('id-ID'),
+    }]);
+    if (orderErr) console.error('Gagal menyimpan order ke Supabase:', orderErr.message);
+
+    // Optimistic refresh (realtime juga akan menyusul)
+    await Promise.all([fetchOrders(), fetchCustomers()]);
   };
 
-  const updateOrderStatus = (id, status) => {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+  const updateOrderStatus = async (id, status) => {
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o)); // optimistic
+    const { error } = await supabase.from('orders').update({ status }).eq('id', id);
+    if (error) console.error('Gagal update status order:', error.message);
   };
 
-  const deleteOrder = (id) => {
+  const deleteOrder = async (id) => {
     if (window.confirm('Yakin ingin menghapus riwayat pesanan ini?')) {
+      const { error } = await supabase.from('orders').delete().eq('id', id);
+      if (error) console.error('Gagal menghapus order:', error.message);
       setOrders(prev => prev.filter(o => o.id !== id));
     }
   };
 
-  const deleteCustomer = (id) => {
+  const deleteCustomer = async (id) => {
     if (window.confirm('Hapus customer ini dari database?')) {
+      const { error } = await supabase.from('customers').delete().eq('id', id);
+      if (error) console.error('Gagal menghapus customer:', error.message);
       setCustomers(prev => prev.filter(c => c.id !== id));
     }
-  };
-
-  // ================= REVIEWS FUNCTIONS =================
-  const addReview = (reviewData) => {
-    // 🟢 PERBAIKAN SENSITIF: Petakan nama pengirim (`name` atau `customerName`) & ulasan (`text` atau `comment`)
-    // agar ulasan dari MemberPortal tidak lagi terbaca "ANONIM" di admin moderasi.
-    const senderName = reviewData.customerName || reviewData.name || 'PELANGGAN SETIA';
-    const reviewText = reviewData.comment || reviewData.text || '';
-
-    const newReview = {
-      id: Date.now(),
-      customerName: senderName,
-      name: senderName, // Simpan kedua key untuk kompatibilitas dashboard
-      phone: reviewData.phone || '',
-      rating: Number(reviewData.rating || 5),
-      comment: reviewText,
-      text: reviewText, // Simpan kedua key untuk kompatibilitas rendering
-      status: 'PENDING',
-      tier: reviewData.tier || 'MEMBER',
-      createdAt: new Date().toISOString()
-    };
-    setReviews(prev => [newReview, ...prev]);
-  };
-
-  const updateReviewStatus = (id, status) => {
-    // Memastikan status diubah secara konsisten kapital (APPROVED / REJECTED / PENDING)
-    setReviews(prev => prev.map(r => r.id === id ? { ...r, status: status.toUpperCase() } : r));
-  };
-
-  const deleteReview = (id) => {
-    if (window.confirm('Hapus ulasan ini secara permanen?')) {
-      setReviews(prev => prev.filter(r => r.id !== id));
-    }
-  };
-
-  // ================= REGISTRASI MEMBER =================
-  const registerMember = ({ name, phone }) => {
-    const cleanName  = name.trim();
-    const cleanPhone = phone.trim();
-    if (!cleanName || !cleanPhone) {
-      return { customer: null, error: 'Nama dan nomor HP wajib diisi.' };
-    }
-
-    const existing = customers.find(
-      (c) => c.name.toLowerCase() === cleanName.toLowerCase()
-    );
-
-    if (existing) {
-      if (existing.phone && existing.phone !== cleanPhone) {
-        return { customer: null, error: 'Nama ini sudah terdaftar dengan nomor HP lain. Coba login atau hubungi kasir.' };
-      }
-      setCustomers((prev) =>
-        prev.map((c) => c.id === existing.id ? { ...c, phone: cleanPhone } : c)
-      );
-      return { customer: { ...existing, phone: cleanPhone }, error: null };
-    }
-
-    const phoneTaken = customers.find((c) => c.phone === cleanPhone);
-    if (phoneTaken) {
-      return { customer: null, error: 'Nomor HP ini sudah terdaftar atas nama lain.' };
-    }
-
-    const newCustomer = {
-      id:         Date.now(),
-      name:       cleanName.toUpperCase(),
-      email:      `${cleanName.toLowerCase().replace(/\s/g, '')}@mail.com`,
-      phone:      cleanPhone,
-      visits:     0,
-      totalSpend: 0,
-      points:     0,
-      status:     'MEMBER',
-    };
-    setCustomers((prev) => [...prev, newCustomer]);
-    return { customer: newCustomer, error: null };
-  };
-
-  // ================= LOGIN MEMBER =================
-  const loginMember = ({ name, phone }) => {
-    const cleanName  = name.trim().toLowerCase();
-    const cleanPhone = phone.trim();
-    const found = customers.find(
-      (c) => c.name.toLowerCase() === cleanName && c.phone === cleanPhone
-    );
-    if (!found) {
-      return { customer: null, error: 'Nama atau nomor HP tidak terdaftar.' };
-    }
-    return { customer: found, error: null };
   };
 
   return (
     <AppContext.Provider value={{
       user, login, logout,
-      menuList, orders, customers,
-      reviews,
+      menuList, orders, customers, loadingData,
       addOrder, updateOrderStatus,
       deleteOrder, deleteCustomer,
       getMemberTier,
-      registerMember, loginMember,
-      addReview, updateReviewStatus, deleteReview
+      refetch: () => Promise.all([fetchOrders(), fetchCustomers()]),
     }}>
       {children}
     </AppContext.Provider>
