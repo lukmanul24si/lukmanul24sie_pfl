@@ -902,10 +902,9 @@ export default function BogengLandingPage() {
         </div>
         {(() => {
           const DUMMY = [
-            { id: "d5", name: "Nadia K.",   tier: "Reguler",      rating: 5, text: "Matcha Latte Premium disini beda dari yang lain, worth it banget!" },
-            { id: "d6", name: "Bagas P.",   tier: "VIP Member",   rating: 5, text: "Sistem member-nya keren, nggak perlu download app apapun." },
-            { id: "d7", name: "Fitri A.",   tier: "Loyal Member", rating: 4, text: "Red Velvet Cream-nya enak banget, jadi favorit baru aku." },
-            { id: "d8", name: "Hendra S.",  tier: "Reguler",      rating: 5, text: "Nasi Goreng Spesialnya porsi besar, rasanya nggak kaleng-kaleng!" },
+            { id: "d6", name: "Hakim S kennedy",   tier: "VIP Member",   rating: 5, text: "Sistem member-nya keren, nggak perlu download app apapun." },
+            { id: "d7", name: "Bogeng Cibaduyut",   tier: "Loyal Member", rating: 4, text: "Red Velvet Cream-nya enak banget, jadi favorit baru aku." },
+            { id: "d8", name: "Yadi Hutapea",  tier: "Reguler",      rating: 5, text: "Nasi Goreng Spesialnya porsi besar, rasanya nggak kaleng-kaleng!" },
           ];
           return <InfiniteMarquee reviews={[...approvedReviews, ...DUMMY]} />;
         })()}

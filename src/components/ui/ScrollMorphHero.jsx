@@ -121,13 +121,16 @@ function HeroParticles() {
 // selalu ketinggalan dari posisi seharusnya, hasilnya muter jadi
 // patah-patah/tersendat, bukan mulus muter kayak carousel.
 //
-// FIX: saat prop `spinning` true (fase auto-rotate), kartu diposisikan
-// LANGSUNG tanpa spring (transition duration 0) — karena posisi target-
-// nya sendiri sudah dihitung mulus lewat sin/cos berbasis delta-time
-// (lihat useEffect auto-rotate di bawah), jadi tidak perlu lagi "dikejar"
-// oleh spring. Untuk fase lain (scatter/line/circle/arc/scroll) tetap
-// pakai spring, tapi sedikit lebih responsif (stiffness naik) supaya
-// gerak morph pas scroll juga terasa lebih smooth & tidak "ngeden".
+// v6 FIX: prop `spinning` diganti maknanya jadi "direct" — dipakai bukan
+// cuma pas auto-rotate final, tapi JUGA pas morph circle→arc lagi
+// discroll. Sebelumnya fase scroll itu masih pakai spring, dan karena
+// targetnya di-update oleh event wheel yang datang tidak rata, spring
+// itu jadi "mengejar" lompatan target → kelihatan patah-patah, persis
+// masalah yang sama seperti auto-rotate sebelum di-fix. Sekarang posisi
+// pas morph aktif SUDAH dihitung mulus per-frame lewat RAF (lihat
+// smoothScrollRef di komponen utama), jadi kartu tinggal dipasang
+// langsung tanpa spring lagi — spring cuma dipakai buat transisi
+// masuk yang jarang terjadi (scatter → line → circle awal).
 function MorphCard({ item, target, isVisible, spinning }) {
   return (
     <motion.div
@@ -139,7 +142,7 @@ function MorphCard({ item, target, isVisible, spinning }) {
       transition={
         spinning
           ? { duration: 0 }
-          : { type:"spring", stiffness:70, damping:18, mass:0.6 }
+          : { type:"spring", stiffness:120, damping:20, mass:0.5 }
       }
       style={{ position:"absolute", width:60, height:85, transformStyle:"preserve-3d", perspective:"1000px" }}
       className="cursor-pointer group"
@@ -285,11 +288,11 @@ function ScrollHint({ visible }) {
 // ═════════════════════════════════════════════════════════════════════
 export default function ScrollMorphHero({ onNavigate }) {
   const containerRef   = useRef(null);
-  const scrollRef      = useRef(0);
+  const scrollRef      = useRef(0); // target scroll mentah (langsung dari wheel/touch)
+  const smoothScrollRef = useRef(0); // v6 FIX: nilai scroll yang sudah dihaluskan, diupdate tiap frame lewat RAF
   const rafRef         = useRef(null);
+  const rafScrollRef   = useRef(null);
   const autoRotRef     = useRef(0);
-  // Batasi frekuensi setState untuk performa
-  const lastRenderRef  = useRef(0);
 
   const [containerSize, setContainerSize] = useState({ width:0, height:0 });
 
@@ -326,27 +329,27 @@ export default function ScrollMorphHero({ onNavigate }) {
     return () => obs.disconnect();
   }, []);
 
-  // ── apply scroll (throttled untuk performa) ──
+  // ── apply scroll ──
+  // v6 FIX (akar masalah "lingkaran patah-patah" saat scroll):
+  // Sebelumnya morphValue/rotateValue di-derive LANGSUNG dari event wheel,
+  // lalu di-throttle manual ke ~60fps DI DALAM handler wheel itu sendiri.
+  // Masalahnya event wheel/touch itu TIDAK datang rata — browser kadang
+  // ngirim banyak event numpuk lalu diam sejenak — jadi target morph
+  // "melompat" tiap kali ada event, bukan bergerak kontinu. Kartu yang
+  // dikasih spring jadi kelihatan "dikejar-kejar" & patah-patah, persis
+  // seperti masalah muter di fase final sebelum di-fix (lihat catatan v5
+  // di bawah), tapi sekarang muncul di fase circle→arc pas scroll.
+  //
+  // FIX: applyScroll sekarang HANYA mencatat target scroll mentah.
+  // Perhitungan morph/rotate progress dipindah ke RAF-loop terpisah
+  // (lihat useEffect "smooth scroll loop" di bawah) yang jalan TERUS
+  // setiap frame (bukan cuma pas ada event wheel) dan meng-interpolasi
+  // smoothScrollRef menuju target pakai exponential smoothing berbasis
+  // delta-time — jadi geraknya 1 gerakan kontinu yang konsisten di semua
+  // refresh rate, bukan kumpulan lompatan yang dikejar spring.
   const applyScroll = useCallback((next) => {
     scrollRef.current = next;
-    morphProgress.current  = norm(next, 0, MORPH_END);
-    rotateProgress.current = norm(next, MORPH_END, ROTATE_END);
-
-    // Throttle setState: max 60fps
-    const now = performance.now();
-    if (now - lastRenderRef.current < 14) return;
-    lastRenderRef.current = now;
-
-    setMorphValue(morphProgress.current);
-    setRotateValue(rotateProgress.current);
-
-    if (next > 20 && !morphActive) setMorphActive(true);
-    if (next <= 5) setMorphActive(false);
-
-    if (next >= MAX_SCROLL && !finalPhase) {
-      setFinalPhase(true);
-    }
-  }, [morphActive, finalPhase]);
+  }, []);
 
   // ── Wheel / Touch handler ──
   useEffect(() => {
@@ -400,6 +403,7 @@ export default function ScrollMorphHero({ onNavigate }) {
         setFinalPhase(false);
         setFinalTrans(0);
         scrollRef.current = 0;
+        smoothScrollRef.current = 0;
         setMorphValue(0);
         setRotateValue(0);
         setMorphActive(false);
@@ -409,6 +413,55 @@ export default function ScrollMorphHero({ onNavigate }) {
     window.addEventListener("scroll", onWinScroll, { passive:true });
     return () => window.removeEventListener("scroll", onWinScroll);
   }, [finalPhase]);
+
+  // ── v6 FIX: smooth-scroll RAF loop (bikin fase circle→arc mulus) ──
+  // Loop ini jalan TERUS selama komponen di fase intro (belum finalPhase),
+  // tiap frame mendekatkan smoothScrollRef ke scrollRef.current (target
+  // mentah dari wheel/touch) pakai exponential smoothing berbasis
+  // delta-time — jadi kecepatan penghalusan SAMA di semua refresh rate
+  // (60Hz, 120Hz, dll), tidak ikut goyang seperti pendekatan "+step per
+  // frame" biasa. morphValue & rotateValue diturunkan & di-setState dari
+  // sini, setiap frame — bukan cuma pas ada event wheel — sehingga kartu
+  // bergerak sebagai satu animasi kontinu, bukan lompatan yang dikejar
+  // spring satu-satu.
+  const SMOOTH_SCROLL_SPEED = 9; // makin besar = makin cepat "nempel" ke posisi scroll asli
+
+  useEffect(() => {
+    if (finalPhase) return;
+    let lastTs = null;
+
+    const loop = (ts) => {
+      if (lastTs === null) lastTs = ts;
+      const dt = Math.min((ts - lastTs) / 1000, 0.05);
+      lastTs = ts;
+
+      const target = scrollRef.current;
+      const cur    = smoothScrollRef.current;
+      const diff   = target - cur;
+
+      smoothScrollRef.current = Math.abs(diff) < 0.05
+        ? target
+        : cur + diff * (1 - Math.exp(-SMOOTH_SCROLL_SPEED * dt));
+
+      const sv = smoothScrollRef.current;
+      morphProgress.current  = norm(sv, 0, MORPH_END);
+      rotateProgress.current = norm(sv, MORPH_END, ROTATE_END);
+      setMorphValue(morphProgress.current);
+      setRotateValue(rotateProgress.current);
+
+      if (sv > 20 && !morphActive) setMorphActive(true);
+      if (sv <= 5 && morphActive)  setMorphActive(false);
+
+      if (target >= MAX_SCROLL && Math.abs(diff) < 0.5 && !finalPhase) {
+        setFinalPhase(true);
+      }
+
+      rafScrollRef.current = requestAnimationFrame(loop);
+    };
+
+    rafScrollRef.current = requestAnimationFrame(loop);
+    return () => { if (rafScrollRef.current) cancelAnimationFrame(rafScrollRef.current); };
+  }, [finalPhase, morphActive]);
 
   // ── Auto-rotate half-circle saat finalPhase ──
   // FIX: kecepatan muter sekarang berbasis DELTA TIME (derajat/detik),
@@ -614,8 +667,9 @@ export default function ScrollMorphHero({ onNavigate }) {
   // scroll progress untuk progress bar (reaktif)
   const [scrollPct, setScrollPct] = useState(0);
   useEffect(() => {
-    // update progress bar setiap kali morphValue berubah
-    setScrollPct(scrollRef.current / MAX_SCROLL);
+    // v6 FIX: progress bar ikut pakai smoothScrollRef, bukan scrollRef
+    // mentah, biar isi progress bar juga gerak mulus (bukan lompat2).
+    setScrollPct(smoothScrollRef.current / MAX_SCROLL);
   }, [morphValue]);
 
   return (
@@ -699,7 +753,7 @@ export default function ScrollMorphHero({ onNavigate }) {
             item={item}
             target={getCardTarget(i)}
             isVisible={introPhase !== "scatter"}
-            spinning={finalPhase && finalTrans >= 1}
+            spinning={morphActive || finalPhase}
           />
         ))}
       </div>
